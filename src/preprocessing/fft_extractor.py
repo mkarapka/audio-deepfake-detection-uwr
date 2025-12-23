@@ -1,6 +1,7 @@
-from preprocessing.audio_extractor import AudioExtractor
+from preprocessing.base_preprocessor import BasePreprocessor
 
-class FFTExtractor(AudioExtractor):
+
+class FFTExtractor(BasePreprocessor):
     def transform(self, data):
         # Implementation for FFT feature extraction goes here
         pass

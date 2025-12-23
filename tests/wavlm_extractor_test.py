@@ -1,5 +1,5 @@
 from src.preprocessing.wavlm_extractor import WavLmExtractor
-from src.preprocessing.audio_segmentation import AudioSegmentator
+from preprocessing.audio_segmentator import AudioSegmentator
 from src.common.constants import Constants as const
 from datasets import load_dataset, Audio
 

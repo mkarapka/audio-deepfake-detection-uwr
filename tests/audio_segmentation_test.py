@@ -1,5 +1,5 @@
 from datasets import load_dataset, Audio
-from src.preprocessing.audio_segmentation import AudioSegmentator
+from preprocessing.audio_segmentator import AudioSegmentator
 from src.common.constants import Constants as const
 class TestAudioSegmentation:
     def __init__(self):

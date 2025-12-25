@@ -1,9 +1,11 @@
-import torch
-import torchaudio
 import numpy as np
 import pandas as pd
+import torch
+import torchaudio
+
 from src.common.constants import Constants as const
 from src.preprocessing.base_preprocessor import BasePreprocessor
+
 
 class AudioSegmentator(BasePreprocessor):
     def __init__(self, overlap=2.0, max_duration=4.0):
@@ -11,9 +13,9 @@ class AudioSegmentator(BasePreprocessor):
         self.chunk_sec = max_duration
 
     def _get_relevant_samples(self, wave_samples):
-        samples = wave_samples['array']
-        sr = wave_samples['sampling_rate']
-        duration = wave_samples['array'].shape[0] / sr
+        samples = wave_samples["array"]
+        sr = wave_samples["sampling_rate"]
+        duration = wave_samples["array"].shape[0] / sr
         tensor_samples = torch.tensor(samples, dtype=torch.float32).unsqueeze(0)
         return [tensor_samples, sr, duration]
 
@@ -34,9 +36,7 @@ class AudioSegmentator(BasePreprocessor):
         return chunks, st_points
 
     def _resample(self, waveform, og_sr):
-        resampler = torchaudio.transforms.Resample(
-            orig_freq=og_sr, new_freq=const.g_sample_rate
-        )
+        resampler = torchaudio.transforms.Resample(orig_freq=og_sr, new_freq=const.g_sample_rate)
         return resampler(waveform)
 
     def transform(self, data_set):

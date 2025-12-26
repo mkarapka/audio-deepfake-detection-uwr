@@ -1,3 +1,4 @@
+import torch
 from datasets import load_dataset
 
 from src.common.constants import Constants
@@ -14,3 +15,7 @@ def load_audeter_dataset(config: str, split: str | None = None):
 
 def load_audeter_ds_using_streaming(config: str, split: str):
     return load_dataset("wqz995/AUDETER", config, split=split, streaming=True)
+
+
+def get_device():
+    return torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")

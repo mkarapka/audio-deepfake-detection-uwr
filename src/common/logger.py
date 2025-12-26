@@ -1,12 +1,13 @@
 import logging
 from datetime import datetime
+
 from src.common.constants import Constants as consts
 
 
 def setup_logger(
     name: str = "audio_deepfake",
     level: int = logging.INFO,
-    log_to_console: bool = True,
+    log_to_console: bool = False,
     log_to_file: bool = True,
 ) -> logging.Logger:
     """
@@ -48,7 +49,7 @@ def setup_logger(
         consts.logs_dir.mkdir(parents=True, exist_ok=True)
 
         # Nazwa pliku z datą
-        log_filename = f"{name}_{datetime.now().strftime('%Y-%m-%d')}.log"
+        log_filename = f"{"audio_deepfake"}_{datetime.now().strftime('%Y-%m-%d')}.log"
         log_filepath = consts.logs_dir / log_filename
 
         file_handler = logging.FileHandler(log_filepath, encoding="utf-8")

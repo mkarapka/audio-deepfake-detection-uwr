@@ -3,23 +3,25 @@ import pandas as pd
 import torch
 import torchaudio
 
-from src.common.constants import Constants as const
+from src.common.constants import Constants as consts
 from src.preprocessing.base_preprocessor import BasePreprocessor
 
 
 class AudioSegmentator(BasePreprocessor):
-    def __init__(self, overlap=2.0, max_duration=4.0):
+    def __init__(self, overlap=2.0, max_duration=4.0, audio_type="spoof"):
+        super().__init__(class_name=__class__.__name__)
         self.overlap_sec = overlap
         self.chunk_sec = max_duration
+        self.audio_type = audio_type
 
-    def _get_relevant_samples(self, wave_samples):
+    def _get_relevant_samples(self, wave_samples) -> list[torch.Tensor | int | float]:
         samples = wave_samples["array"]
         sr = wave_samples["sampling_rate"]
         duration = wave_samples["array"].shape[0] / sr
         tensor_samples = torch.tensor(samples, dtype=torch.float32).unsqueeze(0)
         return [tensor_samples, sr, duration]
 
-    def _split_into_audio_slices(self, waveform, sr):
+    def _split_into_audio_slices(self, waveform, sr) -> tuple[list[np.ndarray], list[float]]:
         chunk_samples = int(self.chunk_sec * sr)
         stride_samples = int((self.chunk_sec - self.overlap_sec) * sr)
 
@@ -35,11 +37,11 @@ class AudioSegmentator(BasePreprocessor):
 
         return chunks, st_points
 
-    def _resample(self, waveform, og_sr):
-        resampler = torchaudio.transforms.Resample(orig_freq=og_sr, new_freq=const.g_sample_rate)
+    def _resample(self, waveform, og_sr) -> torch.Tensor:
+        resampler = torchaudio.transforms.Resample(orig_freq=og_sr, new_freq=consts.g_sample_rate)
         return resampler(waveform)
 
-    def transform(self, data_set):
+    def transform(self, data_set) -> tuple[pd.DataFrame, pd.DataFrame]:
         audio_segments_rows = []
         durations = []
 
@@ -47,9 +49,9 @@ class AudioSegmentator(BasePreprocessor):
             waveform, sr, dur = self._get_relevant_samples(record["wav"])
             key_id = record["__key__"]
 
-            if sr != const.g_sample_rate:
+            if sr != consts.g_sample_rate:
                 waveform = self._resample(waveform, sr)
-                sr = const.g_sample_rate
+                sr = consts.g_sample_rate
             durations.append({"key_id": key_id, "duration": dur})
 
             chunks, st_points = self._split_into_audio_slices(waveform, sr)

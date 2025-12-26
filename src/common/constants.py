@@ -1,21 +1,21 @@
-from dataclasses import dataclass
 from pathlib import Path
 
 
-@dataclass
-class AudioType:
-    SPOOF: str = "spoof"
-    BONAFIDE: str = "bonafide"
-
-
 class Constants:
+    # Directories
     root = Path(__file__).parent.parent.parent
     data_dir = root / "data"
     logs_dir = data_dir / "logs"
+
+    # File names
+    extracted_embeddings_csv = "extracted_embeddings.csv"
+
+    # Audio settings
     g_sample_rate = 16_000
     wavlm_base_plus_name = "microsoft/wavlm-base-plus"
 
-    tts_and_vocoders_configs = [
+    # TTS and Vocoders configs
+    tts_configs = [
         "mls-tts-bark",
         "mls-tts-chattts",
         "mls-tts-cosyvoice",
@@ -26,6 +26,9 @@ class Constants:
         "mls-tts-xtts",
         "mls-tts-yourtts",
         "mls-tts-zonos",
+    ]
+
+    vocoders_configs = [
         "mls-vocoders-bigvgan",
         "mls-vocoders-bigvsan",
         "mls-vocoders-full_band_melgan",
@@ -38,5 +41,8 @@ class Constants:
         "mls-vocoders-vocos",
     ]
 
-    spoof = AudioType.SPOOF
-    bonafide = AudioType.BONAFIDE
+    tts_and_vocoders_configs = tts_configs.extend(vocoders_configs)
+
+    # Audio types
+    spoof = "spoof"
+    bonafide = "bonafide"

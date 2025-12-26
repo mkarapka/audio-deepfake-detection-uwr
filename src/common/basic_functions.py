@@ -1,3 +1,6 @@
+import functools
+import time
+
 import torch
 from datasets import load_dataset
 
@@ -19,3 +22,15 @@ def load_audeter_ds_using_streaming(config: str, split: str):
 
 def get_device():
     return torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+
+
+def measure_time(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        end = time.perf_counter()
+        print(f"{func.__name__} took {end - start:.4f} seconds")
+        return result
+
+    return wrapper

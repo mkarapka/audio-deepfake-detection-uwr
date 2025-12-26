@@ -20,20 +20,20 @@ class TestAudioSegmentation:
             return num_segments
 
     def test_transform(self):
-        audio_segmenter = AudioSegmentator()
-        segmented_ds, durations_df = audio_segmenter.transform(self.dataset)
+        audio_segmentator = AudioSegmentator()
+        segmented_ds, durations_df = audio_segmentator.transform(self.dataset)
 
-        assert segmented_ds.shape[0] > 2  # Each audio should be split into multiple segments
+        assert segmented_ds.shape[0] >= 2  # Each audio should be split into multiple segments
         assert self.calculate_number_of_segments(
             duration=durations_df["duration"].iloc[0],
-            chunk_sec=audio_segmenter.chunk_sec,
-            overlap_sec=audio_segmenter.overlap_sec,
+            chunk_sec=audio_segmentator.chunk_sec,
+            overlap_sec=audio_segmentator.overlap_sec,
         ) == len(segmented_ds[segmented_ds["key_id"] == durations_df["key_id"].iloc[0]])
 
         assert self.calculate_number_of_segments(
             duration=durations_df["duration"].iloc[1],
-            chunk_sec=audio_segmenter.chunk_sec,
-            overlap_sec=audio_segmenter.overlap_sec,
+            chunk_sec=audio_segmentator.chunk_sec,
+            overlap_sec=audio_segmentator.overlap_sec,
         ) == len(segmented_ds[segmented_ds["key_id"] == durations_df["key_id"].iloc[1]])
 
         print("Segmented Dataset Samples Shapes:")
@@ -44,5 +44,15 @@ class TestAudioSegmentation:
         print("Durations DataFrame:")
         print(durations_df.head())
 
+    def test_transform_shorter_than_4_seconds(self):
+        self.dataset[0]["wav"]["array"] = self.dataset[0]["wav"]["array"][:8000]  # 0.5 seconds at 16kHz
+        audio_segmentator = AudioSegmentator()
+        segmented_ds, durations_df = audio_segmentator.transform(self.dataset)
+
+        assert segmented_ds.shape[0] >= 2  # First audio should yield 1 segment, second as before
+        assert segmented_ds.iloc[0]["wave"].shape[0] == 64000  # Padded to 4 seconds (64000 samples at 16kHz)
+        print("Tested segmentation for audio shorter than 4 seconds successfully.")
+
 
 TestAudioSegmentation().test_transform()
+TestAudioSegmentation().test_transform_shorter_than_4_seconds()

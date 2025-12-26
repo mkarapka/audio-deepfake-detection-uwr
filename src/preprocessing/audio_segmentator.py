@@ -24,12 +24,17 @@ class AudioSegmentator(BasePreprocessor):
     def _split_into_audio_slices(self, waveform, sr) -> tuple[list[np.ndarray], list[float]]:
         chunk_samples = int(self.chunk_sec * sr)
         stride_samples = int((self.chunk_sec - self.overlap_sec) * sr)
+        chunks, st_points = [], []
+        wav_len = waveform.shape[-1]
 
-        chunks = []
-        st_points = []
-        steps = np.arange(0, waveform.shape[-1] - chunk_samples + 1, stride_samples)
-        if steps[-1] + chunk_samples < waveform.shape[-1]:
-            steps = np.append(steps, waveform.shape[-1] - chunk_samples)
+        if wav_len < chunk_samples:
+            padded = torch.nn.functional.pad(waveform, (0, chunk_samples - wav_len))
+            return [padded.cpu().squeeze().numpy()], [0.0]
+
+        steps = np.arange(0, wav_len - chunk_samples + 1, stride_samples)
+        if steps[-1] + chunk_samples < wav_len:
+            steps = np.append(steps, wav_len - chunk_samples)
+
         for start in steps:
             chunk = waveform.narrow(-1, start, chunk_samples).detach()
             chunks.append(chunk.squeeze().numpy())

@@ -44,13 +44,16 @@ class TestWavLmExtractor:
     def test_transform_batch_size_thirty_two(self, records_no=100):
         self.test_transform(batch_size=32, records_no=records_no)
 
-    def test_transform_batch_size_sixty_four(self, records_no=100):
+    def test_transform_batch_size_sixty_four(self, records_no=1000):
         self.test_transform(batch_size=64, records_no=records_no)
 
-    def test_transform_batch_size_one_twenty_eight(self, records_no=100):
+    def test_transform_batch_size_one_twenty_eight(self, records_no=1000):
         self.test_transform(batch_size=128, records_no=records_no)
+    
+    def test_transform_batch_size_two_fifty_six(self, records_no=1000):
+        self.test_transform(batch_size=256, records_no=records_no)
 
 
-# TestWavLmExtractor().test_transform_batch_size_one()
-# TestWavLmExtractor().test_transform_batch_size_eight()
-TestWavLmExtractor().test_transform_batch_size_sixteen()
+TestWavLmExtractor().test_transform_batch_size_sixty_four()
+TestWavLmExtractor().test_transform_batch_size_one_twenty_eight()
+TestWavLmExtractor().test_transform_batch_size_two_fifty_six()

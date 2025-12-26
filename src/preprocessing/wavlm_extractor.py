@@ -41,11 +41,11 @@ class WavLmExtractor(BasePreprocessor):
             with torch.no_grad():
                 outputs = self.model(**inputs)
                 embeddings = outputs.last_hidden_state.mean(dim=1)
-                all_embeddings.append(embeddings.cpu().numpy())
+                all_embeddings.append(embeddings)
                 self.logger.info(f"Embeddings shape: {embeddings.shape}")
 
             self._print_percent_of_completed_records(i, rows_size)
 
-        full_embeddings = np.vstack(all_embeddings)
+        full_embeddings = torch.cat(all_embeddings, dim=0).cpu().numpy()
         data["wave"] = list(full_embeddings)
         return data

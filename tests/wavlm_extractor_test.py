@@ -49,7 +49,7 @@ class TestWavLmExtractor:
 
     def test_transform_batch_size_one_twenty_eight(self, records_no=1000):
         self.test_transform(batch_size=128, records_no=records_no)
-    
+
     def test_transform_batch_size_two_fifty_six(self, records_no=1000):
         self.test_transform(batch_size=256, records_no=records_no)
 

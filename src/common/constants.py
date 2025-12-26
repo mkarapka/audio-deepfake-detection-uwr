@@ -29,7 +29,6 @@ class Constants:
     ]
 
     vocoders_configs = [
-        "mls-vocoders-bigvgan",
         "mls-vocoders-bigvsan",
         "mls-vocoders-full_band_melgan",
         "mls-vocoders-hifigan",
@@ -41,7 +40,7 @@ class Constants:
         "mls-vocoders-vocos",
     ]
 
-    tts_and_vocoders_configs = tts_configs.extend(vocoders_configs)
+    tts_and_vocoders_configs = tts_configs + vocoders_configs
 
     # Audio types
     spoof = "spoof"

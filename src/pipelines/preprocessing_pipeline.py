@@ -37,12 +37,14 @@ class PreprocessingPipeline:
             collector = Collector(save_file_name=csv_file)
             collector.transform(embedding_audio_df)
 
+
 np.random.seed(42)
 tts_sample = np.random.choice(consts.tts_configs, 2, replace=False)
 vocoders_sample = np.random.choice(consts.vocoders_configs, 2, replace=False)
-configs_lst = np.concatenate((tts_sample, vocoders_sample)).tolist()
+configs_lst = np.hstack([tts_sample, vocoders_sample]).tolist()
+print("Selected configurations for preprocessing:", configs_lst)
 
-BATCH_SIZE = 256
+BATCH_SIZE = 128
 
 PreprocessingPipeline(consts.spoof, config_lst=configs_lst).serialize_waves_into_csv_with_embeddings(
     batch_size=BATCH_SIZE

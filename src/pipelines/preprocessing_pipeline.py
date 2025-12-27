@@ -20,22 +20,29 @@ class PreprocessingPipeline:
 
     def serialize_waves_into_csv_with_embeddings(self, csv_file=consts.extracted_embeddings_csv, batch_size=8):
         config_loader = ConfigLoader(self.config_lst)
+        audio_segmentator = AudioSegmentator()
+        wavlm_extractor = WavLmExtractor(batch_size=batch_size)
+        collector = Collector(save_file_name=csv_file)
+        
         for data_set in config_loader.stream_next_config_dataset():
             print(
                 f"Processing config: {config_loader.get_current_config()}, split: {config_loader.get_current_split()}"
             )
 
-            segmented_audio_df, _ = AudioSegmentator().transform(data_set)
+            segmented_audio_df, _ = audio_segmentator.transform(data_set)
             segmented_audio_df = self.modify_audio_df(config_loader, segmented_audio_df)
             print(f"Segmented audio into {len(segmented_audio_df)} segments.")
 
-            embedding_audio_df = WavLmExtractor(batch_size=batch_size).transform(
+            embedding_audio_df = wavlm_extractor.transform(
                 segmented_audio_df, consts.g_sample_rate
             )
             print(f"Extracted embeddings for {len(embedding_audio_df)} audio segments.")
 
-            collector = Collector(save_file_name=csv_file)
-            collector.transform(embedding_audio_df)
+            df_meta = embedding_audio_df.drop(columns=["wave"])
+            collector.transform(df_meta)
+            npy_file = csv_file.replace(".csv", ".npy")
+            collector.append_embeddings(npy_file, embedding_audio_df["wave"])
+            print(f"Saved embeddings and metadata for config: {config_loader.get_current_config()}")
 
 
 np.random.seed(42)

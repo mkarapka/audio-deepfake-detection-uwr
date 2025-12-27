@@ -29,27 +29,34 @@ class Collector(BasePreprocessor):
             raise ValueError(f"Embeddings dimension mismatch: expected {dim}, got {emb_np.shape[1]}")
         
         file_path = self.data_dir / Path(file_name)
-        if file_path.exists():
-            #create file
-            file_path.touch()
+        if not file_path.exists():
+            # Nowy plik - utwórz
+            self.logger.info(f"Creating new embeddings file: {file_path}")
             mmap = np.memmap(file_path,
-                             dtype="float32",
-                             mode="w+",
-                             shape=(n_new, dim))
+                            dtype="float32",
+                            mode="w+",
+                            shape=(n_new, dim))
             mmap[:] = emb_np
         else:
+            # Istniejący plik - dołącz dane
+            self.logger.info(f"Appending to existing embeddings file: {file_path}")
             old = np.memmap(file_path, 
                             dtype="float32",
-                            mode="r+")
+                            mode="r")
             n_old = old.size // dim
+            old_data = old.reshape((n_old, dim))
             
+            # Stwórz nowy większy plik
             mmap = np.memmap(file_path,
-                             dtype="float32",
-                             mode="w+",
-                             shape=(n_old + n_new, dim))
+                            dtype="float32",
+                            mode="w+",
+                            shape=(n_old + n_new, dim))
+            mmap[:n_old] = old_data
             mmap[n_old:] = emb_np
+            del old
             
         mmap.flush()
+        del mmap
     
     def transform(self, data: pd.DataFrame):
         if self.save_file_path.exists() is True:

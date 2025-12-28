@@ -46,9 +46,8 @@ class AudioSegmentator(BasePreprocessor):
         resampler = torchaudio.transforms.Resample(orig_freq=og_sr, new_freq=consts.g_sample_rate)
         return resampler(waveform)
 
-    def transform(self, data_set) -> tuple[pd.DataFrame, pd.DataFrame]:
+    def transform(self, data_set) -> pd.DataFrame:
         audio_segments_rows = []
-        durations = []
 
         for record in data_set:
             waveform, sr, dur = self._get_relevant_samples(record["wav"])
@@ -57,7 +56,6 @@ class AudioSegmentator(BasePreprocessor):
             if sr != consts.g_sample_rate:
                 waveform = self._resample(waveform, sr)
                 sr = consts.g_sample_rate
-            durations.append({"key_id": key_id, "duration": dur})
 
             chunks, st_points = self._split_into_audio_slices(waveform, sr)
             for ch, stp in zip(chunks, st_points):
@@ -71,5 +69,4 @@ class AudioSegmentator(BasePreprocessor):
                 )
 
         audio_segments_df = pd.DataFrame(audio_segments_rows)
-        durations_df = pd.DataFrame(durations)
-        return audio_segments_df, durations_df
+        return audio_segments_df

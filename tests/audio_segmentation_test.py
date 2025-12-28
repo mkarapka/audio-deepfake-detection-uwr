@@ -1,13 +1,12 @@
 from datasets import Audio, load_dataset
-
+import pandas as pd
 from src.preprocessing.audio_segmentator import AudioSegmentator
+from tests.base_test import BaseTest
 
 
-class TestAudioSegmentation:
+class TestAudioSegmentation(BaseTest):
     def __init__(self):
-        dataset = load_dataset("wqz995/AUDETER", "mls-tts-bark", split="dev", streaming=True)
-        dataset = dataset.cast_column("wav", Audio())
-        self.dataset = [record for _, record in zip(range(2), dataset)]
+        super().__init__(split="dev", config="mls-tts-bark", records_no=2)
 
     def calculate_number_of_segments(self, duration, chunk_sec, overlap_sec):
         stride = chunk_sec - overlap_sec
@@ -18,12 +17,24 @@ class TestAudioSegmentation:
             if (duration - chunk_sec) % stride > 0:
                 num_segments += 1
             return num_segments
+        
+    def get_durrations_from_dataset(self, dataset):
+        durations = []
+        for record in dataset:
+            samples = record["wav"]["array"]
+            sr = record["wav"]["sampling_rate"]
+            dur = samples.shape[0] / sr
+            durations.append({"key_id": record["__key__"], "duration": dur})
+        return pd.DataFrame(durations)
 
     def test_transform(self):
         audio_segmentator = AudioSegmentator()
-        segmented_ds, durations_df = audio_segmentator.transform(self.dataset)
+        segmented_ds = audio_segmentator.transform(self.dataset)
+        durations_df = self.get_durrations_from_dataset(self.dataset)
 
-        assert segmented_ds.shape[0] >= 2  # Each audio should be split into multiple segments
+        assert (
+            segmented_ds.shape[0] >= 2
+        )  # Each audio should be split into multiple segments
         assert self.calculate_number_of_segments(
             duration=durations_df["duration"].iloc[0],
             chunk_sec=audio_segmentator.chunk_sec,
@@ -45,12 +56,18 @@ class TestAudioSegmentation:
         print(durations_df.head())
 
     def test_transform_shorter_than_4_seconds(self):
-        self.dataset[0]["wav"]["array"] = self.dataset[0]["wav"]["array"][:8000]  # 0.5 seconds at 16kHz
+        self.dataset[0]["wav"]["array"] = self.dataset[0]["wav"]["array"][
+            :8000
+        ]  # 0.5 seconds at 16kHz
         audio_segmentator = AudioSegmentator()
-        segmented_ds, durations_df = audio_segmentator.transform(self.dataset)
+        segmented_ds = audio_segmentator.transform(self.dataset)
 
-        assert segmented_ds.shape[0] >= 2  # First audio should yield 1 segment, second as before
-        assert segmented_ds.iloc[0]["wave"].shape[0] == 64000  # Padded to 4 seconds (64000 samples at 16kHz)
+        assert (
+            segmented_ds.shape[0] >= 2
+        )  # First audio should yield 1 segment, second as before
+        assert (
+            segmented_ds.iloc[0]["wave"].shape[0] == 64000
+        )  # Padded to 4 seconds (64000 samples at 16kHz)
         print("Tested segmentation for audio shorter than 4 seconds successfully.")
 
 

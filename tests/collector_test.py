@@ -1,17 +1,20 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 from src.preprocessing.collector import Collector
 
 TEST_FILE_NAME = "test_collected_data"
 
-def delete_test_files(collector : Collector = None):
+
+def delete_test_files(collector: Collector = None):
     meta_data_file_path = collector.get_meta_data_file_path()
     embeddings_file_path = collector.get_embeddings_file_path()
-    
+
     if meta_data_file_path.exists():
         meta_data_file_path.unlink()
     if embeddings_file_path.exists():
         embeddings_file_path.unlink()
+
 
 class TestCollector:
     def __init__(self):
@@ -21,13 +24,15 @@ class TestCollector:
             "feature2": [1.0, 1.1, 1.2],
         }
         self.sample_df = pd.DataFrame(sample_meta_data)
-        
-        self.embeddings_sample = np.array([
-            [0.1, 0.2, 0.3],
-            [0.4, 0.5, 0.6],
-            [0.7, 0.8, 0.9],
-        ])
-    
+
+        self.embeddings_sample = np.array(
+            [
+                [0.1, 0.2, 0.3],
+                [0.4, 0.5, 0.6],
+                [0.7, 0.8, 0.9],
+            ]
+        )
+
     def test_transform(self):
         collector = Collector(save_file_name=TEST_FILE_NAME)
         delete_test_files(collector)
@@ -50,7 +55,7 @@ class TestCollector:
         delete_test_files(collector)
 
         sample_data = (self.sample_df, self.embeddings_sample)
-        
+
         # Transform (collect) the sample data twice
         collector.transform(sample_data)
         collector.transform(sample_data)
@@ -62,7 +67,7 @@ class TestCollector:
         # Expected data is the original sample data repeated twice
         expected_data = pd.concat([self.sample_df, self.sample_df], ignore_index=True)
         expected_embeddings = np.vstack([self.embeddings_sample, self.embeddings_sample])
-        
+
         pd.testing.assert_frame_equal(expected_data, saved_metadata)
         np.testing.assert_array_equal(expected_embeddings, saved_embeddings)
 

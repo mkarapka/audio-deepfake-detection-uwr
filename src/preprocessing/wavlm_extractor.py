@@ -1,6 +1,6 @@
 import warnings
 
-import pandas as pd
+import numpy as np
 import torch
 from transformers import Wav2Vec2FeatureExtractor, WavLMModel
 
@@ -26,25 +26,22 @@ class WavLmExtractor(BasePreprocessor):
         if (i // self.batch_size) % step == 0:
             print(f"WavLM Extractor: Processed {i / rows_size:.2%} records.")
 
-    def transform(self, data: pd.DataFrame, sample_rate):
-        rows_size = data.shape[0]
+    def transform(self, wave_segments: np.ndarray, sample_rate):
+        rows_size = wave_segments.shape[0]
         sr = sample_rate
         all_embeddings = []
 
-        for i in range(0, data.shape[0], self.batch_size):
-            batch = data.iloc[i : i + self.batch_size]
-            waveforms = batch["wave"].tolist()
-            inputs = self.feature_extractor(waveforms, sampling_rate=sr, return_tensors="pt")
+        for i in range(0, wave_segments.shape[0], self.batch_size):
+            batch_wave_seq = wave_segments[i : i + self.batch_size]
+            inputs = self.feature_extractor(batch_wave_seq, sampling_rate=sr, return_tensors="pt")
             inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
             with torch.no_grad():
                 outputs = self.model(**inputs)
                 embeddings = outputs.last_hidden_state.mean(dim=1)
                 all_embeddings.append(embeddings)
-                self.logger.info(f"Embeddings shape: {embeddings.shape}")
 
             self._print_percent_of_completed_records(i, rows_size)
 
         full_embeddings = torch.cat(all_embeddings, dim=0).cpu().numpy()
-        data["wave"] = list(full_embeddings)
-        return data
+        return full_embeddings

@@ -29,26 +29,31 @@ class TestAudioSegmentation(BaseTest):
 
     def test_transform(self):
         audio_segmentator = AudioSegmentator()
-        segmented_ds = audio_segmentator.transform(self.dataset)
+        metadata, wave_segments = audio_segmentator.transform(self.dataset)
         durations_df = self.get_durrations_from_dataset(self.dataset)
 
-        assert segmented_ds.shape[0] >= 2  # Each audio should be split into multiple segments
+        # Each audio should be split into multiple segments
+        assert metadata.shape[0] >= 2 and wave_segments.shape[0] >= 2
+        assert metadata.shape[0] == wave_segments.shape[0]
+
         assert self.calculate_number_of_segments(
             duration=durations_df["duration"].iloc[0],
             chunk_sec=audio_segmentator.chunk_sec,
             overlap_sec=audio_segmentator.overlap_sec,
-        ) == len(segmented_ds[segmented_ds["key_id"] == durations_df["key_id"].iloc[0]])
+        ) == len(metadata[metadata["key_id"] == durations_df["key_id"].iloc[0]])
 
         assert self.calculate_number_of_segments(
             duration=durations_df["duration"].iloc[1],
             chunk_sec=audio_segmentator.chunk_sec,
             overlap_sec=audio_segmentator.overlap_sec,
-        ) == len(segmented_ds[segmented_ds["key_id"] == durations_df["key_id"].iloc[1]])
+        ) == len(metadata[metadata["key_id"] == durations_df["key_id"].iloc[1]])
 
         print("Segmented Dataset Samples Shapes:")
-        print(segmented_ds.iloc[0]["wave"].shape)
-        print(segmented_ds.shape)
-        print(segmented_ds.head(20))
+        print("Wave Segments Shape:", wave_segments.shape)
+        print("Wave Segment[0] Shape:", wave_segments[0].shape)
+
+        print("Metadata Shape:", metadata.shape)
+        print(metadata.head(20))
 
         print("Durations DataFrame:")
         print(durations_df.head())
@@ -56,10 +61,10 @@ class TestAudioSegmentation(BaseTest):
     def test_transform_shorter_than_4_seconds(self):
         self.dataset[0]["wav"]["array"] = self.dataset[0]["wav"]["array"][:8000]  # 0.5 seconds at 16kHz
         audio_segmentator = AudioSegmentator()
-        segmented_ds = audio_segmentator.transform(self.dataset)
+        metadata, wave_segments = audio_segmentator.transform(self.dataset)
 
-        assert segmented_ds.shape[0] >= 2  # First audio should yield 1 segment, second as before
-        assert segmented_ds.iloc[0]["wave"].shape[0] == 64000  # Padded to 4 seconds (64000 samples at 16kHz)
+        assert metadata.shape[0] >= 2  # First audio should yield 1 segment, second as before
+        assert wave_segments[0].shape[0] == 64000  # Padded to 4 seconds (64000 samples at 16kHz)
         print("Tested segmentation for audio shorter than 4 seconds successfully.")
 
 

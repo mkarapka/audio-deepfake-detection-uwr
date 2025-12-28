@@ -8,7 +8,7 @@ class Constants:
     logs_dir = data_dir / "logs"
 
     # File names
-    extracted_embeddings_csv = "wavlm_extracted"
+    extracted_embeddings = "wavlm_extracted"
     embeddings_ext = "_embeddings.npy"
     metadata_ext = "_metadata.csv"
 

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -14,6 +16,14 @@ def delete_test_files(collector: Collector = None):
         meta_data_file_path.unlink()
     if embeddings_file_path.exists():
         embeddings_file_path.unlink()
+
+
+def change_file_path(collector: Collector):
+    collector.data_dir = Path(str(collector.data_dir).replace("collected_data", "test_collected_data"))
+    if not collector.data_dir.exists():
+        collector.data_dir.mkdir(parents=True, exist_ok=True)
+    collector.meta_data_file_path = collector.data_dir / Path(TEST_FILE_NAME + ".csv")
+    collector.embeddings_file_path = collector.data_dir / Path(TEST_FILE_NAME + ".npy")
 
 
 class TestCollector:
@@ -35,10 +45,11 @@ class TestCollector:
 
     def test_transform(self):
         collector = Collector(save_file_name=TEST_FILE_NAME)
+        change_file_path(collector)
         delete_test_files(collector)
 
         # Transform (collect) the sample data
-        collector.transform((self.sample_df, self.embeddings_sample))
+        collector.transform(meta_df=self.sample_df, embeddings=self.embeddings_sample)
 
         # Load the saved data to verify
         saved_metadata = pd.read_csv(collector.meta_data_file_path)
@@ -52,13 +63,14 @@ class TestCollector:
 
     def test_double_transform(self):
         collector = Collector(save_file_name=TEST_FILE_NAME)
+        change_file_path(collector)
         delete_test_files(collector)
 
         sample_data = (self.sample_df, self.embeddings_sample)
 
         # Transform (collect) the sample data twice
-        collector.transform(sample_data)
-        collector.transform(sample_data)
+        collector.transform(meta_df=sample_data[0], embeddings=sample_data[1])
+        collector.transform(meta_df=sample_data[0], embeddings=sample_data[1])
 
         # Load the saved data to verify
         saved_metadata = pd.read_csv(collector.meta_data_file_path)

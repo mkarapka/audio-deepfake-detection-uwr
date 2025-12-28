@@ -43,7 +43,6 @@ class Collector(BasePreprocessor):
     def get_embeddings_file_path(self) -> Path:
         return self.embeddings_file_path
 
-    def transform(self, data):
-        meta_df, embeddings = data
+    def transform(self, meta_df: pd.DataFrame, embeddings: np.ndarray):
         self._write_data_to_csv(meta_df)
         self._write_embeddings_to_npy(embeddings)

@@ -26,7 +26,7 @@ class WavLmExtractor(BasePreprocessor):
         if (i // self.batch_size) % step == 0:
             print(f"WavLM Extractor: Processed {i / rows_size:.2%} records.")
 
-    def transform(self, wave_segments: np.ndarray, sample_rate):
+    def transform(self, wave_segments: np.ndarray, sample_rate) -> torch.Tensor:
         rows_size = wave_segments.shape[0]
         sr = sample_rate
         all_embeddings = []

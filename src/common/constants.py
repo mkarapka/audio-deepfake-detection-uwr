@@ -16,6 +16,10 @@ class Constants:
     g_sample_rate = 16_000
     wavlm_base_plus_name = "microsoft/wavlm-base-plus"
 
+    # Dataset paths
+    audeter_ds_path = "wqz995/AUDETER"
+    mls_eng_ds_path = "parler-tts/mls_eng"
+
     # TTS and Vocoders configs
     tts_configs = [
         "mls-tts-bark",

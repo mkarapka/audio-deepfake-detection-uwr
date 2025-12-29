@@ -1,3 +1,4 @@
+from src.common.constants import Constants as consts
 from src.preprocessing.config_loader import ConfigLoader
 
 DEV_SIZE = 3807
@@ -8,7 +9,7 @@ class TestConfigLoader:
     def test_load_next_config(self):
         configs = ["mls-tts-bark", "mls-vocoders-melgan"]
         splits = ["dev", "test"]
-        config_loader = ConfigLoader(configs, splits)
+        config_loader = ConfigLoader(consts.audeter_ds_path, configs, splits)
 
         loaded_configs = []
         datasets = []

@@ -1,10 +1,17 @@
-from src.common.basic_functions import load_audeter_ds_using_streaming
+from src.common.basic_functions import load_audio_dataset_by_streaming
 from src.common.constants import Constants as consts
+from src.common.logger import get_logger, setup_logger
+
+logger = get_logger("ConfigLoader")
+setup_logger("ConfigLoader", log_to_console=False)
 
 
 class ConfigLoader:
-    def __init__(self, config: list[str], splits: list[str] = ["dev", "test"]):
-        self.current_dataset = None
+    def __init__(self, source_dataset: str, config: list[str], splits: list[str] = ["dev", "test"]):
+        if source_dataset is None:
+            logger.error("Dataset name must be provided to initialize ConfigLoader.")
+        self.source_dataset = source_dataset
+
         self.current_config = None
         self.current_split = None
         self.config_lst = config
@@ -24,5 +31,4 @@ class ConfigLoader:
             self.current_config = config
             for split in self.included_splits:
                 self.current_split = split
-                self.current_dataset = load_audeter_ds_using_streaming(config, split)
-                yield self.current_dataset
+                yield load_audio_dataset_by_streaming(self.source_dataset, config, split)

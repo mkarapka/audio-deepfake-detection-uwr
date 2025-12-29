@@ -16,6 +16,8 @@ class PreprocessingPipeline:
     def __init__(self, audio_type: str, config_lst: list[str] | None = None):
         self.audio_type = audio_type
         self.config_lst = config_lst
+        if self.audio_type not in [consts.spoof, consts.bonafide]:
+            logger.error(f"Invalid audio type: {self.audio_type}. Must be 'spoof' or 'bonafide'.")
 
     def _modify_audio_df(self, config_loader: ConfigLoader, segmented_audio_df):
         curr_cfg = config_loader.get_current_config()
@@ -23,8 +25,15 @@ class PreprocessingPipeline:
         segmented_audio_df["target"] = self.audio_type
         return segmented_audio_df
 
-    def save_audio_segments_embeddings_and_csv(self, file_name=consts.extracted_embeddings, batch_size=8):
-        config_loader = ConfigLoader(self.config_lst)
+    def _attach_key_to_dataset(self, ds, split):
+        curr_row = 0
+        for record in ds:
+            record["__key__"] = f"{split}/{curr_row}_0"
+            curr_row += 1
+            yield record
+
+    def save_audio_segments_embeddings_and_csv_spoof(self, file_name=consts.extracted_embeddings, batch_size=8):
+        config_loader = ConfigLoader(source_dataset=consts.audeter_ds_path, config=self.config_lst)
         audio_segmentator = AudioSegmentator()
         wavlm_extractor = WavLmExtractor(batch_size=batch_size)
         collector = Collector(save_file_name=file_name)
@@ -33,6 +42,8 @@ class PreprocessingPipeline:
             logger.info(
                 f"Processing config: {config_loader.get_current_config()}, split: {config_loader.get_current_split()}"
             )
+            if self.audio_type == consts.bonafide:
+                data_set = self._attach_key_to_dataset(ds=data_set, split=config_loader.get_current_split())
 
             audio_segs_metadata, waves_segs = audio_segmentator.transform(data_set)
             audio_segs_metadata = self._modify_audio_df(config_loader, audio_segs_metadata)
@@ -44,15 +55,15 @@ class PreprocessingPipeline:
             collector.transform(meta_df=audio_segs_metadata, embeddings=embeddings)
             logger.info(f"Saved embeddings and metadata for config: {config_loader.get_current_config()}")
 
+if __name__ == "__main__":
+    np.random.seed(42)
+    tts_sample = np.random.choice(consts.tts_configs, 2, replace=False)
+    vocoders_sample = np.random.choice(consts.vocoders_configs, 2, replace=False)
+    configs_lst = np.hstack([tts_sample, vocoders_sample]).tolist()
+    logger.info(f"Selected configurations for preprocessing: {configs_lst}")
 
-np.random.seed(42)
-tts_sample = np.random.choice(consts.tts_configs, 2, replace=False)
-vocoders_sample = np.random.choice(consts.vocoders_configs, 2, replace=False)
-configs_lst = np.hstack([tts_sample, vocoders_sample]).tolist()
-logger.info(f"Selected configurations for preprocessing: {configs_lst}")
+    BATCH_SIZE = 8
 
-BATCH_SIZE = 8
-
-PreprocessingPipeline(consts.spoof, config_lst=configs_lst).save_audio_segments_embeddings_and_csv(
-    batch_size=BATCH_SIZE
-)
+    PreprocessingPipeline(consts.spoof, config_lst=configs_lst).save_audio_segments_embeddings_and_csv_spoof(
+        batch_size=BATCH_SIZE
+    )

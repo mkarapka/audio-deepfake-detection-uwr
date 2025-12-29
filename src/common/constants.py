@@ -16,6 +16,7 @@ class Constants:
     g_sample_rate = 16_000
     wavlm_base_plus_name = "microsoft/wavlm-base-plus"
     A_100_BATCH_SIZE = 256
+    ESTIMATED_RECORDS_IN_DATA_SET = 3800  # Approximate number of records in AUDETER and MLS English datasets
 
     # Dataset paths
     audeter_ds_path = "wqz995/AUDETER"

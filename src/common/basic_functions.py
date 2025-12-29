@@ -54,3 +54,13 @@ def generate_config_sample(seed=42, num_tts=2, num_vocoders=2):
     configs_lst = np.hstack([tts_sample, vocoders_sample]).tolist()
     logger.info(f"Selected configurations for preprocessing: {configs_lst}")
     return configs_lst
+
+
+def get_gpu_name():
+    device = get_device()
+    if device.type == "cuda":
+        return torch.cuda.get_device_name(0)
+    elif device.type == "mps":
+        return "Apple Silicon GPU"
+    else:
+        return "CPU"

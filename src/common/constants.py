@@ -15,6 +15,7 @@ class Constants:
     # Audio settings
     g_sample_rate = 16_000
     wavlm_base_plus_name = "microsoft/wavlm-base-plus"
+    A_100_BATCH_SIZE = 256
 
     # Dataset paths
     audeter_ds_path = "wqz995/AUDETER"

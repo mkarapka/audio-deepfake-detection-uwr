@@ -32,7 +32,7 @@ class PreprocessingPipeline:
             curr_row += 1
             yield record
 
-    def save_audio_segments_embeddings_and_csv_spoof(self, file_name=consts.extracted_embeddings, batch_size=8):
+    def preprocess_data_set(self, file_name=consts.extracted_embeddings, batch_size=8):
         config_loader = ConfigLoader(source_dataset=consts.audeter_ds_path, config=self.config_lst)
         audio_segmentator = AudioSegmentator()
         wavlm_extractor = WavLmExtractor(batch_size=batch_size)
@@ -55,6 +55,7 @@ class PreprocessingPipeline:
             collector.transform(meta_df=audio_segs_metadata, embeddings=embeddings)
             logger.info(f"Saved embeddings and metadata for config: {config_loader.get_current_config()}")
 
+
 if __name__ == "__main__":
     np.random.seed(42)
     tts_sample = np.random.choice(consts.tts_configs, 2, replace=False)
@@ -64,6 +65,4 @@ if __name__ == "__main__":
 
     BATCH_SIZE = 8
 
-    PreprocessingPipeline(consts.spoof, config_lst=configs_lst).save_audio_segments_embeddings_and_csv_spoof(
-        batch_size=BATCH_SIZE
-    )
+    PreprocessingPipeline(consts.spoof, config_lst=configs_lst).preprocess_data_set(batch_size=BATCH_SIZE)

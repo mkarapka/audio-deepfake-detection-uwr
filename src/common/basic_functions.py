@@ -32,7 +32,7 @@ def load_audio_dataset_by_streaming(dataset: str, config: str | None, split: str
 
 
 def get_device():
-    return torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+    return "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 
 
 def measure_time(func):
@@ -56,11 +56,18 @@ def generate_config_sample(seed=42, num_tts=2, num_vocoders=2):
     return configs_lst
 
 
-def get_gpu_name():
+def get_batch_size():
     device = get_device()
-    if device.type == "cuda":
-        return torch.cuda.get_device_name(0)
-    elif device.type == "mps":
-        return "Apple Silicon GPU"
+    if device == "cuda":
+        if "A100" in torch.cuda.get_device_name(0):
+            return 256
+        elif "L4" in torch.cuda.get_device_name(0):
+            return 64
+        elif "T4" in torch.cuda.get_device_name(0):
+            return 32
+        else:
+            return 16
+    elif device == "mps":
+        return 8
     else:
-        return "CPU"
+        return 4

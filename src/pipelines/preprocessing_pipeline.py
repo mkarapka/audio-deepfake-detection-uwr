@@ -1,5 +1,3 @@
-import numpy as np
-
 from src.common.constants import Constants as consts
 from src.common.logger import get_logger, setup_logger
 from src.preprocessing.audio_segmentator import AudioSegmentator
@@ -60,15 +58,3 @@ class PreprocessingPipeline:
 
             collector.transform(meta_df=audio_segs_metadata, embeddings=embeddings)
             logger.info(f"Saved embeddings and metadata for config: {config_loader.get_current_config()}")
-
-
-if __name__ == "__main__":
-    np.random.seed(42)
-    tts_sample = np.random.choice(consts.tts_configs, 2, replace=False)
-    vocoders_sample = np.random.choice(consts.vocoders_configs, 2, replace=False)
-    configs_lst = np.hstack([tts_sample, vocoders_sample]).tolist()
-    logger.info(f"Selected configurations for preprocessing: {configs_lst}")
-
-    BATCH_SIZE = 8
-
-    PreprocessingPipeline(consts.spoof, config_lst=configs_lst).preprocess_data_set(batch_size=BATCH_SIZE)

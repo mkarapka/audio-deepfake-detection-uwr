@@ -56,6 +56,16 @@ def generate_config_sample(seed=42, num_tts=2, num_vocoders=2):
     return configs_lst
 
 
+def get_device_name():
+    device = get_device()
+    if device == "cuda":
+        return torch.cuda.get_device_name(0)
+    elif device == "mps":
+        return "Apple Silicon"
+    else:
+        return "CPU"
+
+
 def get_batch_size():
     device = get_device()
     if device == "cuda":

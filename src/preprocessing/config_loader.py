@@ -21,6 +21,8 @@ class ConfigLoader:
             consts.data_dir.mkdir(parents=True, exist_ok=True)
 
     def get_current_config(self):
+        if self.current_config is None:
+            return consts.mls_eng_config
         return self.current_config
 
     def get_current_split(self):

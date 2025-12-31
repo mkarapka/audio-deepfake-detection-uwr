@@ -49,14 +49,14 @@ class AudioSegmentator(BasePreprocessor):
     def _log_segmented_audio_info(self, iteration: int):
         self.logger.info(
             f"Estimated percentage of dataset processed: {
-                iteration * 100 / consts.ESTIMATED_RECORDS_IN_DATA_SET:.2f}%"
+                iteration * 100 / consts.ESTIMATED_RECORDS_IN_DATASET:.2f}%"
         )
 
-    def transform(self, data_set) -> tuple[pd.DataFrame, np.ndarray]:
+    def transform(self, dataset) -> tuple[pd.DataFrame, np.ndarray]:
         audio_segments_rows = []
         wave_segments = []
 
-        for i, record in enumerate(data_set):
+        for i, record in enumerate(dataset):
             waveform, sr, dur = self._get_relevant_samples(record["wav"])
             key_id = record["__key__"]
 
@@ -75,7 +75,7 @@ class AudioSegmentator(BasePreprocessor):
                 )
                 wave_segments.append(ch)
 
-            if (i + 1) % int(consts.ESTIMATED_RECORDS_IN_DATA_SET * 0.1) == 0:
+            if (i + 1) % int(consts.ESTIMATED_RECORDS_IN_DATASET * 0.1) == 0:
                 self._log_segmented_audio_info(iteration=i + 1)
 
         audio_segments_df = pd.DataFrame(audio_segments_rows)

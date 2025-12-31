@@ -6,17 +6,22 @@ class Constants:
     root = Path(__file__).parent.parent.parent
     data_dir = root / "data"
     logs_dir = data_dir / "logs"
+    collected_data_dir = data_dir / "collected_data"
+    training_dir = "spoof_and_bonafide"
 
     # File names
-    extracted_embeddings = "wavlm_extracted"
-    embeddings_ext = "_embeddings.npy"
-    metadata_ext = "_metadata.csv"
+    wavlm_file_name_prefix = "wavlm_extracted"
+    embeddings_extension = "_embeddings.npy"
+    metadata_extension = "_metadata.csv"
 
     # Audio settings
     g_sample_rate = 16_000
     wavlm_base_plus_name = "microsoft/wavlm-base-plus"
     A_100_BATCH_SIZE = 256
-    ESTIMATED_RECORDS_IN_DATA_SET = 3800  # Approximate number of records in AUDETER and MLS English datasets
+    ESTIMATED_RECORDS_IN_DATASET = (
+        3800  # Approximate number of records in AUDETER and MLS English datasets in single split
+    )
+    mls_eng_config = "mls-bonafide"
 
     # Dataset paths
     audeter_ds_path = "wqz995/AUDETER"
@@ -35,7 +40,6 @@ class Constants:
         "mls-tts-yourtts",
         "mls-tts-zonos",
     ]
-
     vocoders_configs = [
         "mls-vocoders-bigvsan",
         "mls-vocoders-full_band_melgan",
@@ -47,9 +51,21 @@ class Constants:
         "mls-vocoders-univnet",
         "mls-vocoders-vocos",
     ]
-
     tts_and_vocoders_configs = tts_configs + vocoders_configs
 
     # Audio types
     spoof = "spoof"
     bonafide = "bonafide"
+
+    # Configs for functions
+    basic_train_dev_test_config = {
+        "train": 0.7,
+        "dev": 0.15,
+        "test": 0.15,
+    }
+
+    bigger_dataset_train_dev_test_config = {
+        "train": 0.8,
+        "dev": 0.1,
+        "test": 0.1,
+    }

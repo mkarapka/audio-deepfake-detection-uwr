@@ -38,5 +38,28 @@ class TestConfigLoader:
             assert records_amount == expected_size
             print(f"Dataset for Config: {cfg}, Split: {sp} has {records_amount} records - passed size check.")
 
+    def check_if_mls_bonafide_is_loaded(self):
+        configs = [None]
+        splits = ["dev"]
+        config_loader = ConfigLoader(consts.mls_eng_ds_path, configs, splits)
+
+        dataset = next(config_loader.stream_next_config_dataset())
+        assert dataset is not None
+
+        print(f"Loaded dataset for config: {consts.mls_eng_config} - passed existence check.")
+
+    def check_current_config_for_mls_bonafide(self):
+        configs = [None]
+        splits = ["dev"]
+        config_loader = ConfigLoader(consts.mls_eng_ds_path, configs, splits)
+
+        _ = next(config_loader.stream_next_config_dataset())
+        current_config = config_loader.get_current_config()
+        assert current_config == consts.mls_eng_config
+
+        print(f"Current config is {current_config} - passed config name check.")
+
 
 TestConfigLoader().test_load_next_config()
+TestConfigLoader().check_if_mls_bonafide_is_loaded()
+TestConfigLoader().check_current_config_for_mls_bonafide()

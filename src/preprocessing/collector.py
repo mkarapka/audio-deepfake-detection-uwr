@@ -16,8 +16,8 @@ class Collector(BasePreprocessor):
             self.data_dir.mkdir(parents=True, exist_ok=True)
 
         if save_file_name is not None:
-            self.meta_data_file_path = self.data_dir / Path(save_file_name + consts.metadata_ext)
-            self.embeddings_file_path = self.data_dir / Path(save_file_name + consts.embeddings_ext)
+            self.meta_data_file_path = self.data_dir / Path(save_file_name + consts.metadata_extension)
+            self.embeddings_file_path = self.data_dir / Path(save_file_name + consts.embeddings_extension)
             logging.info(f"Metadata will be saved to: {self.meta_data_file_path}")
             logging.info(f"Embeddings will be saved to: {self.embeddings_file_path}")
         else:

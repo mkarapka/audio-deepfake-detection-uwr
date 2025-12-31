@@ -3,6 +3,7 @@ from src.common.logger import get_logger, setup_logger
 from src.preprocessing.audio_segmentator import AudioSegmentator
 from src.preprocessing.collector import Collector
 from src.preprocessing.config_loader import ConfigLoader
+from src.preprocessing.metadata_modifier import MetadataModifier
 from src.preprocessing.wavlm_extractor import WavLmExtractor
 
 LOGGER_NAME = "PreprocessingPipeline"
@@ -19,12 +20,6 @@ class PreprocessingPipeline:
         if self.audio_type not in [consts.spoof, consts.bonafide]:
             logger.error(f"Invalid audio type: {self.audio_type}. Must be 'spoof' or 'bonafide'.")
 
-    def _modify_audio_df(self, config_loader: ConfigLoader, segmented_audio_df):
-        curr_cfg = config_loader.get_current_config()
-        segmented_audio_df["key_id"] = segmented_audio_df["key_id"].apply(lambda x: f"{curr_cfg}_{x}")
-        segmented_audio_df["target"] = self.audio_type
-        return segmented_audio_df
-
     def _normalize_dataset_format(self, ds, split):
         for idx, record in enumerate(ds):
             if "__key__" not in record:
@@ -33,28 +28,35 @@ class PreprocessingPipeline:
                 record["wav"] = record.pop("audio")
             yield record
 
-    def preprocess_data_set(self, file_name=consts.extracted_embeddings, batch_size=8):
+    def preprocess_dataset(self, file_name=consts.wavlm_file_name_prefix, batch_size=8):
         config_loader = ConfigLoader(source_dataset=self.source_dataset, config=self.config_lst)
         audio_segmentator = AudioSegmentator()
+        metadata_modifier = MetadataModifier(audio_type=self.audio_type)
         wavlm_extractor = WavLmExtractor(batch_size=batch_size)
         collector = Collector(save_file_name=file_name)
 
-        for data_set in config_loader.stream_next_config_dataset():
+        for dataset_split in config_loader.stream_next_config_dataset():
             logger.info(
-                f"Processing data set {
-                    self.source_dataset}, config: {
-                    config_loader.get_current_config()}, split: {
-                    config_loader.get_current_split()}"
+                f"Processing data set {self.source_dataset}, config: {
+                    config_loader.get_current_config()
+                }, split: {config_loader.get_current_split()}"
             )
             if self.audio_type == consts.bonafide:
-                data_set = self._normalize_dataset_format(ds=data_set, split=config_loader.get_current_split())
+                dataset_split = self._normalize_dataset_format(
+                    ds=dataset_split, split=config_loader.get_current_split()
+                )
+                logger.debug("Normalized dataset format for bonafide audio")
 
-            audio_segs_metadata, waves_segs = audio_segmentator.transform(data_set)
-            audio_segs_metadata = self._modify_audio_df(config_loader, audio_segs_metadata)
-            logger.info(f"Segmented audio into {audio_segs_metadata.shape[0]} segments.")
+            audio_segs_metadata, waves_segs = audio_segmentator.transform(dataset_split)
+            logger.info(f"✓ Segmented into {audio_segs_metadata.shape[0]} segments")
+
+            modified_audio_segs_metadata = metadata_modifier.transform(
+                config_loader.get_current_config(), audio_segs_metadata
+            )
+            logger.info(f"✓ Modified metadata ({len(modified_audio_segs_metadata.columns)} columns)")
 
             embeddings = wavlm_extractor.transform(wave_segments=waves_segs, sample_rate=consts.g_sample_rate)
-            logger.info(f"Extracted embeddings for {len(embeddings)} audio segments.")
+            logger.info(f"✓ Extracted {len(embeddings)} embeddings")
 
-            collector.transform(meta_df=audio_segs_metadata, embeddings=embeddings)
-            logger.info(f"Saved embeddings and metadata for config: {config_loader.get_current_config()}")
+            collector.transform(meta_df=modified_audio_segs_metadata, embeddings=embeddings)
+            logger.info(f"✓ Saved to {file_name}\n")

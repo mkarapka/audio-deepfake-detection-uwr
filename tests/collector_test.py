@@ -2,7 +2,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
 from src.preprocessing.collector import Collector
 
 TEST_FILE_NAME = "test_collected_data"

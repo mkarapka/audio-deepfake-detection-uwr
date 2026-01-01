@@ -4,6 +4,15 @@ from src.preprocessing.config_loader import ConfigLoader
 DEV_SIZE = 3807
 TEST_SIZE = 3769
 
+FIRST_SPEAKER_ID_DEV = 10214
+FIRST_SP_ROW_NO_DEV = 1
+
+FIRST_SPEAKER_ID_TEST = 10226
+FIRST_SP_ROW_NO_TEST = 0
+
+SECOND_SPEAKER_ID_DEV = 10218
+SECOND_SP_ROW_NO_DEV = 30
+
 
 class TestConfigLoader:
     def test_load_next_config(self):
@@ -59,7 +68,41 @@ class TestConfigLoader:
 
         print(f"Current config is {current_config} - passed config name check.")
 
+    def check_load_speakers_ids(self):
+        configs = [None]
+        splits = ["dev", "test"]
+        config_loader = ConfigLoader(consts.mls_eng_ds_path, configs, splits)
+
+        speakers_ids_df = config_loader.load_speakers_ids()
+
+        print("Loaded speakers IDs DataFrame:")
+        print(speakers_ids_df.head())
+        print(speakers_ids_df.loc[FIRST_SP_ROW_NO_DEV, "dev"])
+        print(speakers_ids_df.loc[SECOND_SP_ROW_NO_DEV, "dev"])
+        print(speakers_ids_df.loc[FIRST_SP_ROW_NO_TEST, "test"])
+
+        assert speakers_ids_df is not None
+        assert not speakers_ids_df.empty
+        assert "dev" in speakers_ids_df.columns
+        assert "test" in speakers_ids_df.columns
+
+        # Check number of unique speaker IDs
+        assert speakers_ids_df.loc[FIRST_SP_ROW_NO_DEV, "dev"] == FIRST_SPEAKER_ID_DEV
+        assert speakers_ids_df.loc[FIRST_SP_ROW_NO_TEST, "test"] == FIRST_SPEAKER_ID_TEST
+        assert speakers_ids_df.loc[SECOND_SP_ROW_NO_DEV, "dev"] == SECOND_SPEAKER_ID_DEV
+        assert speakers_ids_df.loc[SECOND_SP_ROW_NO_DEV - 1, "dev"] == FIRST_SPEAKER_ID_DEV
+
+        # Check for padding in 'test' split
+        assert speakers_ids_df.loc[TEST_SIZE, "test"] == -1  # Padding check
+        assert speakers_ids_df.loc[DEV_SIZE - 1, "test"] == -1
+        assert speakers_ids_df.loc[DEV_SIZE - 1, "dev"] != -1
+
+        # Check DataFrame shape
+        assert speakers_ids_df.shape[0] == DEV_SIZE  # Number of rows check
+        assert speakers_ids_df.shape[1] == 2  # Number of columns check
+
 
 TestConfigLoader().test_load_next_config()
 TestConfigLoader().check_if_mls_bonafide_is_loaded()
 TestConfigLoader().check_current_config_for_mls_bonafide()
+TestConfigLoader().check_load_speakers_ids()

@@ -31,7 +31,7 @@ class PreprocessingPipeline:
     def preprocess_dataset(self, file_name=consts.wavlm_file_name_prefix, batch_size=8):
         config_loader = ConfigLoader(source_dataset=self.source_dataset, config=self.config_lst)
         audio_segmentator = AudioSegmentator()
-        metadata_modifier = MetadataModifier(audio_type=self.audio_type)
+        metadata_modifier = MetadataModifier(audio_type=self.audio_type, speakers_ids=config_loader.load_speakers_ids())
         wavlm_extractor = WavLmExtractor(batch_size=batch_size)
         collector = Collector(save_file_name=file_name)
 
@@ -47,16 +47,17 @@ class PreprocessingPipeline:
                 )
                 logger.debug("Normalized dataset format for bonafide audio")
 
-            audio_segs_metadata, waves_segs = audio_segmentator.transform(dataset_split)
-            logger.info(f"✓ Segmented into {audio_segs_metadata.shape[0]} segments")
+            segs_metadata, waves_segs = audio_segmentator.transform(dataset_split)
+            logger.info(f"✓ Segmented into {segs_metadata.shape[0]} segments")
 
-            modified_audio_segs_metadata = metadata_modifier.transform(
-                config_loader.get_current_config(), audio_segs_metadata
+            modified_segs_metadata = metadata_modifier.transform(
+                current_config=config_loader.get_current_config(), metadata=segs_metadata
             )
-            logger.info(f"✓ Modified metadata ({len(modified_audio_segs_metadata.columns)} columns)")
+            logger.info(f"✓ Modified metadata ({len(modified_segs_metadata.columns)} columns)")
+            print(modified_segs_metadata.head(50))
 
             embeddings = wavlm_extractor.transform(wave_segments=waves_segs, sample_rate=consts.g_sample_rate)
             logger.info(f"✓ Extracted {len(embeddings)} embeddings")
 
-            collector.transform(meta_df=modified_audio_segs_metadata, embeddings=embeddings)
+            collector.transform(meta_df=modified_segs_metadata, embeddings=embeddings)
             logger.info(f"✓ Saved to {file_name}\n")

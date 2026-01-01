@@ -13,6 +13,7 @@ class Constants:
     wavlm_file_name_prefix = "wavlm_extracted"
     embeddings_extension = "_embeddings.npy"
     metadata_extension = "_metadata.csv"
+    speakers_ids_file = "speakers_ids.csv"
 
     # Audio settings
     g_sample_rate = 16_000

@@ -54,7 +54,6 @@ class PreprocessingPipeline:
                 current_config=config_loader.get_current_config(), metadata=segs_metadata
             )
             logger.info(f"✓ Modified metadata ({len(modified_segs_metadata.columns)} columns)")
-            print(modified_segs_metadata.head(50))
 
             embeddings = wavlm_extractor.transform(wave_segments=waves_segs, sample_rate=consts.g_sample_rate)
             logger.info(f"✓ Extracted {len(embeddings)} embeddings")

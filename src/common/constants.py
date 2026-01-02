@@ -8,6 +8,7 @@ class Constants:
     logs_dir = data_dir / "logs"
     collected_data_dir = data_dir / "collected_data"
     training_dir = "spoof_and_bonafide"
+    splited_data_dir = collected_data_dir / "splited_data"
 
     # File names
     wavlm_file_name_prefix = "wavlm_extracted"

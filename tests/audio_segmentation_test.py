@@ -1,6 +1,6 @@
 import pandas as pd
-from src.preprocessing.audio_segmentator import AudioSegmentator
 
+from src.preprocessing.audio_segmentator import AudioSegmentator
 from tests.base_test import BaseTest
 
 

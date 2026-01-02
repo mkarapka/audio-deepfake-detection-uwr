@@ -21,7 +21,7 @@ class ConfigLoader:
 
         if consts.data_dir.exists() is False:
             consts.data_dir.mkdir(parents=True, exist_ok=True)
-              
+
         if consts.collected_data_dir.exists() is False:
             consts.collected_data_dir.mkdir(parents=True, exist_ok=True)
 

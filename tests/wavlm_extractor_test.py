@@ -1,10 +1,10 @@
 import time
 
 import numpy as np
+
 from src.common.constants import Constants as consts
 from src.preprocessing.audio_segmentator import AudioSegmentator
 from src.preprocessing.wavlm_extractor import WavLmExtractor
-
 from tests.base_test import BaseTest
 
 WAVLM_BASE_EMBEDDING_SIZE = 768

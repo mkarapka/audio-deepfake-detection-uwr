@@ -9,9 +9,9 @@ from src.preprocessing.base_preprocessor import BasePreprocessor
 
 
 class Collector(BasePreprocessor):
-    def __init__(self, save_file_name: str):
+    def __init__(self, save_file_name: str, data_dir: Path | None = consts.collected_data_dir):
         super().__init__(class_name=__class__.__name__)
-        self.data_dir = consts.data_dir / "collected_data"
+        self.data_dir = data_dir
         if self.data_dir.exists() is False:
             self.data_dir.mkdir(parents=True, exist_ok=True)
 

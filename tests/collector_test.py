@@ -5,17 +5,31 @@ import pandas as pd
 
 from src.preprocessing.collector import Collector
 
-TEST_FILE_NAME = "test_collected_data"
+TEST_FILE_NAME = "test_file"
 
 
 def delete_test_files(collector: Collector = None):
-    meta_data_file_path = collector.get_meta_data_file_path()
+    meta_data_file_path = collector.get_metadata_file_path()
     embeddings_file_path = collector.get_embeddings_file_path()
 
     if meta_data_file_path.exists():
         meta_data_file_path.unlink()
     if embeddings_file_path.exists():
         embeddings_file_path.unlink()
+
+
+def delete_test_splits_files(collector: Collector = None, splits=["train", "dev", "test"]):
+    base_meta_path = collector.get_metadata_file_path()
+    base_emb_path = collector.get_embeddings_file_path()
+
+    for s_name in splits:
+        meta_path = base_meta_path.parent / f"{base_meta_path.stem}_{s_name}{base_meta_path.suffix}"
+        emb_path = base_emb_path.parent / f"{base_emb_path.stem}_{s_name}{base_emb_path.suffix}"
+
+        if meta_path.exists():
+            meta_path.unlink()
+        if emb_path.exists():
+            emb_path.unlink()
 
 
 def change_file_path(collector: Collector):
@@ -85,6 +99,52 @@ class TestCollector:
 
         print("Collector double transform test passed. Data collected and verified successfully.")
 
+    def test_transform_splits(self):
+        collector = Collector(save_file_name=TEST_FILE_NAME)
+        change_file_path(collector)
+        delete_test_splits_files(collector)
+
+        example_splits = [
+            (self.sample_df, self.embeddings_sample),
+            (self.sample_df, self.embeddings_sample),
+            (self.sample_df, self.embeddings_sample),
+        ]
+
+        collector.transform_splits(data=example_splits, splits=["train", "dev", "test"])
+
+        # Wczytaj zapisane pliki dla każdego splitu
+        base_meta_path = collector.get_metadata_file_path()
+        base_emb_path = collector.get_embeddings_file_path()
+
+        # Train split
+        meta_path_train = base_meta_path.parent / f"{base_meta_path.stem}_train{base_meta_path.suffix}"
+        emb_path_train = base_emb_path.parent / f"{base_emb_path.stem}_train{base_emb_path.suffix}"
+        saved_metadata_train = pd.read_csv(meta_path_train)
+        saved_embeddings_train = np.load(emb_path_train)
+
+        # Dev split
+        meta_path_dev = base_meta_path.parent / f"{base_meta_path.stem}_dev{base_meta_path.suffix}"
+        emb_path_dev = base_emb_path.parent / f"{base_emb_path.stem}_dev{base_emb_path.suffix}"
+        saved_metadata_dev = pd.read_csv(meta_path_dev)
+        saved_embeddings_dev = np.load(emb_path_dev)
+
+        # Test split
+        meta_path_test = base_meta_path.parent / f"{base_meta_path.stem}_test{base_meta_path.suffix}"
+        emb_path_test = base_emb_path.parent / f"{base_emb_path.stem}_test{base_emb_path.suffix}"
+        saved_metadata_test = pd.read_csv(meta_path_test)
+        saved_embeddings_test = np.load(emb_path_test)
+
+        # Sprawdź czy zapisane dane są poprawne
+        pd.testing.assert_frame_equal(self.sample_df, saved_metadata_train)
+        np.testing.assert_array_equal(self.embeddings_sample, saved_embeddings_train)
+        pd.testing.assert_frame_equal(self.sample_df, saved_metadata_dev)
+        np.testing.assert_array_equal(self.embeddings_sample, saved_embeddings_dev)
+        pd.testing.assert_frame_equal(self.sample_df, saved_metadata_test)
+        np.testing.assert_array_equal(self.embeddings_sample, saved_embeddings_test)
+
+        print("Collector transform_splits test passed. All splits saved and verified successfully.")
+
 
 TestCollector().test_transform()
 TestCollector().test_double_transform()
+TestCollector().test_transform_splits()

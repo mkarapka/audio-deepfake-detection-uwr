@@ -12,8 +12,8 @@ class Constants:
 
     # File names
     wavlm_file_name_prefix = "wavlm_extracted"
-    embeddings_extension = "_embeddings.npy"
-    metadata_extension = "_metadata.csv"
+    embeddings_extension = ".npy"
+    metadata_extension = ".csv"
     speakers_ids_file = "speakers_ids.csv"
 
     # Audio settings

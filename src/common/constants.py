@@ -12,9 +12,14 @@ class Constants:
 
     # File names
     wavlm_file_name_prefix = "wavlm_extracted"
+    fft_file_name_prefix = "fft_extracted"
+
     embeddings_extension = ".npy"
     metadata_extension = ".csv"
+
     speakers_ids_file = "speakers_ids.csv"
+    embeddings_file = wavlm_file_name_prefix + embeddings_extension
+    metadata_file = wavlm_file_name_prefix + metadata_extension
 
     # Audio settings
     g_sample_rate = 16_000

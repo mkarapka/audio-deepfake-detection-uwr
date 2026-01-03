@@ -31,7 +31,7 @@ class PreprocessingPipeline:
                 record["wav"] = record.pop("audio")
             yield record
 
-    def preprocess_dataset(self, file_name=consts.wavlm_file_name_prefix, batch_size=8):
+    def preprocess_dataset_wavlm(self, file_name=consts.wavlm_file_name_prefix, batch_size=8):
         config_loader = ConfigLoader(source_dataset=self.source_dataset, config=self.config_lst)
         audio_segmentator = AudioSegmentator()
         metadata_modifier = MetadataModifier(audio_type=self.audio_type, speakers_ids=config_loader.load_speakers_ids())
@@ -63,3 +63,9 @@ class PreprocessingPipeline:
 
             collector.transform(meta_df=modified_segs_metadata, embeddings=embeddings)
             logger.info(f"✓ Saved to {file_name}\n")
+
+    def preprocess_dataset_fft(file_name=consts.fft_file_name_prefix, batch_size=8):
+        pass
+
+    def split_and_balance_dataset(self, file_name=consts.wavlm_file_name_prefix):
+        pass

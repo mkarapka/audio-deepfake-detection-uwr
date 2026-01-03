@@ -104,44 +104,58 @@ class TestCollector:
         change_file_path(collector)
         delete_test_splits_files(collector)
 
+        # Utwórz różne embeddingi dla każdego split
+        emb1 = self.embeddings_sample
+        emb2 = np.random.RandomState(42).rand(*self.embeddings_sample.shape)
+        emb3 = np.random.RandomState(43).rand(*self.embeddings_sample.shape)
+
+        embeddings = np.vstack([emb1, emb2, emb3])
+        example_metadata = pd.concat([self.sample_df, self.sample_df, self.sample_df], ignore_index=True)
+
+        first_part_meta = example_metadata.iloc[0:3]
+        second_part_meta = example_metadata.iloc[3:6]
+        third_part_meta = example_metadata.iloc[6:9]
+
         example_splits = [
-            (self.sample_df, self.embeddings_sample),
-            (self.sample_df, self.embeddings_sample),
-            (self.sample_df, self.embeddings_sample),
+            first_part_meta,
+            second_part_meta,
+            third_part_meta,
         ]
 
         collector.transform_splits(data=example_splits, splits=["train", "dev", "test"])
 
-        # Wczytaj zapisane pliki dla każdego splitu
+        # Load saved splits to verify
         base_meta_path = collector.get_metadata_file_path()
-        base_emb_path = collector.get_embeddings_file_path()
 
         # Train split
         meta_path_train = base_meta_path.parent / f"{base_meta_path.stem}_train{base_meta_path.suffix}"
-        emb_path_train = base_emb_path.parent / f"{base_emb_path.stem}_train{base_emb_path.suffix}"
-        saved_metadata_train = pd.read_csv(meta_path_train)
-        saved_embeddings_train = np.load(emb_path_train)
+        saved_metadata_train = pd.read_csv(meta_path_train, index_col=0)
+        emb_train = embeddings[saved_metadata_train.index]
 
         # Dev split
         meta_path_dev = base_meta_path.parent / f"{base_meta_path.stem}_dev{base_meta_path.suffix}"
-        emb_path_dev = base_emb_path.parent / f"{base_emb_path.stem}_dev{base_emb_path.suffix}"
-        saved_metadata_dev = pd.read_csv(meta_path_dev)
-        saved_embeddings_dev = np.load(emb_path_dev)
+        saved_metadata_dev = pd.read_csv(meta_path_dev, index_col=0)
+        emb_dev = embeddings[saved_metadata_dev.index]
 
         # Test split
         meta_path_test = base_meta_path.parent / f"{base_meta_path.stem}_test{base_meta_path.suffix}"
-        emb_path_test = base_emb_path.parent / f"{base_emb_path.stem}_test{base_emb_path.suffix}"
-        saved_metadata_test = pd.read_csv(meta_path_test)
-        saved_embeddings_test = np.load(emb_path_test)
+        saved_metadata_test = pd.read_csv(meta_path_test, index_col=0)
+        emb_test = embeddings[saved_metadata_test.index]
 
         # Sprawdź czy zapisane dane są poprawne
-        pd.testing.assert_frame_equal(self.sample_df, saved_metadata_train)
-        np.testing.assert_array_equal(self.embeddings_sample, saved_embeddings_train)
-        pd.testing.assert_frame_equal(self.sample_df, saved_metadata_dev)
-        np.testing.assert_array_equal(self.embeddings_sample, saved_embeddings_dev)
-        pd.testing.assert_frame_equal(self.sample_df, saved_metadata_test)
-        np.testing.assert_array_equal(self.embeddings_sample, saved_embeddings_test)
-
+        print(self.sample_df)
+        print("---")
+        print(saved_metadata_train)
+        print("---")
+        print(saved_metadata_dev)
+        print("---")
+        print(saved_metadata_test)
+        pd.testing.assert_frame_equal(first_part_meta, saved_metadata_train), "Train metadata does not match."
+        np.testing.assert_array_equal(emb1, emb_train), "Train embeddings do not match."
+        pd.testing.assert_frame_equal(second_part_meta, saved_metadata_dev), "Dev metadata does not match."
+        np.testing.assert_array_equal(emb2, emb_dev), "Dev embeddings do not match."
+        pd.testing.assert_frame_equal(third_part_meta, saved_metadata_test), "Test metadata does not match."
+        np.testing.assert_array_equal(emb3, emb_test), "Test embeddings do not match."
         print("Collector transform_splits test passed. All splits saved and verified successfully.")
 
 

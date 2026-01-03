@@ -31,13 +31,13 @@ class Collector(BasePreprocessor):
         file_path = self.data_dir / Path(f"{self.file_name}_{f_name_suffix}")
         return file_path
 
-    def _write_data_to_csv(self, data: pd.DataFrame, file_path: Path = None):
+    def _write_data_to_csv(self, data: pd.DataFrame, file_path: Path = None, include_index: bool = False):
         if file_path is None:
             file_path = self.meta_data_file_path
         if file_path.exists() is True:
-            data.to_csv(file_path, mode="a+", index=False, header=False)
+            data.to_csv(file_path, mode="a+", index=include_index, header=False)
         else:
-            data.to_csv(file_path, index=False, header=True)
+            data.to_csv(file_path, index=include_index, header=True)
 
     def _write_embeddings_to_npy(self, embeddings: np.ndarray, file_path: Path = None):
         if file_path is None:
@@ -59,14 +59,7 @@ class Collector(BasePreprocessor):
         self._write_data_to_csv(meta_df)
         self._write_embeddings_to_npy(embeddings)
 
-    def transform_splits(
-        self,
-        data: list[tuple[pd.DataFrame, np.ndarray]],
-        splits=["train", "dev", "test"],
-    ):
-        for (meta, emb), split_name in zip(data, splits):
+    def transform_splits(self, data: list[pd.DataFrame], splits=["train", "dev", "test"]):
+        for meta, split_name in zip(data, splits):
             new_meta_path = self._create_file_path(f"{split_name}{consts.metadata_extension}")
-            new_emb_path = self._create_file_path(f"{split_name}{consts.embeddings_extension}")
-
-            self._write_data_to_csv(data=meta, file_path=new_meta_path)
-            self._write_embeddings_to_npy(embeddings=emb, file_path=new_emb_path)
+            self._write_data_to_csv(data=meta, file_path=new_meta_path, include_index=True)

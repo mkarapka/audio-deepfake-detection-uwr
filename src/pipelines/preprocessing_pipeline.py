@@ -17,6 +17,9 @@ class PreprocessingPipeline:
         self.config_lst = config_lst
         self.source_dataset = consts.audeter_ds_path if audio_type == consts.spoof else consts.mls_eng_ds_path
 
+        logger.info(f"Initialized PreprocessingPipeline for audio type: {self.audio_type}")
+        logger.info(f"Source dataset set to: {self.source_dataset}")
+        logger.info(f"Configurations to be used: {self.config_lst}")
         if self.audio_type not in [consts.spoof, consts.bonafide]:
             logger.error(f"Invalid audio type: {self.audio_type}. Must be 'spoof' or 'bonafide'.")
 

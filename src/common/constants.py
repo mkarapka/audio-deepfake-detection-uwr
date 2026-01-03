@@ -43,6 +43,7 @@ class Constants:
         "mls-tts-zonos",
     ]
     vocoders_configs = [
+        "mls-vocoders-bigvgan",
         "mls-vocoders-bigvsan",
         "mls-vocoders-full_band_melgan",
         "mls-vocoders-hifigan",

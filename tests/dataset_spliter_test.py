@@ -111,7 +111,7 @@ class TestDatasetSpliter:
         print("Original DataFrame:")
         print(data)
 
-        (train, emb_train), (dev, emb_dev), (test, emb_test) = self.spliter.transform(data, example_embeddings)
+        train, dev, test = self.spliter.transform(data)
 
         uq_speakers_ids = set(data["speaker_id"].unique())
         uq_speakers_ids_in_splits = {
@@ -119,6 +119,10 @@ class TestDatasetSpliter:
             "dev": set(dev["speaker_id"].unique()),
             "test": set(test["speaker_id"].unique()),
         }
+
+        emb_train = example_embeddings[train.index]
+        emb_dev = example_embeddings[dev.index]
+        emb_test = example_embeddings[test.index]
 
         assert len(uq_speakers_ids) == sum(len(s) for s in uq_speakers_ids_in_splits.values())
         self.check_if_speakers_ids_set_is_disjoint(uq_speakers_ids_in_splits)

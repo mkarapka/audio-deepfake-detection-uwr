@@ -28,7 +28,7 @@ class Collector(BasePreprocessor):
             logging.error("Save file name must be provided for Collector.")
 
     def _create_file_path(self, f_name_suffix: str):
-        file_path = self.data_dir / Path(f"{self.file_name}_{f_name_suffix}")
+        file_path = self.data_dir / Path(f"{self.file_name}{f_name_suffix}")
         return file_path
 
     def _write_data_to_csv(self, data: pd.DataFrame, file_path: Path = None, include_index: bool = False):

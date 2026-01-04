@@ -11,15 +11,27 @@ class Constants:
     splited_data_dir = collected_data_dir / "splited_data"
 
     # File names
-    wavlm_file_name_prefix = "wavlm_extracted"
-    fft_file_name_prefix = "fft_extracted"
-
+    speakers_ids_file = "speakers_ids.csv"
     embeddings_extension = ".npy"
     metadata_extension = ".csv"
 
-    speakers_ids_file = "speakers_ids.csv"
+    # Wavlm
+    wavlm_file_name_prefix = "wavlm_extracted"
     embeddings_file = wavlm_file_name_prefix + embeddings_extension
-    metadata_file = wavlm_file_name_prefix + metadata_extension
+    wavlm_metadata_file = wavlm_file_name_prefix + metadata_extension
+
+    train_wavlm_file = wavlm_file_name_prefix + "_train" + metadata_extension
+    dev_wavlm_file = wavlm_file_name_prefix + "_dev" + metadata_extension
+    test_wavlm_file = wavlm_file_name_prefix + "_test" + metadata_extension
+
+    # FFT
+    fft_file_name_prefix = "fft_extracted"
+    fft_embeddings_file = fft_file_name_prefix + embeddings_extension
+    fft_metadata_file = fft_file_name_prefix + metadata_extension
+
+    train_fft_file = fft_file_name_prefix + "_train" + metadata_extension
+    dev_fft_file = fft_file_name_prefix + "_dev" + metadata_extension
+    test_fft_file = fft_file_name_prefix + "_test" + metadata_extension
 
     # Audio settings
     g_sample_rate = 16_000

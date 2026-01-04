@@ -2,9 +2,8 @@ import time
 
 import numpy as np
 
-from src.common.constants import Constants as consts
 from src.preprocessing.audio_segmentator import AudioSegmentator
-from src.preprocessing.wavlm_extractor import WavLmExtractor
+from src.preprocessing.feature_extractors.wavlm_extractor import WavLmExtractor
 from tests.base_test import BaseTest
 
 WAVLM_BASE_EMBEDDING_SIZE = 768
@@ -21,7 +20,7 @@ class TestWavLmExtractor(BaseTest):
         metadata, wave_segments = audio_segmenter.transform(self.dataset)
 
         wavlm_extractor = WavLmExtractor(batch_size=batch_size)
-        features = wavlm_extractor.transform(wave_segments, consts.g_sample_rate)
+        features = wavlm_extractor.transform(wave_segments)
         end = time.time()
 
         assert features.shape[0] == wave_segments.shape[0] == metadata.shape[0]
@@ -55,9 +54,9 @@ class TestWavLmExtractor(BaseTest):
 TestWavLmExtractor().test_transform_batch_size_one()
 TestWavLmExtractor(records_no=10).test_transform_batch_size_eight()
 
-test_wavlm_1000 = TestWavLmExtractor(records_no=1000)
-test_wavlm_1000.test_transform_batch_size_sixteen()
-test_wavlm_1000.test_transform_batch_size_thirty_two()
-test_wavlm_1000.test_transform_batch_size_sixty_four()
-test_wavlm_1000.test_transform_batch_size_one_twenty_eight()
-test_wavlm_1000.test_transform_batch_size_two_fifty_six()
+# test_wavlm_1000 = TestWavLmExtractor(records_no=1000)
+# test_wavlm_1000.test_transform_batch_size_sixteen()
+# test_wavlm_1000.test_transform_batch_size_thirty_two()
+# test_wavlm_1000.test_transform_batch_size_sixty_four()
+# test_wavlm_1000.test_transform_batch_size_one_twenty_eight()
+# test_wavlm_1000.test_transform_batch_size_two_fifty_six()

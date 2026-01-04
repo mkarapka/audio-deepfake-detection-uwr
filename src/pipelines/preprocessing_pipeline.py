@@ -3,8 +3,12 @@ from src.common.logger import get_logger, setup_logger
 from src.preprocessing.audio_segmentator import AudioSegmentator
 from src.preprocessing.collector import Collector
 from src.preprocessing.config_loader import ConfigLoader
+from src.preprocessing.feature_extractors.base_feature_extractor import (
+    BaseFeatureExtractor,
+)
+from src.preprocessing.feature_extractors.fft_extractor import FFTExtractor
+from src.preprocessing.feature_extractors.wavlm_extractor import WavLmExtractor
 from src.preprocessing.metadata_modifier import MetadataModifier
-from src.preprocessing.wavlm_extractor import WavLmExtractor
 
 LOGGER_NAME = "PreprocessingPipeline"
 logger = get_logger(LOGGER_NAME)
@@ -31,11 +35,15 @@ class PreprocessingPipeline:
                 record["wav"] = record.pop("audio")
             yield record
 
-    def preprocess_dataset_wavlm(self, file_name=consts.wavlm_file_name_prefix, batch_size=8):
+    def _preprocess_dataset(self, file_name: str, feature_extractor: BaseFeatureExtractor, batch_size=8):
+        if file_name is None or file_name == "":
+            logger.error("File name for saving processed data must be provided.")
+        if feature_extractor is None:
+            logger.error("Feature extractor must be provided for preprocessing.")
+
         config_loader = ConfigLoader(source_dataset=self.source_dataset, config=self.config_lst)
         audio_segmentator = AudioSegmentator()
         metadata_modifier = MetadataModifier(audio_type=self.audio_type, speakers_ids=config_loader.load_speakers_ids())
-        wavlm_extractor = WavLmExtractor(batch_size=batch_size)
         collector = Collector(save_file_name=file_name)
 
         for dataset_split in config_loader.stream_next_config_dataset():
@@ -54,18 +62,30 @@ class PreprocessingPipeline:
             logger.info(f"✓ Segmented into {segs_metadata.shape[0]} segments")
 
             modified_segs_metadata = metadata_modifier.transform(
-                current_config=config_loader.get_current_config(), metadata=segs_metadata
+                current_config=config_loader.get_current_config(),
+                metadata=segs_metadata,
             )
             logger.info(f"✓ Modified metadata ({len(modified_segs_metadata.columns)} columns)")
 
-            embeddings = wavlm_extractor.transform(wave_segments=waves_segs, sample_rate=consts.g_sample_rate)
+            embeddings = feature_extractor.transform(wave_segments=waves_segs)
             logger.info(f"✓ Extracted {len(embeddings)} embeddings")
 
             collector.transform(meta_df=modified_segs_metadata, embeddings=embeddings)
             logger.info(f"✓ Saved to {file_name}\n")
 
-    def preprocess_dataset_fft(file_name=consts.fft_file_name_prefix, batch_size=8):
-        pass
+    def preprocess_dataset_wavlm(self, file_name=consts.wavlm_file_name_prefix, batch_size=8):
+        self._preprocess_dataset(
+            file_name=file_name,
+            feature_extractor=WavLmExtractor(batch_size=batch_size),
+            batch_size=batch_size,
+        )
+
+    def preprocess_dataset_fft(self, file_name=consts.fft_file_name_prefix, batch_size=8):
+        self._preprocess_dataset(
+            file_name=file_name,
+            feature_extractor=FFTExtractor(batch_size=batch_size),
+            batch_size=batch_size,
+        )
 
     def split_and_balance_dataset(self, file_name=consts.wavlm_file_name_prefix):
         pass

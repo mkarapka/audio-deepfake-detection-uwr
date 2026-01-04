@@ -6,16 +6,19 @@ from transformers import Wav2Vec2FeatureExtractor, WavLMModel
 
 from src.common.basic_functions import get_device
 from src.common.constants import Constants as consts
-from src.preprocessing.base_preprocessor import BasePreprocessor
+from src.preprocessing.feature_extractors.base_feature_extractor import (
+    BaseFeatureExtractor,
+)
 
 
-class WavLmExtractor(BasePreprocessor):
-    def __init__(self, batch_size=8, pretrained_model_name=consts.wavlm_base_plus_name):
+class WavLmExtractor(BaseFeatureExtractor):
+    def __init__(self, batch_size=8, pretrained_model_name=consts.wavlm_base_plus_name, sample_rate=16_000):
         warnings.filterwarnings("ignore", message=".*key_padding_mask and attn_mask.*")
-        super().__init__()
+        super().__init__(class_name=__class__.__name__)
 
         self.device = get_device()
         self.batch_size = batch_size
+        self.sample_rate = sample_rate
         self.pretrained_model_name = pretrained_model_name
         self.feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(self.pretrained_model_name)
         self.model = WavLMModel.from_pretrained(self.pretrained_model_name).to(self.device)
@@ -26,9 +29,9 @@ class WavLmExtractor(BasePreprocessor):
         if (i // self.batch_size) % step == 0:
             print(f"WavLM Extractor: Processed {i / rows_size:.2%} records.")
 
-    def transform(self, wave_segments: np.ndarray, sample_rate) -> torch.Tensor:
+    def transform(self, wave_segments: np.ndarray) -> torch.Tensor:
         rows_size = wave_segments.shape[0]
-        sr = sample_rate
+        sr = self.sample_rate
         all_embeddings = []
 
         for i in range(0, wave_segments.shape[0], self.batch_size):

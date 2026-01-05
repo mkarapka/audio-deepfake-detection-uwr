@@ -14,6 +14,7 @@ class Constants:
     speakers_ids_file = "speakers_ids.csv"
     embeddings_extension = ".npy"
     metadata_extension = ".csv"
+    feature_extracted = "feature_extracted"
 
     # Wavlm
     wavlm_file_name_prefix = "wavlm_extracted"

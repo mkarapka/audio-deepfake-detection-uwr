@@ -7,22 +7,25 @@ from src.preprocessing.feature_loader import FeatureLoader
 TEST_DIR = consts.collected_data_dir / "test_feature_loader"
 TEST_FILE_PATH = TEST_DIR / "test_file"
 TEST_DIR.mkdir(parents=True, exist_ok=True)
+SPLIT_DIR = TEST_DIR / "splited_data"
+SPLIT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def delete_test_files():
-    if TEST_DIR.exists() is False:
-        TEST_DIR.mkdir(parents=True, exist_ok=True)
-    files = TEST_DIR.iterdir()
+    if SPLIT_DIR.exists() is False:
+        SPLIT_DIR.mkdir(parents=True, exist_ok=True)
+    files = SPLIT_DIR.iterdir()
     for file in files:
         file.unlink()
 
 
 class TestFeatureLoader:
     def __init__(self):
-        self.EMBD_FILE_NAME = "test_file.npy"
+        self.FILE_NAME = "test_file"
         self.loader = FeatureLoader(
-            emb_file_name=self.EMBD_FILE_NAME,
+            file_name=self.FILE_NAME,
             data_dir=TEST_DIR,
+            split_dir=SPLIT_DIR,
         )
 
     def test_transform(self):
@@ -42,19 +45,27 @@ class TestFeatureLoader:
                 [0.7, 0.8, 0.9],
             ]
         )
-
-        # Zapisz przykładowe dane
-        sample_df.to_csv(TEST_FILE_PATH.with_suffix(consts.metadata_extension), index=True)
         np.save(TEST_FILE_PATH.with_suffix(consts.embeddings_extension), sample_embeddings)
+        for split in ["train", "dev", "test"]:
+            sample_df.to_csv(
+                f"{SPLIT_DIR}/{self.FILE_NAME}_{split}{consts.metadata_extension}",
+                index=True,
+            )
 
-        # Wczytaj dane za pomocą FeatureLoader
-        loaded_meta, loaded_embeddings = self.loader.transform("test_file")
+            # Wczytaj dane za pomocą FeatureLoader
+            loaded_meta, loaded_embeddings = self.loader.transform(f"{split}")
 
-        # Sprawdź czy wczytane dane są poprawne
-        pd.testing.assert_frame_equal(sample_df, loaded_meta), "Metadata does not match."
-        np.testing.assert_array_equal(sample_embeddings, loaded_embeddings), "Embeddings do not match."
+            # Sprawdź czy wczytane dane są poprawne
+            (
+                pd.testing.assert_frame_equal(sample_df, loaded_meta),
+                "Metadata does not match.",
+            )
+            (
+                np.testing.assert_array_equal(sample_embeddings, loaded_embeddings),
+                "Embeddings do not match.",
+            )
 
-        print("FeatureLoader transform test passed. Metadata and embeddings match successfully.")
+            print("FeatureLoader transform test passed. Metadata and embeddings match successfully.")
 
 
 TestFeatureLoader().test_transform()

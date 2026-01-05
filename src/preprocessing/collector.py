@@ -9,15 +9,20 @@ from src.preprocessing.base_preprocessor import BasePreprocessor
 
 
 class Collector(BasePreprocessor):
-    def __init__(self, save_file_name: str, data_dir: Path | None = consts.collected_data_dir):
+    def __init__(
+        self, save_file_name: str, data_dir: Path = consts.collected_data_dir, split_dir: Path = consts.splited_data_dir
+    ):
         super().__init__(class_name=__class__.__name__)
         self.data_dir = data_dir
+        self.split_dir = split_dir
         self.file_name = save_file_name
         self.meta_data_file_path = None
         self.embeddings_file_path = None
 
         if self.data_dir.exists() is False:
             self.data_dir.mkdir(parents=True, exist_ok=True)
+        if self.split_dir.exists() is False:
+            self.split_dir.mkdir(parents=True, exist_ok=True)
 
         if save_file_name is not None:
             self.meta_data_file_path = self._create_file_path(f_name_suffix=consts.metadata_extension)
@@ -27,8 +32,10 @@ class Collector(BasePreprocessor):
         else:
             logging.error("Save file name must be provided for Collector.")
 
-    def _create_file_path(self, f_name_suffix: str):
-        file_path = self.data_dir / Path(f"{self.file_name}{f_name_suffix}")
+    def _create_file_path(self, f_name_suffix: str, data_dir: Path = None) -> Path:
+        if data_dir is None:
+            data_dir = self.data_dir
+        file_path = data_dir / Path(f"{self.file_name}{f_name_suffix}")
         return file_path
 
     def _write_data_to_csv(self, data: pd.DataFrame, file_path: Path = None, include_index: bool = False):
@@ -61,5 +68,9 @@ class Collector(BasePreprocessor):
 
     def transform_splits(self, data: list[pd.DataFrame], splits=["train", "dev", "test"]):
         for meta, split_name in zip(data, splits):
-            new_meta_path = self._create_file_path(f"{split_name}{consts.metadata_extension}")
+            new_meta_path = self._create_file_path(
+                f_name_suffix=f"_{split_name}{
+                    consts.metadata_extension}",
+                data_dir=self.split_dir,
+            )
             self._write_data_to_csv(data=meta, file_path=new_meta_path, include_index=True)

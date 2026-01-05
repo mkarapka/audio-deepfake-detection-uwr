@@ -3,41 +3,29 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from src.common.constants import Constants as consts
 from src.preprocessing.collector import Collector
 
 TEST_FILE_NAME = "test_file"
+TEST_DATA_DIR = consts.collected_data_dir / Path("test_collected_data")
+TEST_SPLIT_DIR = TEST_DATA_DIR / "splited_data"
 
 
-def delete_test_files(collector: Collector = None):
-    meta_data_file_path = collector.get_metadata_file_path()
-    embeddings_file_path = collector.get_embeddings_file_path()
-
+def delete_test_files():
+    meta_data_file_path = TEST_DATA_DIR / f"{TEST_FILE_NAME}{consts.metadata_extension}"
+    embeddings_file_path = TEST_DATA_DIR / f"{TEST_FILE_NAME}{consts.embeddings_extension}"
     if meta_data_file_path.exists():
         meta_data_file_path.unlink()
     if embeddings_file_path.exists():
         embeddings_file_path.unlink()
 
+    if TEST_SPLIT_DIR.exists():
+        files = TEST_SPLIT_DIR.iterdir()
+        for file in files:
+            file.unlink()
 
-def delete_test_splits_files(collector: Collector = None, splits=["train", "dev", "test"]):
-    base_meta_path = collector.get_metadata_file_path()
-    base_emb_path = collector.get_embeddings_file_path()
-
-    for s_name in splits:
-        meta_path = base_meta_path.parent / f"{base_meta_path.stem}_{s_name}{base_meta_path.suffix}"
-        emb_path = base_emb_path.parent / f"{base_emb_path.stem}_{s_name}{base_emb_path.suffix}"
-
-        if meta_path.exists():
-            meta_path.unlink()
-        if emb_path.exists():
-            emb_path.unlink()
-
-
-def change_file_path(collector: Collector):
-    collector.data_dir = Path(str(collector.data_dir).replace("collected_data", "test_collected_data"))
-    if not collector.data_dir.exists():
-        collector.data_dir.mkdir(parents=True, exist_ok=True)
-    collector.meta_data_file_path = collector.data_dir / Path(TEST_FILE_NAME + ".csv")
-    collector.embeddings_file_path = collector.data_dir / Path(TEST_FILE_NAME + ".npy")
+    if TEST_SPLIT_DIR.exists():
+        TEST_SPLIT_DIR.rmdir()
 
 
 class TestCollector:
@@ -58,9 +46,12 @@ class TestCollector:
         )
 
     def test_transform(self):
-        collector = Collector(save_file_name=TEST_FILE_NAME)
-        change_file_path(collector)
-        delete_test_files(collector)
+        delete_test_files()
+        collector = Collector(
+            save_file_name=TEST_FILE_NAME,
+            data_dir=TEST_DATA_DIR,
+            split_dir=TEST_SPLIT_DIR,
+        )
 
         # Transform (collect) the sample data
         collector.transform(meta_df=self.sample_df, embeddings=self.embeddings_sample)
@@ -76,9 +67,12 @@ class TestCollector:
         print("Collector transform test passed. Data collected and verified successfully.")
 
     def test_double_transform(self):
-        collector = Collector(save_file_name=TEST_FILE_NAME)
-        change_file_path(collector)
-        delete_test_files(collector)
+        delete_test_files()
+        collector = Collector(
+            save_file_name=TEST_FILE_NAME,
+            data_dir=TEST_DATA_DIR,
+            split_dir=TEST_SPLIT_DIR,
+        )
 
         sample_data = (self.sample_df, self.embeddings_sample)
 
@@ -100,9 +94,12 @@ class TestCollector:
         print("Collector double transform test passed. Data collected and verified successfully.")
 
     def test_transform_splits(self):
-        collector = Collector(save_file_name=TEST_FILE_NAME)
-        change_file_path(collector)
-        delete_test_splits_files(collector)
+        delete_test_files()
+        collector = Collector(
+            save_file_name=TEST_FILE_NAME,
+            data_dir=TEST_DATA_DIR,
+            split_dir=TEST_SPLIT_DIR,
+        )
 
         # Utwórz różne embeddingi dla każdego split
         emb1 = self.embeddings_sample
@@ -123,22 +120,22 @@ class TestCollector:
         ]
 
         collector.transform_splits(data=example_splits, splits=["train", "dev", "test"])
-
-        # Load saved splits to verify
+        # Load saved splits to verify - używaj split_dir, nie data_dir!
         base_meta_path = collector.get_metadata_file_path()
+        split_base_dir = collector.split_dir  # Użyj split_dir zamiast data_dir
 
         # Train split
-        meta_path_train = base_meta_path.parent / f"{base_meta_path.stem}_train{base_meta_path.suffix}"
+        meta_path_train = split_base_dir / f"{base_meta_path.stem}_train{base_meta_path.suffix}"
         saved_metadata_train = pd.read_csv(meta_path_train, index_col=0)
         emb_train = embeddings[saved_metadata_train.index]
 
         # Dev split
-        meta_path_dev = base_meta_path.parent / f"{base_meta_path.stem}_dev{base_meta_path.suffix}"
+        meta_path_dev = split_base_dir / f"{base_meta_path.stem}_dev{base_meta_path.suffix}"
         saved_metadata_dev = pd.read_csv(meta_path_dev, index_col=0)
         emb_dev = embeddings[saved_metadata_dev.index]
 
         # Test split
-        meta_path_test = base_meta_path.parent / f"{base_meta_path.stem}_test{base_meta_path.suffix}"
+        meta_path_test = split_base_dir / f"{base_meta_path.stem}_test{base_meta_path.suffix}"
         saved_metadata_test = pd.read_csv(meta_path_test, index_col=0)
         emb_test = embeddings[saved_metadata_test.index]
 
@@ -150,11 +147,20 @@ class TestCollector:
         print(saved_metadata_dev)
         print("---")
         print(saved_metadata_test)
-        pd.testing.assert_frame_equal(first_part_meta, saved_metadata_train), "Train metadata does not match."
+        (
+            pd.testing.assert_frame_equal(first_part_meta, saved_metadata_train),
+            "Train metadata does not match.",
+        )
         np.testing.assert_array_equal(emb1, emb_train), "Train embeddings do not match."
-        pd.testing.assert_frame_equal(second_part_meta, saved_metadata_dev), "Dev metadata does not match."
+        (
+            pd.testing.assert_frame_equal(second_part_meta, saved_metadata_dev),
+            "Dev metadata does not match.",
+        )
         np.testing.assert_array_equal(emb2, emb_dev), "Dev embeddings do not match."
-        pd.testing.assert_frame_equal(third_part_meta, saved_metadata_test), "Test metadata does not match."
+        (
+            pd.testing.assert_frame_equal(third_part_meta, saved_metadata_test),
+            "Test metadata does not match.",
+        )
         np.testing.assert_array_equal(emb3, emb_test), "Test embeddings do not match."
         print("Collector transform_splits test passed. All splits saved and verified successfully.")
 

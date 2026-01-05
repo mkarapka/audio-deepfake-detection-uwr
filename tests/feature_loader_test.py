@@ -67,5 +67,29 @@ class TestFeatureLoader:
 
             print("FeatureLoader transform test passed. Metadata and embeddings match successfully.")
 
+    def test_load_speakers_ids(self):
+        delete_test_files()
+
+        # Przygotuj przykładowe dane do zapisania
+        sample_speakers_data = {
+            "speaker_id": ["spk1", "spk2", "spk3"],
+            "attribute": ["attr1", "attr2", "attr3"],
+        }
+        sample_speakers_df = pd.DataFrame(sample_speakers_data)
+        speakers_ids_path = TEST_DIR / consts.speakers_ids_file
+        sample_speakers_df.to_csv(speakers_ids_path, index=False)
+
+        # Wczytaj dane za pomocą FeatureLoader
+        loaded_speakers_df = self.loader.load_speakers_ids()
+
+        # Sprawdź czy wczytane dane są poprawne
+        (
+            pd.testing.assert_frame_equal(sample_speakers_df, loaded_speakers_df),
+            "Speakers IDs data does not match.",
+        )
+
+        print("FeatureLoader load_speakers_ids test passed. Speakers IDs data match successfully.")
+
 
 TestFeatureLoader().test_transform()
+TestFeatureLoader().test_load_speakers_ids()

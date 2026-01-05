@@ -1,13 +1,17 @@
+from pathlib import Path
+
 from src.common.constants import Constants as consts
 from src.common.logger import get_logger, setup_logger
 from src.preprocessing.audio_segmentator import AudioSegmentator
 from src.preprocessing.collector import Collector
 from src.preprocessing.config_loader import ConfigLoader
+from src.preprocessing.dataset_spliter import DatasetSpliter
 from src.preprocessing.feature_extractors.base_feature_extractor import (
     BaseFeatureExtractor,
 )
 from src.preprocessing.feature_extractors.fft_extractor import FFTExtractor
 from src.preprocessing.feature_extractors.wavlm_extractor import WavLmExtractor
+from src.preprocessing.feature_loader import FeatureLoader
 from src.preprocessing.metadata_modifier import MetadataModifier
 
 LOGGER_NAME = "PreprocessingPipeline"
@@ -87,5 +91,13 @@ class PreprocessingPipeline:
             batch_size=batch_size,
         )
 
-    def split_and_balance_dataset(self, file_name=consts.wavlm_file_name_prefix):
-        pass
+    def split_dataset(self, file_name: Path, split_config: dict[str, float], seed=44):
+        feature_loader = FeatureLoader(file_name=file_name)
+        dataset_spliter = DatasetSpliter(
+            config=split_config, speakers_ids=feature_loader.load_speakers_ids(), seed=seed
+        )
+        collector = Collector(save_file_name=file_name)
+
+        metadata = feature_loader.load_metadata_file(file_path=collector.get_metadata_file_path())
+        meta_train, meta_dev, meta_test = dataset_spliter.transform(metadata=metadata)
+        collector.transform_splits(data=[meta_train, meta_dev, meta_test])

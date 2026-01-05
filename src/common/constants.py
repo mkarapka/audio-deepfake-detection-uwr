@@ -78,6 +78,8 @@ class Constants:
     bonafide = "bonafide"
 
     # Configs for functions
+    base_splits_names = ["train", "dev", "test"]
+
     basic_train_dev_test_config = {
         "train": 0.7,
         "dev": 0.15,

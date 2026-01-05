@@ -26,11 +26,22 @@ class FeatureLoader(BasePreprocessor):
             self.logger.error(f"File {file_path} does not exist.")
         return file_path
 
+    def load_speakers_ids(self) -> pd.DataFrame:
+        speakers_ids_path = self.data_dir / consts.speakers_ids_file
+        self.logger.info(f"Loading speakers IDs from {speakers_ids_path}")
+        speakers_ids_df = pd.read_csv(speakers_ids_path)
+        return speakers_ids_df
+
+    def load_metadata_file(self, file_path: Path) -> pd.DataFrame:
+        self.logger.info(f"Loading metadata from {file_path}")
+        metadata_df = pd.read_csv(file_path, index_col=0)
+        return metadata_df
+
     def transform(self, split_name: str) -> tuple[pd.DataFrame, np.ndarray]:
-        self.logger.info(f"Loading features from {split_name}.csv")
+        self.logger.info(f"Loading features from {self.file_name + split_name}.csv")
         file_path = self._get_file_path(split_name)
 
-        loaded_meta = pd.read_csv(file_path, index_col=0)
+        loaded_meta = self.load_metadata_file(file_path)
         embeddings_mmap = np.load(self.emb_path, mmap_mode="r")
         loaded_embeddings = embeddings_mmap[loaded_meta.index].copy()
 

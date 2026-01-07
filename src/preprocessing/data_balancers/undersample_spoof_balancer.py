@@ -17,9 +17,9 @@ class UndersampleSpoofBalancer(BaseBalancer):
             return np.arange(spoof_samples_no)
         return np.random.choice(spoof_samples_no, size=adjusted_spoof_count, replace=False)
 
-    def transform(self, metadata: pd.DataFrame, embeddings: np.ndarray):
+    def transform(self, metadata: pd.DataFrame):
         if not self.is_need_to_balance(metadata):
-            return metadata, embeddings[metadata.index]
+            return metadata
         meta_bonafide, meta_spoof = self.get_bonafide_spoof_data(metadata)
 
         np.random.seed(self.seed)
@@ -31,4 +31,4 @@ class UndersampleSpoofBalancer(BaseBalancer):
 
         new_meta = pd.concat((meta_bonafide, sampled_spoof_meta))
         balanced_metadata = self.shuffle_data(new_meta)
-        return balanced_metadata, embeddings[balanced_metadata.index]
+        return balanced_metadata

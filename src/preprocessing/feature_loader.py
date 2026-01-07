@@ -37,12 +37,15 @@ class FeatureLoader(BasePreprocessor):
         metadata_df = pd.read_csv(file_path, index_col=0)
         return metadata_df
 
+    def load_embeddings_from_metadata(self, metadata: pd.DataFrame) -> np.ndarray:
+        embeddings_mmap = np.load(self.emb_path, mmap_mode="r")
+        return embeddings_mmap[metadata.index].copy()
+
     def transform(self, split_name: str) -> tuple[pd.DataFrame, np.ndarray]:
         self.logger.info(f"Loading features from {self.file_name + split_name}.csv")
         file_path = self._get_file_path(split_name)
 
         loaded_meta = self.load_metadata_file(file_path)
-        embeddings_mmap = np.load(self.emb_path, mmap_mode="r")
-        loaded_embeddings = embeddings_mmap[loaded_meta.index].copy()
+        loaded_embeddings = self.load_embeddings_from_metadata(loaded_meta)
 
         return loaded_meta, loaded_embeddings

@@ -1,6 +1,8 @@
-from src.training.logistic_regression_trainer import LogisticRegressionTrainer
 from sklearn.metrics import accuracy_score
+
 from src.preprocessing.feature_loader import FeatureLoader
+from src.training.logistic_regression_trainer import LogisticRegressionTrainer
+
 
 class LogisticTrainnerTest:
     def __init__(self, feature_loader: FeatureLoader):
@@ -17,13 +19,16 @@ class LogisticTrainnerTest:
         embeddings = self.feature_loader.load_embeddings_from_metadata(self.train_split)
         dev_embeddings = self.feature_loader.load_embeddings_from_metadata(self.dev_split)
 
-        clf = LogisticRegressionTrainer(X_train=embeddings, y_train=self.train_split["target"], X_dev=dev_embeddings, y_dev=self.dev_split["target"])
+        clf = LogisticRegressionTrainer(
+            X_train=embeddings, y_train=self.train_split["target"], X_dev=dev_embeddings, y_dev=self.dev_split["target"]
+        )
         clf.train()
         best_clf = clf.get_best_model()
 
         dev_predictions = best_clf.predict(dev_embeddings)
         accuracy = accuracy_score(self.dev_split["target"], dev_predictions)
         print(f"Logistic Regression Classifier Accuracy on Dev Set: {accuracy:.4f}")
+
 
 if __name__ == "__main__":
     feature_loader = FeatureLoader(file_name="feature_extracted")

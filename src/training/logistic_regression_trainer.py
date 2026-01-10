@@ -1,5 +1,5 @@
-from sklearn.linear_model import LogisticRegression
 import optuna
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
 
@@ -14,6 +14,7 @@ def objective(trial, X_train, y_train, X_dev, y_dev):
     accuracy = accuracy_score(y_dev, y_pred)
     return accuracy
 
+
 class LogisticRegressionTrainer:
     def __init__(self, X_train, y_train, X_dev, y_dev):
         self.study = optuna.create_study(direction="maximize", sampler=optuna.samplers.RandomSampler())
@@ -22,8 +23,10 @@ class LogisticRegressionTrainer:
         self.X_dev = X_dev
         self.y_dev = y_dev
 
-    def train(self):
-        self.study.optimize(lambda trial: objective(trial, self.X_train, self.y_train, self.X_dev, self.y_dev), n_trials=100)
+    def train(self, n_trials=100):
+        self.study.optimize(
+            lambda trial: objective(trial, self.X_train, self.y_train, self.X_dev, self.y_dev), n_trials=n_trials
+        )
 
     def get_best_model(self):
         best_params = self.study.best_params

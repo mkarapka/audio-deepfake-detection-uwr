@@ -21,9 +21,7 @@ class FeatureLoader(BasePreprocessor):
         self.file_name = file_name
 
     def _get_file_path(self, split_name: str) -> Path:
-        file_path = self.split_dir / (
-            self.file_name + "_" + split_name + consts.metadata_extension
-        )
+        file_path = self.split_dir / (self.file_name + "_" + split_name + consts.metadata_extension)
         if not file_path.exists():
             self.logger.error(f"File {file_path} does not exist.")
         return file_path

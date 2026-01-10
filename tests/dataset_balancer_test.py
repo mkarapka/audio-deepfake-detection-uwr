@@ -48,7 +48,7 @@ class TestDatasetBalancer:
         embeddings = np.random.rand(total_rows, 768)  # Example embeddings with 768 dimensions
         balanced_metadata = self.balancer.transform(metadata)
         balanced_embeddings = embeddings[balanced_metadata.index]
-        
+
         bonafide_mask = balanced_metadata[f"{TARGET_COL}"] == "bonafide"
         spoof_mask = balanced_metadata[f"{TARGET_COL}"] == "spoof"
 

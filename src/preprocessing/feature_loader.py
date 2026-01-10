@@ -21,7 +21,9 @@ class FeatureLoader(BasePreprocessor):
         self.file_name = file_name
 
     def _get_file_path(self, split_name: str) -> Path:
-        file_path = self.split_dir / (self.file_name + "_" + split_name + consts.metadata_extension)
+        file_path = self.split_dir / (
+            self.file_name + "_" + split_name + consts.metadata_extension
+        )
         if not file_path.exists():
             self.logger.error(f"File {file_path} does not exist.")
         return file_path
@@ -35,11 +37,16 @@ class FeatureLoader(BasePreprocessor):
     def load_metadata_file(self, file_path: Path) -> pd.DataFrame:
         self.logger.info(f"Loading metadata from {file_path}")
         metadata_df = pd.read_csv(file_path, index_col=0)
+        metadata_df.index = metadata_df.index.astype(int)
         return metadata_df
 
     def load_embeddings_from_metadata(self, metadata: pd.DataFrame) -> np.ndarray:
         embeddings_mmap = np.load(self.emb_path, mmap_mode="r")
         return embeddings_mmap[metadata.index].copy()
+
+    def load_split_file(self, split_name: str) -> pd.DataFrame:
+        file_path = self._get_file_path(split_name)
+        return self.load_metadata_file(file_path)
 
     def transform(self, split_name: str) -> tuple[pd.DataFrame, np.ndarray]:
         self.logger.info(f"Loading features from {self.file_name + split_name}.csv")

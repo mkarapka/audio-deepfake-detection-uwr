@@ -5,7 +5,7 @@ from src.preprocessing.data_balancers.base_balancer import BaseBalancer
 
 
 class OversampleRealBalancer(BaseBalancer):
-    def __init__(self, seed=42, real_to_spoof_ratio=1.0):
+    def __init__(self, real_to_spoof_ratio=1.0, seed=42):
         super().__init__(__class__.__name__)
         self.seed = seed
         self.real_to_spoof_ratio = real_to_spoof_ratio

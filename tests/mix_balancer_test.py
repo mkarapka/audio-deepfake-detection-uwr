@@ -30,7 +30,8 @@ class MixBalancerTest:
         embeddings = np.random.rand(COLUMN_LENGTH, 128)  # 200 samples, 128-dimensional embeddings
 
         # Apply the MixBalancer
-        balanced_metadata, balanced_embeddings = self.balancer.transform(metadata, embeddings)
+        balanced_metadata = self.balancer.transform(metadata)
+        balanced_embeddings = embeddings[balanced_metadata.index]
 
         print("Original metadata count:")
         print(metadata["target"].value_counts())

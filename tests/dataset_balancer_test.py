@@ -46,8 +46,9 @@ class TestDatasetBalancer:
         print("Target Column", metadata[f"{TARGET_COL}"].value_counts().to_dict())
 
         embeddings = np.random.rand(total_rows, 768)  # Example embeddings with 768 dimensions
-        balanced_metadata, balanced_embeddings = self.balancer.transform(metadata, embeddings)
-
+        balanced_metadata = self.balancer.transform(metadata)
+        balanced_embeddings = embeddings[balanced_metadata.index]
+        
         bonafide_mask = balanced_metadata[f"{TARGET_COL}"] == "bonafide"
         spoof_mask = balanced_metadata[f"{TARGET_COL}"] == "spoof"
 
@@ -127,8 +128,10 @@ class TestDatasetBalancer:
         )
         embeddings = np.random.rand(ROWS_NO, 768)  # Example embeddings with 768 dimensions
 
-        balanced_metadata1, balanced_embeddings1 = self.balancer.transform(metadata, embeddings)
-        balanced_metadata2, balanced_embeddings2 = self.balancer.transform(metadata, embeddings)
+        balanced_metadata1 = self.balancer.transform(metadata)
+        balanced_embeddings1 = embeddings[balanced_metadata1.index]
+        balanced_metadata2 = self.balancer.transform(metadata)
+        balanced_embeddings2 = embeddings[balanced_metadata2.index]
 
         assert balanced_metadata1.equals(balanced_metadata2), "Balanced metadata should be the same for the same seed."
         assert np.array_equal(

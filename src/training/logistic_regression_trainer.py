@@ -30,6 +30,7 @@ class LogisticRegressionTrainer:
 
     def get_best_model(self):
         best_params = self.study.best_params
+        print(f"Best hyperparameters: {best_params}")
         best_model = LogisticRegression(
             penalty=best_params["penalty"],
             C=best_params["C"],

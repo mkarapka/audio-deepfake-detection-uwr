@@ -20,6 +20,8 @@ class BestBalancePipeline:
         self.feature_loader = FeatureLoader(file_name=consts.feature_extracted)
         self.train_split = self.feature_loader.load_split_file(split_name="train")
         self.dev_split = self.feature_loader.load_split_file(split_name="dev")
+        self.reduced_train_split = self.sample_fraction_from_split(self.train_split)
+        self.reduced_dev_split = self.sample_fraction_from_split(self.dev_split)
 
     def _get_balancer_instance(self, balancer_type: str, ratio_args):
         if balancer_type == "undersample":
@@ -37,15 +39,15 @@ class BestBalancePipeline:
         for ratio in consts.ratios_config[oversampling_method]:
             self.logger.info(f"Training Logistic Regression with {oversampling_method} and ratio: {ratio}")
             data_balancer = self._get_balancer_instance(balancer_type=oversampling_method, ratio_args=ratio)
-            balanced_metadata = data_balancer.transform(metadata=self.train_split)
+            balanced_metadata = data_balancer.transform(metadata=self.reduced_train_split)
             train_embeddings = self.feature_loader.load_embeddings_from_metadata(balanced_metadata)
-            dev_embeddings = self.feature_loader.load_embeddings_from_metadata(self.dev_split)
+            dev_embeddings = self.feature_loader.load_embeddings_from_metadata(self.reduced_dev_split)
 
             clf = LogisticRegressionTrainer(
                 X_train=train_embeddings,
                 y_train=balanced_metadata["target"],
                 X_dev=dev_embeddings,
-                y_dev=self.dev_split["target"],
+                y_dev=self.reduced_dev_split["target"],
             )
             clf.train(max_iter=150, n_trials=10)
             best_clf = clf.get_best_model()
@@ -53,6 +55,30 @@ class BestBalancePipeline:
             ratio_str = f"{ratio[0]}_{ratio[1]}" if oversampling_method == "mix" else f"{ratio}"
             self.trained_models[f"{oversampling_method}{ratio_str}"] = best_clf
         return self.trained_models
+
+    def sample_fraction_from_split(self, split: pd.DataFrame, fraction=0.4) -> pd.DataFrame:
+        half_size = int(len(split) * fraction)
+        reduced_split = split.sample(n=half_size, random_state=42)
+        return reduced_split
+
+    def train_on_raw_data(self, max_iter=150, n_trials=10):
+        self.logger.info("Training Logistic Regression on raw (unbalanced) data")
+        train_embeddings = self.feature_loader.load_embeddings_from_metadata(self.reduced_train_split)
+        dev_embeddings = self.feature_loader.load_embeddings_from_metadata(self.reduced_dev_split)
+
+        print("Train embeddings shape:", train_embeddings.shape)
+        print("Dev embeddings shape:", dev_embeddings.shape)
+        clf = LogisticRegressionTrainer(
+            X_train=train_embeddings,
+            y_train=self.reduced_train_split["target"],
+            X_dev=dev_embeddings,
+            y_dev=self.reduced_dev_split["target"],
+        )
+        clf.train(max_iter=max_iter, n_trials=n_trials)
+        best_clf = clf.get_best_model()
+
+        self.trained_models["raw_data"] = best_clf
+        return best_clf
 
     def train_all_balancers(self):
         for balancer_type in consts.ratios_config.keys():

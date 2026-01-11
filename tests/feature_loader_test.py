@@ -90,6 +90,40 @@ class TestFeatureLoader:
 
         print("FeatureLoader load_speakers_ids test passed. Speakers IDs data match successfully.")
 
+    def test_load_metadata_file_when_there_is_no_index_in_column_zero(self):
+        delete_test_files()
+
+        # Przygotuj przykładowe dane do zapisania
+        sample_meta_data = {
+            "key_id": ["id1", "id2", "id3"],
+            "feature1": [0.1, 0.2, 0.3],
+            "feature2": [1.0, 1.1, 1.2],
+        }
+        sample_df = pd.DataFrame(sample_meta_data)
+        sample_df.to_csv(
+            TEST_DIR / f"{self.FILE_NAME}_metadata{consts.metadata_extension}",
+            index=False,
+        )
+
+        # Wczytaj dane za pomocą FeatureLoader
+        loaded_meta = self.loader.load_metadata_file(
+            TEST_DIR / f"{self.FILE_NAME}_metadata{consts.metadata_extension}"
+        )
+
+        print("Loaded metadata index:")
+        print(loaded_meta.index)
+        print("Saved metadata index:")
+        print(sample_df.index)
+
+        # Sprawdź czy wczytane dane są poprawne
+        (
+            pd.testing.assert_frame_equal(sample_df, loaded_meta),
+            "Metadata does not match.",
+        )
+
+        print("FeatureLoader load_metadata_file test passed. Metadata match successfully.")
+
 
 TestFeatureLoader().test_transform()
 TestFeatureLoader().test_load_speakers_ids()
+TestFeatureLoader().test_load_metadata_file_when_there_is_no_index_in_column_zero()

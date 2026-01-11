@@ -32,10 +32,9 @@ class FeatureLoader(BasePreprocessor):
         speakers_ids_df = pd.read_csv(speakers_ids_path)
         return speakers_ids_df
 
-    def load_metadata_file(self, file_path: Path) -> pd.DataFrame:
+    def load_metadata_file(self, file_path: Path, index_col: int | None = None) -> pd.DataFrame:
         self.logger.info(f"Loading metadata from {file_path}")
-        metadata_df = pd.read_csv(file_path, index_col=0)
-        metadata_df.index = metadata_df.index.astype(int)
+        metadata_df = pd.read_csv(file_path, index_col=index_col)
         return metadata_df
 
     def load_embeddings_from_metadata(self, metadata: pd.DataFrame) -> np.ndarray:
@@ -44,13 +43,13 @@ class FeatureLoader(BasePreprocessor):
 
     def load_split_file(self, split_name: str) -> pd.DataFrame:
         file_path = self._get_file_path(split_name)
-        return self.load_metadata_file(file_path)
+        return self.load_metadata_file(file_path, index_col=0)
 
-    def transform(self, split_name: str) -> tuple[pd.DataFrame, np.ndarray]:
+    def transform(self, split_name: str, index_col: int | None = 0) -> tuple[pd.DataFrame, np.ndarray]:
         self.logger.info(f"Loading features from {self.file_name + split_name}.csv")
         file_path = self._get_file_path(split_name)
 
-        loaded_meta = self.load_metadata_file(file_path)
+        loaded_meta = self.load_metadata_file(file_path, index_col=index_col)
         loaded_embeddings = self.load_embeddings_from_metadata(loaded_meta)
 
         return loaded_meta, loaded_embeddings

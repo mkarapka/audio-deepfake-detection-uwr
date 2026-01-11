@@ -54,6 +54,7 @@ class BestBalancePipeline:
 
             ratio_str = f"{ratio[0]}_{ratio[1]}" if oversampling_method == "mix" else f"{ratio}"
             self.trained_models[f"{oversampling_method}{ratio_str}"] = best_clf
+        return self.trained_models
 
     def train_all_balancers(self):
         for balancer_type in consts.ratios_config.keys():

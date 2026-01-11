@@ -15,8 +15,9 @@ from src.training.logistic_regression_trainer import LogisticRegressionTrainer
 
 
 class BestBalancePipeline:
-    def __init__(self):
+    def __init__(self, RATIOS_CONFIG=consts.ratios_config):
         self.trained_models = {}
+        self.RATIOS_CONFIG = RATIOS_CONFIG
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.feature_loader = FeatureLoader(file_name=consts.feature_extracted)
         self.train_split = self.feature_loader.load_split_file(split_name="train")
@@ -39,7 +40,7 @@ class BestBalancePipeline:
     def _train_clf_on_resampled_data(
         self, oversampling_method: str, train_split: pd.DataFrame, dev_split: pd.DataFrame, max_iter=150, n_trials=10
     ):
-        for ratio in consts.ratios_config[oversampling_method]:
+        for ratio in self.RATIOS_CONFIG[oversampling_method]:
             self.logger.info(f"Training Logistic Regression with {oversampling_method} and ratio: {ratio}")
             data_balancer = self._get_balancer_instance(balancer_type=oversampling_method, ratio_args=ratio)
             if data_balancer == "unbalanced":
@@ -66,11 +67,11 @@ class BestBalancePipeline:
         reduced_split = split.sample(n=half_size, random_state=42)
         return reduced_split
 
-    def train_all_balancers(self, reduce_factor=0.4):
+    def train_all_balancers(self, reduce_factor=0.4, max_iter=200, n_trials=20):
         reduced_train_split = self._sample_fraction_from_split(self.train_split, fraction=reduce_factor)
         reduced_dev_split = self._sample_fraction_from_split(self.dev_split, fraction=reduce_factor)
 
-        for balancer_type in consts.ratios_config.keys():
+        for balancer_type in self.RATIOS_CONFIG.keys():
             self.logger.info(
                 f"Training models with balancer: {balancer_type}, and reduced size by {len(reduced_train_split)}/{len(self.train_split):.2f}"
             )
@@ -78,8 +79,8 @@ class BestBalancePipeline:
                 oversampling_method=balancer_type,
                 train_split=reduced_train_split,
                 dev_split=reduced_dev_split,
-                max_iter=200,
-                n_trials=20,
+                max_iter=max_iter,
+                n_trials=n_trials,
             )
 
     def create_dataframe_and_save(self, file_name: str):
@@ -91,7 +92,7 @@ class BestBalancePipeline:
             df["best_params"].append(params)
         results_df = pd.DataFrame(df)
         collector = Collector(save_file_name=file_name)
-        collector._wrirte_data_to_csv(results_df, include_index=False)
+        collector._write_data_to_csv(results_df, include_index=False)
 
     def pick_best_model(self):
         best_model_name = None

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.common.basic_functions import get_logger, setup_logger
+from src.common.basic_functions import setup_logger
 from src.common.constants import Constants as consts
 from src.preprocessing.data_balancers.mix_blancer import MixBalancer
 from src.preprocessing.data_balancers.oversample_real_balancer import (
@@ -35,9 +35,7 @@ class BestBalancePipeline:
 
     def _train_clf_on_resampled_data(self, oversampling_method: str):
         for ratio in consts.ratios_config[oversampling_method]:
-            self.logger.info(
-                f"Training Logistic Regression with {oversampling_method} and ratio: {ratio}"
-            )
+            self.logger.info(f"Training Logistic Regression with {oversampling_method} and ratio: {ratio}")
             data_balancer = self._get_balancer_instance(balancer_type=oversampling_method, ratio_args=ratio)
             balanced_metadata = data_balancer.transform(metadata=self.train_split)
             train_embeddings = self.feature_loader.load_embeddings_from_metadata(balanced_metadata)
@@ -49,7 +47,7 @@ class BestBalancePipeline:
                 X_dev=dev_embeddings,
                 y_dev=self.dev_split["target"],
             )
-            clf.train()
+            clf.train(max_iter=150, n_trials=10)
             best_clf = clf.get_best_model()
 
             ratio_str = f"{ratio[0]}_{ratio[1]}" if oversampling_method == "mix" else f"{ratio}"

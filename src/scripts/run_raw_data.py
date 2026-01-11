@@ -1,7 +1,6 @@
-from src.training.logistic_regression_trainer import LogisticRegressionTrainer
 from src.common.constants import Constants as consts
 from src.preprocessing.feature_loader import FeatureLoader
-from src.common.logger import setup_logger
+from src.training.logistic_regression_trainer import LogisticRegressionTrainer
 
 if __name__ == "__main__":
     feature_loader = FeatureLoader(file_name=consts.feature_extracted)

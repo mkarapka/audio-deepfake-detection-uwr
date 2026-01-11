@@ -106,9 +106,7 @@ class TestFeatureLoader:
         )
 
         # Wczytaj dane za pomocą FeatureLoader
-        loaded_meta = self.loader.load_metadata_file(
-            TEST_DIR / f"{self.FILE_NAME}_metadata{consts.metadata_extension}"
-        )
+        loaded_meta = self.loader.load_metadata_file(TEST_DIR / f"{self.FILE_NAME}_metadata{consts.metadata_extension}")
 
         print("Loaded metadata index:")
         print(loaded_meta.index)

@@ -1,18 +1,18 @@
 import optuna
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import recall_score
 
 
-def objective(trial, X_train, y_train, X_dev, y_dev):
+def objective(trial, X_train, y_train, X_dev, y_dev, max_iter=120):
     C = trial.suggest_float("C", 0.01, 10.0, log=True)
     class_weight = trial.suggest_categorical("class_weight", [None, "balanced"])
     penalty = trial.suggest_categorical("penalty", ["l2", None])
 
-    model = LogisticRegression(penalty=penalty, C=C, class_weight=class_weight, max_iter=500)
+    model = LogisticRegression(penalty=penalty, C=C, class_weight=class_weight, max_iter=max_iter)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_dev)
-    accuracy = accuracy_score(y_dev, y_pred)
-    return accuracy
+    recall = recall_score(y_dev, y_pred, pos_label="bonafide")
+    return recall
 
 
 class LogisticRegressionTrainer:
@@ -23,9 +23,10 @@ class LogisticRegressionTrainer:
         self.X_dev = X_dev
         self.y_dev = y_dev
 
-    def train(self, n_trials=100):
+    def train(self, n_trials=20, max_iter=120):
         self.study.optimize(
-            lambda trial: objective(trial, self.X_train, self.y_train, self.X_dev, self.y_dev), n_trials=n_trials
+            lambda trial: objective(trial, self.X_train, self.y_train, self.X_dev, self.y_dev, max_iter=max_iter),
+            n_trials=n_trials,
         )
 
     def get_best_model(self):
@@ -35,7 +36,6 @@ class LogisticRegressionTrainer:
             penalty=best_params["penalty"],
             C=best_params["C"],
             class_weight=best_params["class_weight"],
-            max_iter=500,
         )
         best_model.fit(self.X_train, self.y_train)
         return best_model
@@ -43,5 +43,5 @@ class LogisticRegressionTrainer:
     def evaluate(self, X_dev, y_dev):
         best_model = self.get_best_model(X_dev, y_dev)
         y_pred = best_model.predict(X_dev)
-        accuracy = accuracy_score(y_dev, y_pred)
-        return accuracy
+        recall = recall_score(y_dev, y_pred, pos_label="bonafide")
+        return recall

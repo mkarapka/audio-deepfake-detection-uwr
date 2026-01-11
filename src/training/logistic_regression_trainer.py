@@ -40,6 +40,12 @@ class LogisticRegressionTrainer:
         best_model.fit(self.X_train, self.y_train)
         return best_model
 
+    def get_best_value(self):
+        return self.study.best_value
+
+    def get_best_params(self):
+        return self.study.best_params
+
     def evaluate(self, X_dev, y_dev):
         best_model = self.get_best_model(X_dev, y_dev)
         y_pred = best_model.predict(X_dev)

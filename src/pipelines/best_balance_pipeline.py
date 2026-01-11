@@ -2,6 +2,7 @@ import pandas as pd
 
 from src.common.basic_functions import setup_logger
 from src.common.constants import Constants as consts
+from src.preprocessing.collector import Collector
 from src.preprocessing.data_balancers.mix_blancer import MixBalancer
 from src.preprocessing.data_balancers.oversample_real_balancer import (
     OversampleRealBalancer,
@@ -20,8 +21,6 @@ class BestBalancePipeline:
         self.feature_loader = FeatureLoader(file_name=consts.feature_extracted)
         self.train_split = self.feature_loader.load_split_file(split_name="train")
         self.dev_split = self.feature_loader.load_split_file(split_name="dev")
-        self.reduced_train_split = self.sample_fraction_from_split(self.train_split)
-        self.reduced_dev_split = self.sample_fraction_from_split(self.dev_split)
 
     def _get_balancer_instance(self, balancer_type: str, ratio_args):
         if balancer_type == "undersample":
@@ -31,70 +30,78 @@ class BestBalancePipeline:
         elif balancer_type == "mix":
             undersample_ratio, oversample_ratio = ratio_args
             return MixBalancer(undersample_ratio=undersample_ratio, oversample_ratio=oversample_ratio)
+        elif balancer_type == "unbalanced":
+            return "unbalanced"
         else:
             self.logger.error(f"Unknown balancer type: {balancer_type}")
             return None
 
-    def _train_clf_on_resampled_data(self, oversampling_method: str):
+    def _train_clf_on_resampled_data(
+        self, oversampling_method: str, train_split: pd.DataFrame, dev_split: pd.DataFrame, max_iter=150, n_trials=10
+    ):
         for ratio in consts.ratios_config[oversampling_method]:
             self.logger.info(f"Training Logistic Regression with {oversampling_method} and ratio: {ratio}")
             data_balancer = self._get_balancer_instance(balancer_type=oversampling_method, ratio_args=ratio)
-            balanced_metadata = data_balancer.transform(metadata=self.reduced_train_split)
-            train_embeddings = self.feature_loader.load_embeddings_from_metadata(balanced_metadata)
-            dev_embeddings = self.feature_loader.load_embeddings_from_metadata(self.reduced_dev_split)
+            if data_balancer == "unbalanced":
+                balanced_train_split = train_split
+            else:
+                balanced_train_split = data_balancer.transform(metadata=train_split)
+
+            train_embeddings = self.feature_loader.load_embeddings_from_metadata(balanced_train_split)
+            dev_embeddings = self.feature_loader.load_embeddings_from_metadata(dev_split)
 
             clf = LogisticRegressionTrainer(
                 X_train=train_embeddings,
-                y_train=balanced_metadata["target"],
+                y_train=balanced_train_split["target"],
                 X_dev=dev_embeddings,
-                y_dev=self.reduced_dev_split["target"],
+                y_dev=dev_split["target"],
             )
-            clf.train(max_iter=150, n_trials=10)
-            best_clf = clf.get_best_model()
+            clf.train(max_iter=max_iter, n_trials=n_trials)
 
             ratio_str = f"{ratio[0]}_{ratio[1]}" if oversampling_method == "mix" else f"{ratio}"
-            self.trained_models[f"{oversampling_method}{ratio_str}"] = best_clf
-        return self.trained_models
+            self.trained_models[f"{oversampling_method}{ratio_str}"] = (clf.get_best_value(), clf.get_best_params())
 
-    def sample_fraction_from_split(self, split: pd.DataFrame, fraction=0.4) -> pd.DataFrame:
+    def _sample_fraction_from_split(self, split: pd.DataFrame, fraction=0.4) -> pd.DataFrame:
         half_size = int(len(split) * fraction)
         reduced_split = split.sample(n=half_size, random_state=42)
         return reduced_split
 
-    def train_on_raw_data(self, max_iter=150, n_trials=10):
-        self.logger.info("Training Logistic Regression on raw (unbalanced) data")
-        train_embeddings = self.feature_loader.load_embeddings_from_metadata(self.reduced_train_split)
-        dev_embeddings = self.feature_loader.load_embeddings_from_metadata(self.reduced_dev_split)
+    def train_all_balancers(self, reduce_factor=0.4):
+        reduced_train_split = self._sample_fraction_from_split(self.train_split, fraction=reduce_factor)
+        reduced_dev_split = self._sample_fraction_from_split(self.dev_split, fraction=reduce_factor)
 
-        print("Train embeddings shape:", train_embeddings.shape)
-        print("Dev embeddings shape:", dev_embeddings.shape)
-        clf = LogisticRegressionTrainer(
-            X_train=train_embeddings,
-            y_train=self.reduced_train_split["target"],
-            X_dev=dev_embeddings,
-            y_dev=self.reduced_dev_split["target"],
-        )
-        clf.train(max_iter=max_iter, n_trials=n_trials)
-        best_clf = clf.get_best_model()
-
-        self.trained_models["raw_data"] = best_clf
-        return best_clf
-
-    def train_all_balancers(self):
         for balancer_type in consts.ratios_config.keys():
-            self.logger.info(f"Training models with balancer: {balancer_type}")
-            self._train_clf_on_resampled_data(oversampling_method=balancer_type)
+            self.logger.info(
+                f"Training models with balancer: {balancer_type}, and reduced size by {len(reduced_train_split)}/{len(self.train_split):.2f}"
+            )
+            self._train_clf_on_resampled_data(
+                oversampling_method=balancer_type,
+                train_split=reduced_train_split,
+                dev_split=reduced_dev_split,
+                max_iter=200,
+                n_trials=20,
+            )
+
+    def create_dataframe_and_save(self, file_name: str):
+        df = {"model_name": [], "recall": [], "best_params": []}
+        for model_name, (recall, params) in self.trained_models.items():
+            self.logger.info(f"Model: {model_name}, Recall: {recall}, Params: {params}")
+            df["model_name"].append(model_name)
+            df["recall"].append(recall)
+            df["best_params"].append(params)
+        results_df = pd.DataFrame(df)
+        collector = Collector(save_file_name=file_name)
+        collector._wrirte_data_to_csv(results_df, include_index=False)
 
     def pick_best_model(self):
-        results = []
-        for model_key, model in self.trained_models.items():
-            dev_embeddings = self.feature_loader.load_embeddings_from_metadata(self.dev_split)
-            accuracy = model.evaluate(X_dev=dev_embeddings, y_dev=self.dev_split["target"])
-            results.append((model_key, accuracy))
+        best_model_name = None
+        best_recall = -1.0
 
-        results.sort(key=lambda x: x[1], reverse=True)
-        results_df = pd.DataFrame(results, columns=["model_key", "accuracy"])
-        best_model_key, best_accuracy = results[0]
-        self.logger.info(f"Best model: {best_model_key} with accuracy: {best_accuracy:.4f}")
-        self.logger.info(f"All results:\n{results_df}")
-        return best_model_key, best_accuracy
+        for model_name, (recall, params) in self.trained_models.items():
+            self.logger.info(f"Model: {model_name}, Recall: {recall}, Params: {params}")
+            if recall > best_recall:
+                best_recall = recall
+                best_model_name = model_name
+
+        self.logger.info(f"Best model is {best_model_name} with Recall: {best_recall}")
+        return best_model_name, best_recall

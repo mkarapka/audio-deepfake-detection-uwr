@@ -15,9 +15,10 @@ from src.training.logistic_regression_trainer import LogisticRegressionTrainer
 
 
 class BestBalancePipeline:
-    def __init__(self, RATIOS_CONFIG=consts.ratios_config):
+    def __init__(self, RATIOS_CONFIG=consts.ratios_config, objective="recall"):
         self.trained_models = {}
         self.RATIOS_CONFIG = RATIOS_CONFIG
+        self.objective = objective
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.feature_loader = FeatureLoader(file_name=consts.feature_extracted)
         self.train_split = self.feature_loader.load_split_file(split_name="train")
@@ -56,6 +57,7 @@ class BestBalancePipeline:
                 y_train=balanced_train_split["target"],
                 X_dev=dev_embeddings,
                 y_dev=dev_split["target"],
+                objective=self.objective,
             )
             clf.train(max_iter=max_iter, n_trials=n_trials)
 

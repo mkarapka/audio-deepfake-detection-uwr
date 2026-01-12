@@ -1,9 +1,9 @@
 import optuna
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import recall_score
+from sklearn.metrics import accuracy_score, recall_score
 
 
-def objective(trial, X_train, y_train, X_dev, y_dev, max_iter=120):
+def objective_rec(trial, X_train, y_train, X_dev, y_dev, max_iter=120):
     C = trial.suggest_float("C", 0.01, 10.0, log=True)
     class_weight = trial.suggest_categorical("class_weight", [None, "balanced"])
     penalty = trial.suggest_categorical("penalty", ["l2", None])
@@ -15,17 +15,34 @@ def objective(trial, X_train, y_train, X_dev, y_dev, max_iter=120):
     return recall
 
 
+def objective_acc(trial, X_train, y_train, X_dev, y_dev, max_iter=120):
+    C = trial.suggest_float("C", 0.01, 10.0, log=True)
+    class_weight = trial.suggest_categorical("class_weight", [None, "balanced"])
+    penalty = trial.suggest_categorical("penalty", ["l2", None])
+
+    model = LogisticRegression(penalty=penalty, C=C, class_weight=class_weight, max_iter=max_iter)
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_dev)
+    accuracy = accuracy_score(y_dev, y_pred)
+    return accuracy
+
+
 class LogisticRegressionTrainer:
-    def __init__(self, X_train, y_train, X_dev, y_dev):
+    def __init__(self, X_train, y_train, X_dev, y_dev, objective="recall"):
         self.study = optuna.create_study(direction="maximize", sampler=optuna.samplers.RandomSampler())
         self.X_train = X_train
         self.y_train = y_train
         self.X_dev = X_dev
         self.y_dev = y_dev
+        self.objective = objective
 
     def train(self, n_trials=20, max_iter=120):
+        if self.objective == "recall":
+            objective_func = objective_rec
+        else:
+            objective_func = objective_acc
         self.study.optimize(
-            lambda trial: objective(trial, self.X_train, self.y_train, self.X_dev, self.y_dev, max_iter=max_iter),
+            lambda trial: objective_func(trial, self.X_train, self.y_train, self.X_dev, self.y_dev, max_iter=max_iter),
             n_trials=n_trials,
         )
 

@@ -1,3 +1,5 @@
+from functools import partial
+
 import optuna
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, recall_score
@@ -41,10 +43,17 @@ class LogisticRegressionTrainer:
             objective_func = objective_rec
         else:
             objective_func = objective_acc
-        self.study.optimize(
-            lambda trial: objective_func(trial, self.X_train, self.y_train, self.X_dev, self.y_dev, max_iter=max_iter),
-            n_trials=n_trials,
+
+        objective_with_data = partial(
+            objective_func,
+            X_train=self.X_train,
+            y_train=self.y_train,
+            X_dev=self.X_dev,
+            y_dev=self.y_dev,
+            max_iter=max_iter,
         )
+
+        self.study.optimize(objective_with_data, n_trials=n_trials, gc_after_trial=True)
 
     def get_best_model(self):
         best_params = self.study.best_params
@@ -62,9 +71,3 @@ class LogisticRegressionTrainer:
 
     def get_best_params(self):
         return self.study.best_params
-
-    def evaluate(self, X_dev, y_dev):
-        best_model = self.get_best_model(X_dev, y_dev)
-        y_pred = best_model.predict(X_dev)
-        recall = recall_score(y_dev, y_pred, pos_label="bonafide")
-        return recall

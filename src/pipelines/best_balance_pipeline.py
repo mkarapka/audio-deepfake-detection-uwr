@@ -11,11 +11,11 @@ from src.preprocessing.data_balancers.undersample_spoof_balancer import (
     UndersampleSpoofBalancer,
 )
 from src.preprocessing.feature_loader import FeatureLoader
-from src.training.logistic_regression_trainer import LogisticRegressionTrainer
+from src.training.logistic_regression_classifier import LogisticRegressionClassifier
 
 
 class BestBalancePipeline:
-    def __init__(self, RATIOS_CONFIG=consts.ratios_config, objective="recall"):
+    def __init__(self, RATIOS_CONFIG=consts.ratios_config, objective="f1"):
         self.trained_models = {}
         self.RATIOS_CONFIG = RATIOS_CONFIG
         self.objective = objective
@@ -39,7 +39,12 @@ class BestBalancePipeline:
             return None
 
     def _train_clf_on_resampled_data(
-        self, oversampling_method: str, train_split: pd.DataFrame, dev_split: pd.DataFrame, max_iter=150, n_trials=10
+        self,
+        oversampling_method: str,
+        train_split: pd.DataFrame,
+        dev_split: pd.DataFrame,
+        max_iter=150,
+        n_trials=10,
     ):
         for ratio in self.RATIOS_CONFIG[oversampling_method]:
             self.logger.info(f"Training Logistic Regression with {oversampling_method} and ratio: {ratio}")
@@ -52,7 +57,7 @@ class BestBalancePipeline:
             train_embeddings = self.feature_loader.load_embeddings_from_metadata(balanced_train_split)
             dev_embeddings = self.feature_loader.load_embeddings_from_metadata(dev_split)
 
-            clf = LogisticRegressionTrainer(
+            clf = LogisticRegressionClassifier(
                 X_train=train_embeddings,
                 y_train=balanced_train_split["target"],
                 X_dev=dev_embeddings,

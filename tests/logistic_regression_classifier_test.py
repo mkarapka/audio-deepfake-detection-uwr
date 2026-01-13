@@ -1,10 +1,10 @@
 from sklearn.metrics import accuracy_score
 
 from src.preprocessing.feature_loader import FeatureLoader
-from src.training.logistic_regression_trainer import LogisticRegressionTrainer
+from training.logistic_regression_classifier import LogisticRegressionClassifier
 
 
-class LogisticTrainnerTest:
+class LogisticRegressionClassifierTest:
     def __init__(self, feature_loader: FeatureLoader):
         self.feature_loader = feature_loader
         self.train_split = self.feature_loader.load_split_file(split_name="train")
@@ -17,10 +17,15 @@ class LogisticTrainnerTest:
         print("Index types:", self.train_split.index.dtype, self.dev_split.index.dtype)
         print("Index samples:", self.train_split.index[:5], self.dev_split.index[:5])
         embeddings = self.feature_loader.load_embeddings_from_metadata(self.train_split)
-        dev_embeddings = self.feature_loader.load_embeddings_from_metadata(self.dev_split)
+        dev_embeddings = self.feature_loader.load_embeddings_from_metadata(
+            self.dev_split
+        )
 
-        clf = LogisticRegressionTrainer(
-            X_train=embeddings, y_train=self.train_split["target"], X_dev=dev_embeddings, y_dev=self.dev_split["target"]
+        clf = LogisticRegressionClassifier(
+            X_train=embeddings,
+            y_train=self.train_split["target"],
+            X_dev=dev_embeddings,
+            y_dev=self.dev_split["target"],
         )
         clf.train()
         best_clf = clf.get_best_model()
@@ -32,5 +37,5 @@ class LogisticTrainnerTest:
 
 if __name__ == "__main__":
     feature_loader = FeatureLoader(file_name="feature_extracted")
-    test = LogisticTrainnerTest(feature_loader=feature_loader)
+    test = LogisticRegressionClassifierTest(feature_loader=feature_loader)
     test.test_logistic_regression_trainer()

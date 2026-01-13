@@ -2,18 +2,20 @@ from functools import partial
 
 import optuna
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, recall_score
+from sklearn.metrics import accuracy_score, f1_score
 
 
-def objective_rec(trial, X_train, y_train, X_dev, y_dev, max_iter=120):
+def objective_f1(trial, X_train, y_train, X_dev, y_dev, max_iter=120):
     C = trial.suggest_float("C", 0.01, 10.0, log=True)
     class_weight = trial.suggest_categorical("class_weight", [None, "balanced"])
     penalty = trial.suggest_categorical("penalty", ["l2", None])
 
-    model = LogisticRegression(penalty=penalty, C=C, class_weight=class_weight, max_iter=max_iter)
+    model = LogisticRegression(
+        penalty=penalty, C=C, class_weight=class_weight, max_iter=max_iter
+    )
     model.fit(X_train, y_train)
     y_pred = model.predict(X_dev)
-    recall = recall_score(y_dev, y_pred, pos_label="bonafide")
+    recall = f1_score(y_dev, y_pred, pos_label="bonafide")
     return recall
 
 
@@ -22,16 +24,20 @@ def objective_acc(trial, X_train, y_train, X_dev, y_dev, max_iter=120):
     class_weight = trial.suggest_categorical("class_weight", [None, "balanced"])
     penalty = trial.suggest_categorical("penalty", ["l2", None])
 
-    model = LogisticRegression(penalty=penalty, C=C, class_weight=class_weight, max_iter=max_iter)
+    model = LogisticRegression(
+        penalty=penalty, C=C, class_weight=class_weight, max_iter=max_iter
+    )
     model.fit(X_train, y_train)
     y_pred = model.predict(X_dev)
     accuracy = accuracy_score(y_dev, y_pred)
     return accuracy
 
 
-class LogisticRegressionTrainer:
-    def __init__(self, X_train, y_train, X_dev, y_dev, objective="recall"):
-        self.study = optuna.create_study(direction="maximize", sampler=optuna.samplers.RandomSampler())
+class LogisticRegressionClassifier:
+    def __init__(self, X_train, y_train, X_dev, y_dev, objective="f1"):
+        self.study = optuna.create_study(
+            direction="maximize", sampler=optuna.samplers.RandomSampler()
+        )
         self.X_train = X_train
         self.y_train = y_train
         self.X_dev = X_dev
@@ -39,8 +45,8 @@ class LogisticRegressionTrainer:
         self.objective = objective
 
     def train(self, n_trials=20, max_iter=120):
-        if self.objective == "recall":
-            objective_func = objective_rec
+        if self.objective == "f1":
+            objective_func = objective_f1
         else:
             objective_func = objective_acc
 

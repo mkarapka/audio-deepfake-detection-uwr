@@ -17,9 +17,7 @@ class LogisticRegressionClassifierTest:
         print("Index types:", self.train_split.index.dtype, self.dev_split.index.dtype)
         print("Index samples:", self.train_split.index[:5], self.dev_split.index[:5])
         embeddings = self.feature_loader.load_embeddings_from_metadata(self.train_split)
-        dev_embeddings = self.feature_loader.load_embeddings_from_metadata(
-            self.dev_split
-        )
+        dev_embeddings = self.feature_loader.load_embeddings_from_metadata(self.dev_split)
 
         clf = LogisticRegressionClassifier(
             X_train=embeddings,

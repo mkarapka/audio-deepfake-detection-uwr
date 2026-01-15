@@ -11,7 +11,7 @@ from src.preprocessing.data_balancers.undersample_spoof_balancer import (
     UndersampleSpoofBalancer,
 )
 from src.preprocessing.feature_loader import FeatureLoader
-from src.training.logistic_regression_classifier import LogisticRegressionClassifier
+from src.training.fft_baseline_classifier import FFTBaselineClassifier
 
 
 class BestBalancePipeline:
@@ -47,7 +47,7 @@ class BestBalancePipeline:
         n_trials=10,
     ):
         for ratio in self.RATIOS_CONFIG[oversampling_method]:
-            self.logger.info(f"Training Logistic Regression with {oversampling_method} and ratio: {ratio}")
+            self.logger.info(f"Training FFT Baseline Classifier with {oversampling_method} and ratio: {ratio}")
             data_balancer = self._get_balancer_instance(balancer_type=oversampling_method, ratio_args=ratio)
             if data_balancer == "unbalanced":
                 balanced_train_split = train_split
@@ -57,12 +57,11 @@ class BestBalancePipeline:
             train_embeddings = self.feature_loader.load_embeddings_from_metadata(balanced_train_split)
             dev_embeddings = self.feature_loader.load_embeddings_from_metadata(dev_split)
 
-            clf = LogisticRegressionClassifier(
+            clf = FFTBaselineClassifier(
                 X_train=train_embeddings,
                 y_train=balanced_train_split["target"],
                 X_dev=dev_embeddings,
                 y_dev=dev_split["target"],
-                objective=self.objective,
             )
             clf.train(max_iter=max_iter, n_trials=n_trials)
 
@@ -80,7 +79,8 @@ class BestBalancePipeline:
 
         for balancer_type in self.RATIOS_CONFIG.keys():
             self.logger.info(
-                f"Training models with balancer: {balancer_type}, and reduced size by {len(reduced_train_split)}/{len(self.train_split):.2f}"
+                f"Training models with balancer: {balancer_type},and reduced size by {
+                    len(reduced_train_split)}/{len(self.train_split):.2f}"
             )
             self._train_clf_on_resampled_data(
                 oversampling_method=balancer_type,
@@ -91,11 +91,11 @@ class BestBalancePipeline:
             )
 
     def create_dataframe_and_save(self, file_name: str):
-        df = {"model_name": [], "recall": [], "best_params": []}
-        for model_name, (recall, params) in self.trained_models.items():
-            self.logger.info(f"Model: {model_name}, Recall: {recall}, Params: {params}")
+        df = {"model_name": [], f"{self.objective}": [], "best_params": []}
+        for model_name, (objective, params) in self.trained_models.items():
+            self.logger.info(f"Model: {model_name}, Recall: {objective}, Params: {params}")
             df["model_name"].append(model_name)
-            df["recall"].append(recall)
+            df[f"{self.objective}"].append(objective)
             df["best_params"].append(params)
         results_df = pd.DataFrame(df)
         collector = Collector(save_file_name=file_name)
@@ -103,13 +103,13 @@ class BestBalancePipeline:
 
     def pick_best_model(self):
         best_model_name = None
-        best_recall = -1.0
+        best_objective = -1.0
 
-        for model_name, (recall, params) in self.trained_models.items():
-            self.logger.info(f"Model: {model_name}, Recall: {recall}, Params: {params}")
-            if recall > best_recall:
-                best_recall = recall
+        for model_name, (objective, params) in self.trained_models.items():
+            self.logger.info(f"Model: {model_name}, Recall: {objective}, Params: {params}")
+            if objective > best_objective:
+                best_objective = objective
                 best_model_name = model_name
 
-        self.logger.info(f"Best model is {best_model_name} with Recall: {best_recall}")
-        return best_model_name, best_recall
+        self.logger.info(f"Best model is {best_model_name} with Recall: {best_objective}")
+        return best_model_name, best_objective

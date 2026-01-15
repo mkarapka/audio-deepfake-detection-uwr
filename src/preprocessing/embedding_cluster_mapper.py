@@ -1,12 +1,14 @@
 import pickle
 
 import numpy as np
+import pandas as pd
 from hdbscan import HDBSCAN, approximate_predict
 from sklearn.decomposition import PCA
+
 from src.common.basic_functions import setup_logger
 from src.common.constants import Constants as consts
 from src.preprocessing.base_preprocessor import BasePreprocessor
-import pandas as pd
+
 
 class EmbeddingClusterMapper(BasePreprocessor):
     def __init__(
@@ -57,4 +59,3 @@ class EmbeddingClusterMapper(BasePreprocessor):
     def assign_clusters_to_metadata(self, metadata: pd.DataFrame, clusters: np.ndarray) -> pd.DataFrame:
         metadata["cluster"] = clusters
         return metadata[clusters != -1]
-

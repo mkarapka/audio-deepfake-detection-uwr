@@ -1,8 +1,9 @@
 import numpy as np
+from sklearn.preprocessing import Normalizer
 
 from src.preprocessing.embedding_cluster_mapper import EmbeddingClusterMapper
 from src.preprocessing.feature_loader import FeatureLoader
-from sklearn.preprocessing import Normalizer
+
 
 class MapClustersIDsPipeline:
     def train_mapper(self, train_embeddings: np.ndarray):

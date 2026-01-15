@@ -20,12 +20,12 @@ class EmbeddingClusterMapper(BasePreprocessor):
         self.metric = metric
         self.random_state = random_state
 
-    def _reduce_dimensions_PCA(self, embeddings, n_components=10):
+    def _reduce_dimensions_PCA(self, embeddings, n_components):
         pca = PCA(n_components=n_components)
         return pca, pca.fit_transform(embeddings)
 
-    def train(self, embeddings: np.ndarray):
-        pca, reduced_embeddings = self._reduce_dimensions_PCA(embeddings)
+    def train(self, embeddings: np.ndarray, n_components=10):
+        pca, reduced_embeddings = self._reduce_dimensions_PCA(embeddings, n_components=n_components)
         self.logger.info(f"Reduced embeddings shape after PCA: {reduced_embeddings.shape}")
 
         hdbscan = HDBSCAN(

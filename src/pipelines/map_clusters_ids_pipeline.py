@@ -6,7 +6,7 @@ from src.preprocessing.feature_loader import FeatureLoader
 
 class MapClustersIDsPipeline:
     def train_mapper(self, train_embeddings: np.ndarray):
-        mapper = EmbeddingClusterMapper(min_cluster_size=1000, min_samples=5, metric="cosine", random_state=42)
+        mapper = EmbeddingClusterMapper(min_cluster_size=100, min_samples=5, random_state=42)
         mapper.logger.info("training cluster mapping model...")
         mapper.train(train_embeddings)
         mapper.logger.info("training completed.")

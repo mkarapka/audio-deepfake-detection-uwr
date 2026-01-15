@@ -4,30 +4,29 @@ from pathlib import Path
 import numpy as np
 from hdbscan import HDBSCAN
 from sklearn.decomposition import PCA
-
+from src.common.basic_functions import setup_logger
 from src.common.constants import Constants as consts
 from src.preprocessing.base_preprocessor import BasePreprocessor
 
 
 class EmbeddingClusterMapper(BasePreprocessor):
     def __init__(
-        self, min_cluster_size: int = 1000, min_samples: int = 10, metric: str = "cosine", random_state: int = 42
+        self, min_cluster_size: int = 1000, min_samples: int = 10, metric: str = "euclidean", random_state: int = 42
     ):
         super().__init__(class_name=__class__.__name__)
+        self.logger = setup_logger(self.class_name, log_to_console=True)
         self.min_cluster_size = min_cluster_size
         self.min_samples = min_samples
         self.metric = metric
         self.random_state = random_state
 
-    def _reduce_dimensions_PCA(self, embeddings, n_components=64):
+    def _reduce_dimensions_PCA(self, embeddings, n_components=10):
         pca = PCA(n_components=n_components)
         return pca, pca.fit_transform(embeddings)
 
-    def _reduce_dimentions_UMAP(self, embeddings):
-        pass
-
     def train(self, embeddings: np.ndarray):
         pca, reduced_embeddings = self._reduce_dimensions_PCA(embeddings)
+        self.logger.info(f"Reduced embeddings shape after PCA: {reduced_embeddings.shape}")
 
         hdbscan = HDBSCAN(
             min_cluster_size=self.min_cluster_size,

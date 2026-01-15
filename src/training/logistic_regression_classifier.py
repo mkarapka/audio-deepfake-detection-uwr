@@ -10,9 +10,7 @@ def objective_f1(trial, X_train, y_train, X_dev, y_dev, max_iter=120):
     class_weight = trial.suggest_categorical("class_weight", [None, "balanced"])
     penalty = trial.suggest_categorical("penalty", ["l2", None])
 
-    model = LogisticRegression(
-        penalty=penalty, C=C, class_weight=class_weight, max_iter=max_iter
-    )
+    model = LogisticRegression(penalty=penalty, C=C, class_weight=class_weight, max_iter=max_iter)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_dev)
     recall = f1_score(y_dev, y_pred, pos_label="bonafide")
@@ -24,9 +22,7 @@ def objective_acc(trial, X_train, y_train, X_dev, y_dev, max_iter=120):
     class_weight = trial.suggest_categorical("class_weight", [None, "balanced"])
     penalty = trial.suggest_categorical("penalty", ["l2", None])
 
-    model = LogisticRegression(
-        penalty=penalty, C=C, class_weight=class_weight, max_iter=max_iter
-    )
+    model = LogisticRegression(penalty=penalty, C=C, class_weight=class_weight, max_iter=max_iter)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_dev)
     accuracy = accuracy_score(y_dev, y_pred)
@@ -35,9 +31,7 @@ def objective_acc(trial, X_train, y_train, X_dev, y_dev, max_iter=120):
 
 class LogisticRegressionClassifier:
     def __init__(self, X_train, y_train, X_dev, y_dev, objective="f1"):
-        self.study = optuna.create_study(
-            direction="maximize", sampler=optuna.samplers.RandomSampler()
-        )
+        self.study = optuna.create_study(direction="maximize", sampler=optuna.samplers.RandomSampler())
         self.X_train = X_train
         self.y_train = y_train
         self.X_dev = X_dev

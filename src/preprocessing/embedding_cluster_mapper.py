@@ -1,5 +1,4 @@
 import pickle
-from pathlib import Path
 
 import numpy as np
 from hdbscan import HDBSCAN
@@ -39,12 +38,12 @@ class EmbeddingClusterMapper(BasePreprocessor):
 
         return hdbscan, pca
 
-    def save_model(self, model, pca, file_name: Path):
+    def save_model(self, model, pca, file_name: str):
         file_path = consts.collected_data_dir / file_name
         with open(file_path, "wb") as f:
             pickle.dump((model, pca), f)
 
-    def load_model(self, file_name: Path):
+    def load_model(self, file_name: str):
         file_path = consts.collected_data_dir / file_name
         with open(file_path, "rb") as f:
             model, pca = pickle.load(f)

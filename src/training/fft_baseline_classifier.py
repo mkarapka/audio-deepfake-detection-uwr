@@ -40,7 +40,7 @@ class FFTBaselineClassifier:
         self.logger.info(f"Number of positive samples: {n_pos}, Number of negative samples: {n_neg}")
 
         device = get_device(include_mps=False)
-        scale_tree_method = "gpu_hist" if device == "cuda" else "hist"
+        scale_tree_method = "hist"
         self.logger.info(f"Using tree method: {scale_tree_method}")
         self.logger.info(f"Using device: {device}")
 

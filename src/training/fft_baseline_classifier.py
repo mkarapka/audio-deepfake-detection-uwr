@@ -94,13 +94,24 @@ class FFTBaselineClassifier:
 
         self.study = optuna.create_study(direction="maximize", sampler=optuna.samplers.RandomSampler())
         self.study.optimize(objective_with_data, n_trials=n_trials, gc_after_trial=True)
+
+        best_model = self.get_best_model()
+        y_pred = self._predict_all_records(best_model) if is_partial else best_model.predict(self.X_dev)
+        if isinstance(y_pred, cp.ndarray):
+            y_pred = cp.asnumpy(y_pred)
         self.logger.info(
             f"Classification report on dev set:\n{
-                classification_report(
-                    self.y_dev,
-                    self._predict_all_records(
-                        self.get_best_model()))}"
+                classification_report(self.y_dev, y_pred, target_names=['spoof', 'bonafide'])
+            }"
         )
+
+    def get_best_model(self):
+        best_params = self.study.best_params
+        device = get_device(include_mps=False)
+        best_params["device"] = device
+        best_model = xgb.XGBClassifier(**best_params)
+        best_model.fit(self.X_train, self.y_train)
+        return best_model
 
     def get_best_value(self):
         return self.study.best_value

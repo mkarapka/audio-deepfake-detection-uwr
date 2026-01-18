@@ -6,13 +6,29 @@ from sklearn.metrics import classification_report, f1_score
 from src.common.basic_functions import get_device, setup_logger
 from src.training.record_iterator import RecordIterator
 
+try:
+    import cupy as cp
+
+    CUPY_AVAILABLE = True
+except ImportError:
+    CUPY_AVAILABLE = False
+
 
 class FFTBaselineClassifier:
     def __init__(self, X_train, y_train, X_dev, meta_dev):
         self.logger = setup_logger(self.__class__.__name__, log_to_console=True)
-        self.X_train = X_train
-        self.y_train = (y_train == "bonafide").astype(int)
-        self.X_dev = X_dev
+        is_gpu_use = get_device() == "cuda"
+        if is_gpu_use and CUPY_AVAILABLE:
+            self.logger.info("Using CuPy for GPU acceleration")
+            self.X_train = cp.asarray(X_train)
+            self.y_train = cp.asarray((y_train == "bonafide").astype(int))
+            self.X_dev = cp.asarray(X_dev)
+        else:
+            self.logger.info("Using NumPy (CPU)")
+            self.X_train = X_train
+            self.y_train = (y_train == "bonafide").astype(int)
+            self.X_dev = X_dev
+
         self.y_dev = (meta_dev["target"] == "bonafide").astype(int)
         self.meta_dev = meta_dev
 
@@ -61,10 +77,12 @@ class FFTBaselineClassifier:
 
         model = xgb.XGBClassifier(**params)
         model.fit(self.X_train, self.y_train)
-        y_pred = self._predict_all_records(model) if is_partial else model.predict(self.X_dev)
-        f1 = f1_score(self.y_dev, y_pred)
 
-        return f1
+        y_pred = self._predict_all_records(model) if is_partial else model.predict(self.X_dev)
+        if isinstance(y_pred, cp.ndarray):
+            y_pred = cp.asnumpy(y_pred)
+
+        return f1_score(self.y_dev, y_pred)
 
     def train(self, n_trials, max_iter, is_partial):
         def objective_with_data(trial):

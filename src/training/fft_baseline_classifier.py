@@ -1,7 +1,7 @@
 import numpy as np
 import optuna
 import xgboost as xgb
-from sklearn.metrics import f1_score
+from sklearn.metrics import classification_report, f1_score
 
 from src.common.basic_functions import get_device, setup_logger
 from src.training.record_iterator import RecordIterator
@@ -61,7 +61,9 @@ class FFTBaselineClassifier:
         model = xgb.XGBClassifier(**params)
         model.fit(self.X_train, self.y_train)
         y_pred = self._predict_all_records(model) if is_partial else model.predict(self.X_dev)
+
         f1 = f1_score(self.y_dev, y_pred)
+        self.logger.info(classification_report(self.y_dev, y_pred, digits=4))
 
         return f1
 

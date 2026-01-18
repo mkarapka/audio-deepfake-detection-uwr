@@ -70,25 +70,31 @@ class BestBalancePipeline:
             ratio_str = f"{ratio[0]}_{ratio[1]}" if oversampling_method == "mix" else f"{ratio}"
             self.trained_models[f"{oversampling_method}{ratio_str}"] = (clf.get_best_value(), clf.get_best_params())
 
-    def _sample_fraction_from_split(self, split: pd.DataFrame, fraction=0.4) -> pd.DataFrame:
-        half_size = int(len(split) * fraction)
-        reduced_split = split.sample(n=half_size, random_state=42)
+    def _sample_fraction_from_split_basic(self, split: pd.DataFrame, frac=0.4, rs=42) -> pd.DataFrame:
+        half_size = int(len(split) * frac)
+        reduced_split = split.sample(n=half_size, random_state=rs)
         return reduced_split
 
-    def _sample_fraction_uq_audios_from_split(self, split: pd.DataFrame, fraction=0.4) -> pd.DataFrame:
+    def _sample_fraction_uq_audios_from_split(
+        self, split: pd.DataFrame, frac=0.4, is_train_split=False, rs=42
+    ) -> pd.DataFrame:
         record_iterator = RecordIterator()
-        reduced_split = record_iterator.sample_fraction(metadata=split, fraction=fraction)
+        reduced_split = record_iterator.sample_fraction(metadata=split, fraction=frac)
+        if is_train_split:
+            reduced_split = reduced_split.sample(frac=1, random_state=rs)
         return reduced_split
 
     def train_all_balancers(self, reduce_factor=0.4, max_iter=200, n_trials=20):
         if self.is_partial:
             self.logger.info("Using unique audio ids to reduce dataset for partial training.")
-            reduced_train_split = self._sample_fraction_uq_audios_from_split(self.train_split, fraction=reduce_factor)
-            reduced_dev_split = self._sample_fraction_uq_audios_from_split(self.dev_split, fraction=reduce_factor)
+            reduced_train_split = self._sample_fraction_uq_audios_from_split(
+                self.train_split, frac=reduce_factor, is_train_split=True
+            )
+            reduced_dev_split = self._sample_fraction_uq_audios_from_split(self.dev_split, frac=reduce_factor)
         else:
             self.logger.info("Using random sampling to reduce dataset for partial training.")
-            reduced_train_split = self._sample_fraction_from_split(self.train_split, fraction=reduce_factor)
-            reduced_dev_split = self._sample_fraction_from_split(self.dev_split, fraction=reduce_factor)
+            reduced_train_split = self._sample_fraction_from_split_basic(self.train_split, frac=reduce_factor)
+            reduced_dev_split = self._sample_fraction_from_split_basic(self.dev_split, frac=reduce_factor)
 
         for balancer_type in self.RATIOS_CONFIG.keys():
             self.logger.info(

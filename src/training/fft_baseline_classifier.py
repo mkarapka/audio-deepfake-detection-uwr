@@ -26,7 +26,8 @@ class FFTBaselineClassifier:
 
         for record_embeddings, mask in record_iterator.iterate_records(self.meta_dev, self.X_dev):
             record_preds = model.predict(record_embeddings)
-            results[mask] = record_preds
+            majority_voted_preds = majority_vote(record_preds)
+            results[mask] = majority_voted_preds
 
         if np.any(results == -1):
             self.logger.error("Some records were not predicted!")
@@ -61,9 +62,7 @@ class FFTBaselineClassifier:
         model = xgb.XGBClassifier(**params)
         model.fit(self.X_train, self.y_train)
         y_pred = self._predict_all_records(model) if is_partial else model.predict(self.X_dev)
-
         f1 = f1_score(self.y_dev, y_pred)
-        self.logger.info(classification_report(self.y_dev, y_pred, digits=4))
 
         return f1
 
@@ -77,6 +76,13 @@ class FFTBaselineClassifier:
 
         self.study = optuna.create_study(direction="maximize", sampler=optuna.samplers.RandomSampler())
         self.study.optimize(objective_with_data, n_trials=n_trials, gc_after_trial=True)
+        self.logger.info(
+            f"Classification report on dev set:\n{
+                classification_report(
+                    self.y_dev,
+                    self._predict_all_records(
+                        self.get_best_model()))}"
+        )
 
     def get_best_value(self):
         return self.study.best_value

@@ -17,15 +17,11 @@ class RandomMoreLikelyRealModel:
 
 
 class DummyModel:
-    def __init__(self):
-        self.counter = 0
+    def __init__(self, expected_results):
+        self.expected_results = expected_results
 
-    def predict(self, X):
-        self.counter += 1
-        if self.counter % 2 == 1:
-            print("Returning all ones", self.counter)
-            return np.array([1] * len(X))
-        return np.array([0] * len(X))
+    def predict(self, _):
+        return np.array(self.expected_results)
 
 
 class TestFFTBaselineClassifier:
@@ -71,7 +67,7 @@ class TestFFTBaselineClassifier:
         mapper = {0: 1, 1: 0, 2: 1}
         expected_res = [mapper[i] for i in self.meta_dev["unique_audio_id"]]
         print("Expected results:", expected_res)
-        model = DummyModel()
+        model = DummyModel(expected_results=expected_res)
         classifier = FFTBaselineClassifier(self.X_train, self.y_train, self.X_dev, self.meta_dev)
         all_preds = classifier._predict_all_records(model)
         print("Obtained results:", all_preds.tolist())

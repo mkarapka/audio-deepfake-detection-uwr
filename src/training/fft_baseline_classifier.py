@@ -24,8 +24,8 @@ class FFTBaselineClassifier:
         record_iterator = RecordIterator()
         results = np.full(self.X_dev.shape[0], -1)
 
-        for record_embeddings, mask in record_iterator.iterate_records(self.meta_dev, self.X_dev):
-            record_preds = model.predict(record_embeddings)
+        predictions = model.predict(self.X_dev)
+        for record_preds, mask in record_iterator.iterate_records(self.meta_dev, predictions):
             majority_voted_preds = majority_vote(record_preds)
             results[mask] = majority_voted_preds
 

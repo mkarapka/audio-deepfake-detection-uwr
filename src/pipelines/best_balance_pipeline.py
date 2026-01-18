@@ -12,10 +12,11 @@ from src.preprocessing.data_balancers.undersample_spoof_balancer import (
 )
 from src.preprocessing.feature_loader import FeatureLoader
 from src.training.fft_baseline_classifier import FFTBaselineClassifier
+from src.training.record_iterator import RecordIterator
 
 
 class BestBalancePipeline:
-    def __init__(self, RATIOS_CONFIG=consts.ratios_config, objective="f1"):
+    def __init__(self, RATIOS_CONFIG=consts.ratios_config, objective="f1", is_partial=False):
         self.trained_models = {}
         self.RATIOS_CONFIG = RATIOS_CONFIG
         self.objective = objective
@@ -23,6 +24,7 @@ class BestBalancePipeline:
         self.feature_loader = FeatureLoader(file_name=consts.feature_extracted)
         self.train_split = self.feature_loader.load_split_file(split_name="train")
         self.dev_split = self.feature_loader.load_split_file(split_name="dev")
+        self.is_partial = is_partial
 
     def _get_balancer_instance(self, balancer_type: str, ratio_args):
         if balancer_type == "undersample":
@@ -61,9 +63,9 @@ class BestBalancePipeline:
                 X_train=train_embeddings,
                 y_train=balanced_train_split["target"],
                 X_dev=dev_embeddings,
-                y_dev=dev_split["target"],
+                meta_dev=dev_split,
             )
-            clf.train(max_iter=max_iter, n_trials=n_trials)
+            clf.train(max_iter=max_iter, n_trials=n_trials, is_partial=self.is_partial)
 
             ratio_str = f"{ratio[0]}_{ratio[1]}" if oversampling_method == "mix" else f"{ratio}"
             self.trained_models[f"{oversampling_method}{ratio_str}"] = (clf.get_best_value(), clf.get_best_params())
@@ -73,14 +75,26 @@ class BestBalancePipeline:
         reduced_split = split.sample(n=half_size, random_state=42)
         return reduced_split
 
+    def _sample_fraction_uq_audios_from_split(self, split: pd.DataFrame, fraction=0.4) -> pd.DataFrame:
+        record_iterator = RecordIterator()
+        reduced_split = record_iterator.sample_fraction(metadata=split, fraction=fraction)
+        return reduced_split
+
     def train_all_balancers(self, reduce_factor=0.4, max_iter=200, n_trials=20):
-        reduced_train_split = self._sample_fraction_from_split(self.train_split, fraction=reduce_factor)
-        reduced_dev_split = self._sample_fraction_from_split(self.dev_split, fraction=reduce_factor)
+        if self.is_partial:
+            self.logger.info("Using unique audio ids to reduce dataset for partial training.")
+            reduced_train_split = self._sample_fraction_uq_audios_from_split(self.train_split, fraction=reduce_factor)
+            reduced_dev_split = self._sample_fraction_uq_audios_from_split(self.dev_split, fraction=reduce_factor)
+        else:
+            self.logger.info("Using random sampling to reduce dataset for partial training.")
+            reduced_train_split = self._sample_fraction_from_split(self.train_split, fraction=reduce_factor)
+            reduced_dev_split = self._sample_fraction_from_split(self.dev_split, fraction=reduce_factor)
 
         for balancer_type in self.RATIOS_CONFIG.keys():
             self.logger.info(
                 f"Training models with balancer: {balancer_type},and reduced size by {
-                    len(reduced_train_split)}/{len(self.train_split):.2f}"
+                    len(reduced_train_split)
+                }/{len(self.train_split):.2f}"
             )
             self._train_clf_on_resampled_data(
                 oversampling_method=balancer_type,

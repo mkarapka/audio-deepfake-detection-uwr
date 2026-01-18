@@ -31,8 +31,12 @@ def load_audio_dataset_by_streaming(dataset: str, config: str | None, split: str
     return load_dataset(dataset, config, split=split, streaming=True)
 
 
-def get_device():
-    return "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+def get_device(include_mps: bool = True) -> str:
+    if torch.cuda.is_available():
+        return "cuda"
+    if include_mps and torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
 
 
 def measure_time(func):

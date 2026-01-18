@@ -3,25 +3,45 @@ import optuna
 import xgboost as xgb
 from sklearn.metrics import f1_score
 
-from src.common.basic_functions import setup_logger, get_device
+from src.common.basic_functions import get_device, setup_logger
+from src.training.record_iterator import RecordIterator
 
 
 class FFTBaselineClassifier:
-    def __init__(self, X_train, y_train, X_dev, y_dev):
+    def __init__(self, X_train, y_train, X_dev, meta_dev):
         self.logger = setup_logger(self.__class__.__name__, log_to_console=True)
         self.X_train = X_train
         self.y_train = (y_train == "bonafide").astype(int)
         self.X_dev = X_dev
-        self.y_dev = (y_dev == "bonafide").astype(int)
+        self.y_dev = (meta_dev["target"] == "bonafide").astype(int)
+        self.meta_dev = meta_dev
 
-    def objective_f1(self, trial, X_train, y_train, X_dev, y_dev, max_iter=120):
-        n_neg = np.sum(y_train == 0)
-        n_pos = np.sum(y_train == 1)
+    def _predict_all_records(self, model):
+        def majority_vote(predictions: np.ndarray) -> list[int]:
+            vote = int((predictions.mean() >= 0.5))
+            return [vote] * len(predictions)
+
+        record_iterator = RecordIterator()
+        results = np.full(self.X_dev.shape[0], -1)
+
+        for record_embeddings, mask in record_iterator.iterate_records(self.meta_dev, self.X_dev):
+            record_preds = model.predict(record_embeddings)
+            results[mask] = record_preds
+
+        if np.any(results == -1):
+            self.logger.error("Some records were not predicted!")
+        return results
+
+    def objective_f1(self, trial, max_iter, is_partial):
+        n_neg = np.sum(self.y_train == 0)
+        n_pos = np.sum(self.y_train == 1)
         scale_pos_weight = n_neg / n_pos
         self.logger.info(f"Scale pos weight: {scale_pos_weight}")
         self.logger.info(f"Number of positive samples: {n_pos}, Number of negative samples: {n_neg}")
 
-        device = get_device()
+        device = get_device(include_mps=False)
+        scale_tree_method = "gpu_hist" if device == "cuda" else "hist"
+        self.logger.info(f"Using tree method: {scale_tree_method}")
         self.logger.info(f"Using device: {device}")
 
         params = {
@@ -34,27 +54,23 @@ class FFTBaselineClassifier:
             "gamma": trial.suggest_float("gamma", 1e-8, 10.0, log=True),
             "n_estimators": trial.suggest_int("n_estimators", 100, 1000),
             "scale_pos_weight": scale_pos_weight,
-            "tree_method": "hist",
+            "tree_method": scale_tree_method,
             "device": device,
         }
 
         model = xgb.XGBClassifier(**params)
-        model.fit(X_train, y_train)
-
-        y_pred = model.predict(X_dev)
-        f1 = f1_score(y_dev, y_pred)
+        model.fit(self.X_train, self.y_train)
+        y_pred = self._predict_all_records(model) if is_partial else model.predict(self.X_dev)
+        f1 = f1_score(self.y_dev, y_pred)
 
         return f1
 
-    def train(self, n_trials=20, max_iter=120):
+    def train(self, n_trials, max_iter, is_partial):
         def objective_with_data(trial):
             return self.objective_f1(
                 trial,
-                X_train=self.X_train,
-                y_train=self.y_train,
-                X_dev=self.X_dev,
-                y_dev=self.y_dev,
                 max_iter=max_iter,
+                is_partial=is_partial,
             )
 
         self.study = optuna.create_study(direction="maximize", sampler=optuna.samplers.RandomSampler())

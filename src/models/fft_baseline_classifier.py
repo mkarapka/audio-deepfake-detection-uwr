@@ -132,6 +132,6 @@ class FFTBaselineClassifier:
             y_pred = cp.asnumpy(y_pred)
         self.logger.info(
             f"Classification report on dev set:\n{
-                classification_report(self.y_dev, y_pred, target_names=['spoof', 'bonafide'])
+                classification_report(self.y_dev, y_pred, target_names=['spoof', 'bonafide'], digits=4)
             }"
         )

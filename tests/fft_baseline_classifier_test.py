@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from src.training.fft_baseline_classifier import FFTBaselineClassifier
+from src.models.fft_baseline_classifier import FFTBaselineClassifier
 
 
 class RandomModel:

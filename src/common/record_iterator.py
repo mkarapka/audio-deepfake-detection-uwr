@@ -20,11 +20,11 @@ class RecordIterator:
 
         return new_metadata
 
-    def iterate_records(self, metadata: pd.DataFrame, predictions: np.ndarray):
-        unique_records_ids = metadata["unique_audio_id"].unique()
+    def iterate_records(self, uq_audio_ids: pd.Series, predictions: np.ndarray):
+        unique_records_ids = uq_audio_ids.unique()
 
         for unique_audio_id in unique_records_ids:
-            mask = metadata["unique_audio_id"] == unique_audio_id
+            mask = uq_audio_ids == unique_audio_id
             record_predictions = predictions[mask]
 
             yield record_predictions, mask

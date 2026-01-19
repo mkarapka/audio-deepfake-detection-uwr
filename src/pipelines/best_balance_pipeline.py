@@ -2,6 +2,8 @@ import pandas as pd
 
 from src.common.basic_functions import setup_logger
 from src.common.constants import Constants as consts
+from src.common.record_iterator import RecordIterator
+from src.models.fft_baseline_classifier import FFTBaselineClassifier
 from src.preprocessing.collector import Collector
 from src.preprocessing.data_balancers.mix_blancer import MixBalancer
 from src.preprocessing.data_balancers.oversample_real_balancer import (
@@ -11,12 +13,15 @@ from src.preprocessing.data_balancers.undersample_spoof_balancer import (
     UndersampleSpoofBalancer,
 )
 from src.preprocessing.feature_loader import FeatureLoader
-from src.models.fft_baseline_classifier import FFTBaselineClassifier
-from src.common.record_iterator import RecordIterator
 
 
 class BestBalancePipeline:
-    def __init__(self, RATIOS_CONFIG=consts.ratios_config, objective="f1", is_partial=False):
+    def __init__(
+        self,
+        RATIOS_CONFIG=consts.ratios_config,
+        objective="f1",
+        is_chunk_prediction=False,
+    ):
         self.trained_models = {}
         self.RATIOS_CONFIG = RATIOS_CONFIG
         self.objective = objective
@@ -24,7 +29,7 @@ class BestBalancePipeline:
         self.feature_loader = FeatureLoader(file_name=consts.feature_extracted)
         self.train_split = self.feature_loader.load_split_file(split_name="train")
         self.dev_split = self.feature_loader.load_split_file(split_name="dev")
-        self.is_partial = is_partial
+        self.is_chunk_prediction = is_chunk_prediction
 
     def _get_balancer_instance(self, balancer_type: str, ratio_args):
         if balancer_type == "undersample":
@@ -45,7 +50,6 @@ class BestBalancePipeline:
         oversampling_method: str,
         train_split: pd.DataFrame,
         dev_split: pd.DataFrame,
-        max_iter=150,
         n_trials=10,
     ):
         for ratio in self.RATIOS_CONFIG[oversampling_method]:
@@ -60,15 +64,21 @@ class BestBalancePipeline:
             dev_embeddings = self.feature_loader.load_embeddings_from_metadata(dev_split)
 
             clf = FFTBaselineClassifier(
+                is_chunk_prediction=self.is_chunk_prediction, dev_uq_audio_ids=dev_split["unique_audio_id"]
+            )
+            clf.optuna_fit(
+                n_trials=n_trials,
                 X_train=train_embeddings,
                 y_train=balanced_train_split["target"],
                 X_dev=dev_embeddings,
-                meta_dev=dev_split,
+                y_dev=dev_split["target"],
             )
-            clf.train(max_iter=max_iter, n_trials=n_trials, is_partial=self.is_partial)
 
             ratio_str = f"{ratio[0]}_{ratio[1]}" if oversampling_method == "mix" else f"{ratio}"
-            self.trained_models[f"{oversampling_method}{ratio_str}"] = (clf.get_best_value(), clf.get_best_params())
+            self.trained_models[f"{oversampling_method}{ratio_str}"] = (
+                clf.get_best_value(),
+                clf.get_best_params(),
+            )
 
     def _sample_fraction_from_split_basic(self, split: pd.DataFrame, frac=0.4, rs=42) -> pd.DataFrame:
         half_size = int(len(split) * frac)
@@ -84,8 +94,8 @@ class BestBalancePipeline:
             reduced_split = reduced_split.sample(frac=1, random_state=rs)
         return reduced_split
 
-    def train_all_balancers(self, reduce_factor=0.4, max_iter=200, n_trials=20):
-        if self.is_partial:
+    def train_all_balancers(self, reduce_factor=0.4, n_trials=20):
+        if self.is_chunk_prediction:
             self.logger.info("Using unique audio ids to reduce dataset for partial training.")
             reduced_train_split = self._sample_fraction_uq_audios_from_split(
                 self.train_split, frac=reduce_factor, is_train_split=True
@@ -106,7 +116,6 @@ class BestBalancePipeline:
                 oversampling_method=balancer_type,
                 train_split=reduced_train_split,
                 dev_split=reduced_dev_split,
-                max_iter=max_iter,
                 n_trials=n_trials,
             )
 

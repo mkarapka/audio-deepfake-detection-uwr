@@ -26,7 +26,7 @@ class TestRecordIterator:
     def test_iterate_records(self):
         iterator = RecordIterator()
         count = 0
-        for record_embeddings, mask in iterator.iterate_records(self.metadata['unique_audio_id'], self.embeddings):
+        for record_embeddings, mask in iterator.iterate_records(self.metadata["unique_audio_id"], self.embeddings):
             record_metadata = self.metadata[mask]
             assert record_metadata.shape[0] == record_embeddings.shape[0]
             assert all(record_metadata["unique_audio_id"] == record_metadata.iloc[0]["unique_audio_id"])

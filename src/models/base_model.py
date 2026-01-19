@@ -2,7 +2,8 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from src.common.basic_functions import get_device, setup_logger
+from src.common.basic_functions import get_device
+from src.common.logger import setup_logger
 
 try:
     import cupy as cp
@@ -16,11 +17,14 @@ class BaseModel(ABC):
     def __init__(self, model_name, include_mps=False):
         self.model_name = model_name
         self.eval_model = None
+        self.study = None
+        self.best_params = None
         self.device = get_device(include_mps=include_mps)
 
         self.logger = setup_logger(f"audio_deepfake.{self.model_name}", log_to_console=True)
         self.logger.info(f"Initialized model: {self.model_name}")
         self.logger.info(f"Using device: {self.device}")
+
         if self._is_cupy_available():
             self.logger.info("CuPy is available for GPU acceleration")
         else:
@@ -29,11 +33,26 @@ class BaseModel(ABC):
     def _is_cupy_available(self):
         return CUPY_AVAILABLE
 
-    def _convert_to_cupy(self, np_data: np.ndarray):
+    def _to_cupy(self, np_data: np.ndarray):
         if self._is_cupy_available():
             return cp.asarray(np_data)
         self.logger.warning("CuPy is not available. Returning original NumPy array.")
         return np_data
+
+    def _to_numpy(self, data):
+        return cp.asnumpy(data)
+
+    def _is_cupy_array(self, data):
+        if self._is_cupy_available():
+            return isinstance(data, cp.ndarray)
+        return False
+
+    def get_best_value(self):
+        if self.study is not None:
+            return self.study.best_value
+        else:
+            self.logger.warning("Study is not initialized. No best value available.")
+            return None
 
     @abstractmethod
     def objective(self, trial, params):
@@ -45,26 +64,28 @@ class BaseModel(ABC):
         """
 
     @abstractmethod
-    def set_params_for_eval(self, params):
-        """Set parameters for self.eval_model
-
-        Args:
-            params (any): Parameters to set for evaluation
-        """
-
-    @abstractmethod
-    def optuna_fit(self, n_trials: int):
+    def optuna_fit(self, n_trials: int, X_train, y_train):
         """Optimize model using Optuna
         Args:
             n_trials (int): Number of Optuna trials
+            X_train (np.ndarray | cp.asarray | torch.Tensor): Training data features
+            y_train (np.ndarray | cp.asarray | torch.Tensor): Training data labels
         """
 
     @abstractmethod
-    def get_best_model(self):
-        """Get the best evaluation model after optuna optimization
-
+    def get_model(self, params):
+        """Get evaluation model with given parameters
+        Args:
+            params (dict): Model parameters
         Returns:
-            any: The best evaluation model
+            any: Evaluation model
+        """
+
+    @abstractmethod
+    def get_best_params(self):
+        """Get best parameters found by Optuna
+        Returns:
+            dict: Best parameters
         """
 
     @abstractmethod
@@ -77,10 +98,10 @@ class BaseModel(ABC):
         """
 
     @abstractmethod
-    def predict(self, y_test):
+    def predict(self, X_test):
         """Predict using eval model
         Args:
-            y_test (np.ndarray | cp.asarray | torch.Tensor): Test data features
+            X_test (np.ndarray | cp.asarray | torch.Tensor): Test data features
         Returns:
             np.ndarray | cp.asarray | torch.Tensor: Predictions
         """

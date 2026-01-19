@@ -7,18 +7,18 @@ class TestBestBalancePipeline:
         pipeline = BestBalancePipeline(
             RATIOS_CONFIG=consts.only_mix_equal_ratio_config,
             objective="f1",
-            is_partial=True,
+            is_chunk_prediction=True,
         )
         assert pipeline.RATIOS_CONFIG == consts.only_mix_equal_ratio_config
         assert pipeline.objective == "f1"
-        assert pipeline.is_partial is True
+        assert pipeline.is_chunk_prediction is True
         print("BestBalancePipeline initialization test passed.")
 
     def test_sample_fraction_uq_audios_from_split(self, is_train, fraction=0.1, check_size=20):
         pipeline = BestBalancePipeline(
             RATIOS_CONFIG=consts.only_mix_equal_ratio_config,
             objective="f1",
-            is_partial=True,
+            is_chunk_prediction=True,
         )
         split = pipeline.train_split if is_train else pipeline.dev_split
         sampled_split = pipeline._sample_fraction_uq_audios_from_split(
@@ -27,7 +27,8 @@ class TestBestBalancePipeline:
 
         print(
             f"Fraction of metadata after sampling, column 'unique_audio_id': {
-                sampled_split['unique_audio_id'].head(10)}"
+                sampled_split['unique_audio_id'].head(10)
+            }"
         )
         if is_train:
             assert sampled_split["unique_audio_id"].iloc[:check_size].nunique() >= int(check_size * 0.8)
@@ -38,14 +39,15 @@ class TestBestBalancePipeline:
         pipeline = BestBalancePipeline(
             RATIOS_CONFIG=consts.only_mix_equal_ratio_config,
             objective="f1",
-            is_partial=True,
+            is_chunk_prediction=True,
         )
         split = pipeline.train_split if is_train else pipeline.dev_split
         sampled_split = pipeline._sample_fraction_from_split_basic(split=split, frac=fraction)
 
         print(
             f"Fraction of metadata after basic sampling, column 'unique_audio_id': {
-                sampled_split['unique_audio_id'].head(10)}"
+                sampled_split['unique_audio_id'].head(10)
+            }"
         )
         assert sampled_split["unique_audio_id"].iloc[:check_size].nunique() >= int(check_size * 0.8)
 

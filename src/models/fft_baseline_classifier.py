@@ -1,67 +1,51 @@
 import numpy as np
 import optuna
 import xgboost as xgb
-from sklearn.metrics import classification_report, f1_score
+from sklearn.metrics import f1_score
 
-from src.common.basic_functions import get_device, setup_logger
+from src.common.logger import raise_error_logger
 from src.common.record_iterator import RecordIterator
-
-try:
-    import cupy as cp
-
-    CUPY_AVAILABLE = True
-except ImportError:
-    CUPY_AVAILABLE = False
+from src.models.base_model import BaseModel
+from sklearn.metrics import classification_report
 
 
-class FFTBaselineClassifier:
-    def __init__(self, X_train, y_train, X_dev, meta_dev):
-        self.logger = setup_logger(self.__class__.__name__, log_to_console=True)
-        is_gpu_use = get_device() == "cuda"
-        if is_gpu_use and CUPY_AVAILABLE:
-            self.logger.info("Using CuPy for GPU acceleration")
-            self.X_train = cp.asarray(X_train)
-            self.y_train = cp.asarray((y_train == "bonafide").astype(int))
-            self.X_dev = cp.asarray(X_dev)
-        else:
-            self.logger.info("Using NumPy (CPU)")
-            self.X_train = X_train
-            self.y_train = (y_train == "bonafide").astype(int)
-            self.X_dev = X_dev
+class FFTBaselineClassifier(BaseModel):
+    def __init__(self, is_chunk_prediction: bool, dev_uq_audio_ids: str | None = None):
+        super().__init__(model_name=self.__class__.__name__)
+        self.is_chunk_prediction = is_chunk_prediction
+        self.dev_uq_audio_ids = dev_uq_audio_ids
 
-        self.y_dev = (meta_dev["target"] == "bonafide").astype(int)
-        self.meta_dev = meta_dev
-        self.eval_model = None
-
-    def _predict_all_records(self, model):
-        def majority_vote(predictions: np.ndarray) -> list[int]:
-            vote = int((predictions.mean() >= 0.5))
-            return [vote] * len(predictions)
-
-        record_iterator = RecordIterator()
-        results = np.full(self.X_dev.shape[0], -1)
-
-        predictions = model.predict(self.X_dev)
-        for record_preds, mask in record_iterator.iterate_records(self.meta_dev, predictions):
-            majority_voted_preds = majority_vote(record_preds)
-            results[mask] = majority_voted_preds
-
-        if np.any(results == -1):
-            self.logger.error("Some records were not predicted!")
-        return results
-
-    def objective_f1(self, trial, max_iter, is_partial):
-        n_neg = np.sum(self.y_train == 0)
-        n_pos = np.sum(self.y_train == 1)
+    def _calculate_scale_pos_weight(self, y_train):
+        n_neg = np.sum(y_train == 0)
+        n_pos = np.sum(y_train == 1)
         scale_pos_weight = n_neg / n_pos
+
         self.logger.info(f"Scale pos weight: {scale_pos_weight}")
-        self.logger.info(f"Number of positive samples: {n_pos}, Number of negative samples: {n_neg}")
+        self.logger.info(f"Positive samples: {n_pos}, Negative samples: {n_neg}")
 
-        device = get_device(include_mps=False)
-        scale_tree_method = "hist"
-        self.logger.info(f"Using tree method: {scale_tree_method}")
-        self.logger.info(f"Using device: {device}")
+        return scale_pos_weight
 
+    def _majority_vote(self, predictions: np.ndarray) -> list[int]:
+        vote = int((predictions.mean() >= 0.5))
+        return [vote] * len(predictions)
+
+    def _convert_labels_to_ints(self, y: np.ndarray, label: str):
+        return (y == label).astype(int)
+
+    def _log_classification_report(self, y_true, y_pred, n_digits=4):
+        if self._is_cupy_array(y_true):
+            y_true = self._to_numpy(y_true)
+        if self._is_cupy_array(y_pred):
+            y_pred = self._to_numpy(y_pred)
+
+        report = classification_report(y_true, y_pred, digits=n_digits)
+        self.logger.info(f"Classification Report:\n{report}")
+
+    def get_model(self, params):
+        params["device"] = self.device
+        return xgb.XGBClassifier(**params)
+
+    def objective(self, trial, X_train, y_train, X_dev, y_dev, scale_pos_weight):
         params = {
             "max_depth": trial.suggest_int("max_depth", 3, 10),
             "learning_rate": trial.suggest_float("learning_rate", 1e-4, 0.3, log=True),
@@ -72,66 +56,100 @@ class FFTBaselineClassifier:
             "gamma": trial.suggest_float("gamma", 1e-8, 10.0, log=True),
             "n_estimators": trial.suggest_int("n_estimators", 100, 1000),
             "scale_pos_weight": scale_pos_weight,
-            "tree_method": scale_tree_method,
-            "device": device,
+            "tree_method": "hist",
+            "device": self.device,
         }
 
-        model = xgb.XGBClassifier(**params)
-        model.fit(self.X_train, self.y_train)
+        self.set_model(params)
+        self.fit(X_train, y_train)
 
-        y_pred = self._predict_all_records(model) if is_partial else model.predict(self.X_dev)
-        if isinstance(y_pred, cp.ndarray):
-            y_pred = cp.asnumpy(y_pred)
+        y_pred = self.predict(X_dev)
+        if self._is_cupy_array(y_dev):
+            y_dev = self._to_numpy(y_dev)
+        if self._is_cupy_array(y_pred):
+            y_pred = self._to_numpy(y_pred)
 
-        return f1_score(self.y_dev, y_pred)
+        return f1_score(y_true=y_dev, y_pred=y_pred)
 
-    def train(self, n_trials, max_iter, is_partial):
-        def objective_with_data(trial):
-            return self.objective_f1(
-                trial,
-                max_iter=max_iter,
-                is_partial=is_partial,
-            )
+    def optuna_fit(self, n_trials, X_train, y_train, X_dev, y_dev):
+        y_train = self._convert_labels_to_ints(y_train, label="bonafide")
+        y_dev = self._convert_labels_to_ints(y_dev, label="bonafide")
+        if self._is_cupy_available():
+            X_train = self._to_cupy(X_train)
+            y_train = self._to_cupy(y_train)
+            X_dev = self._to_cupy(X_dev)
+            y_dev = self._to_cupy(y_dev)
 
-        self.study = optuna.create_study(direction="maximize", sampler=optuna.samplers.RandomSampler())
-        self.study.optimize(objective_with_data, n_trials=n_trials, gc_after_trial=True)
-
-        best_model = self.get_best_model()
-        y_pred = self._predict_all_records(best_model) if is_partial else best_model.predict(self.X_dev)
-        if isinstance(y_pred, cp.ndarray):
-            y_pred = cp.asnumpy(y_pred)
-        self.logger.info(
-            f"Classification report on dev set:\n{
-                classification_report(self.y_dev, y_pred, target_names=['spoof', 'bonafide'])
-            }"
+        scale_pos_weight = self._calculate_scale_pos_weight(y_train=y_train)
+        self.study = optuna.create_study(
+            direction="maximize", sampler=optuna.samplers.RandomSampler()
+        )
+        self.study.optimize(
+            lambda trial: self.objective(
+                trial, X_train, y_train, X_dev, y_dev, scale_pos_weight
+            ),
+            n_trials=n_trials,
+            gc_after_trial=True,
         )
 
-    def get_best_model(self):
-        best_params = self.study.best_params
-        device = get_device(include_mps=False)
-        best_params["device"] = device
-        best_model = xgb.XGBClassifier(**best_params)
-        best_model.fit(self.X_train, self.y_train)
-        return best_model
+        self.best_params = self.study.best_params
+        self.best_params["scale_pos_weight"] = scale_pos_weight
 
-    def get_best_value(self):
-        return self.study.best_value
+        best_model = self.get_model(self.best_params)
+        best_model.fit(X_train, y_train)
+        self.eval_model = best_model
+
+        self._log_classification_report(y_true=y_dev, y_pred=self.predict(X_dev))
 
     def get_best_params(self):
-        return self.study.best_params
+        if self.best_params is not None:
+            return self.best_params
+        else:
+            self.logger.warning("Best parameters are not set yet.")
+            return None
 
-    def set_params(self, params):
-        self.eval_model = xgb.XGBClassifier(**params)
-        self.eval_model.fit(self.X_train, self.y_train)
+    def get_best_model(self):
+        if self.eval_model is not None:
+            return self.eval_model
+        else:
+            raise_error_logger(
+                self.logger,
+                "Model is not trained yet. Call optuna_fit() before get_best_model().",
+            )
 
-    def evaluate(self):
+    def set_model(self, params):
+        self.eval_model = self.get_model(params)
+
+    def fit(self, X_train, y_train):
         if self.eval_model is None:
-            self.logger.error("Evaluation model is not set. Please set the model parameters first.")
-        y_pred = self._predict_all_records(self.eval_model)
-        if isinstance(y_pred, cp.ndarray):
-            y_pred = cp.asnumpy(y_pred)
-        self.logger.info(
-            f"Classification report on dev set:\n{
-                classification_report(self.y_dev, y_pred, target_names=['spoof', 'bonafide'], digits=4)
-            }"
-        )
+            raise_error_logger(
+                self.logger, "Model is not set. Call set_model() before fit()."
+            )
+        if self._is_cupy_available():
+            X_train = self._to_cupy(X_train)
+            y_train = self._to_cupy(y_train)
+
+        self.eval_model.fit(X_train, y_train)
+
+    def predict(self, X):
+        if self.eval_model is None:
+            raise_error_logger(
+                self.logger, "Model is not trained. Call fit() before predict()."
+            )
+
+        y_pred = self.eval_model.predict(X)
+        if self.is_chunk_prediction and self.dev_uq_audio_ids is not None:
+            record_iterator = RecordIterator()
+            predictions = np.full(X.shape[0], -1)
+            for record_preds, mask in record_iterator.iterate_records(
+                self.dev_uq_audio_ids, y_pred
+            ):
+                majority_voted_preds = self._majority_vote(record_preds)
+                predictions[mask] = majority_voted_preds
+        else:
+            predictions = y_pred
+
+        if np.any(predictions == -1):
+            raise_error_logger(self.logger, "Some records were not predicted!")
+
+        return predictions

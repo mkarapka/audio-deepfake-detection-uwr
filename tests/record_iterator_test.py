@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from src.training.record_iterator import RecordIterator
+from src.common.record_iterator import RecordIterator
 
 
 class TestRecordIterator:

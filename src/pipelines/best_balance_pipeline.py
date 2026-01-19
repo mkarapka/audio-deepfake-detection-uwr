@@ -12,7 +12,7 @@ from src.preprocessing.data_balancers.undersample_spoof_balancer import (
 )
 from src.preprocessing.feature_loader import FeatureLoader
 from src.models.fft_baseline_classifier import FFTBaselineClassifier
-from src.training.record_iterator import RecordIterator
+from src.common.record_iterator import RecordIterator
 
 
 class BestBalancePipeline:

@@ -4,7 +4,7 @@ import xgboost as xgb
 from sklearn.metrics import classification_report, f1_score
 
 from src.common.basic_functions import get_device, setup_logger
-from src.training.record_iterator import RecordIterator
+from src.common.record_iterator import RecordIterator
 
 try:
     import cupy as cp

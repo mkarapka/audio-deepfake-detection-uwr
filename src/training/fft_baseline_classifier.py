@@ -31,6 +31,7 @@ class FFTBaselineClassifier:
 
         self.y_dev = (meta_dev["target"] == "bonafide").astype(int)
         self.meta_dev = meta_dev
+        self.eval_model = None
 
     def _predict_all_records(self, model):
         def majority_vote(predictions: np.ndarray) -> list[int]:
@@ -118,3 +119,19 @@ class FFTBaselineClassifier:
 
     def get_best_params(self):
         return self.study.best_params
+
+    def set_params(self, params):
+        self.eval_model = xgb.XGBClassifier(**params)
+        self.eval_model.fit(self.X_train, self.y_train)
+
+    def evaluate(self):
+        if self.eval_model is None:
+            self.logger.error("Evaluation model is not set. Please set the model parameters first.")
+        y_pred = self._predict_all_records(self.eval_model)
+        if isinstance(y_pred, cp.ndarray):
+            y_pred = cp.asnumpy(y_pred)
+        self.logger.info(
+            f"Classification report on dev set:\n{
+                classification_report(self.y_dev, y_pred, target_names=['spoof', 'bonafide'])
+            }"
+        )

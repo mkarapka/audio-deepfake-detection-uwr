@@ -104,3 +104,11 @@ class Constants:
 
     only_mix_equal_ratio_config = {"mix": [[0.5, 1.0]]}
     mix_and_unbalanced_config = {"mix": [[0.5, 1.0]], "unbalanced": [None]}
+
+    umap_20d_config = {
+        "n_components": 20,
+        "n_neighbors": 30,
+        "min_dist": 0.1,
+        "metric": "cosine",
+        "random_state": 42,
+    }

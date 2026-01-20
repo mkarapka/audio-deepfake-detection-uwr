@@ -122,7 +122,7 @@ class BestBalancePipeline:
     def create_dataframe_and_save(self, file_name: str):
         df = {"model_name": [], f"{self.objective}": [], "best_params": []}
         for model_name, (objective, params) in self.trained_models.items():
-            self.logger.info(f"Model: {model_name}, Recall: {objective}, Params: {params}")
+            self.logger.info(f"Model: {model_name}, {self.objective}: {objective}, Params: {params}")
             df["model_name"].append(model_name)
             df[f"{self.objective}"].append(objective)
             df["best_params"].append(params)
@@ -135,10 +135,10 @@ class BestBalancePipeline:
         best_objective = -1.0
 
         for model_name, (objective, params) in self.trained_models.items():
-            self.logger.info(f"Model: {model_name}, Recall: {objective}, Params: {params}")
+            self.logger.info(f"Model: {model_name}, {self.objective}: {objective}, Params: {params}")
             if objective > best_objective:
                 best_objective = objective
                 best_model_name = model_name
 
-        self.logger.info(f"Best model is {best_model_name} with Recall: {best_objective}")
+        self.logger.info(f"Best model is {best_model_name} with {self.objective}: {best_objective}")
         return best_model_name, best_objective

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from src.common.basic_functions import setup_logger
 from src.common.constants import Constants as consts
 from src.preprocessing.collector import Collector
@@ -25,6 +27,16 @@ class SetAudioIDsPipeline:
         self.logger.info(f"Unique audio IDs set for split: {split_name}")
         return modified_metadata
 
+    def _set_unique_audio_ids_for_main_metadata(self):
+        self.logger.info("Loading main metadata")
+        metadata = self.feature_loader.load_metadata_file(Path("!#"))
+
+        self.logger.info("Setting unique audio IDs for main metadata")
+        modified_metadata = self.uq_audio_id_mapper.transform(metadata=metadata)
+
+        self.logger.info("Unique audio IDs set for main metadata")
+        return modified_metadata
+
     def run(self):
         data = []
         for split_name in self.SPLITS:
@@ -33,3 +45,9 @@ class SetAudioIDsPipeline:
 
         self.logger.info("SetAudioIDsPipeline completed, saving results.")
         self.collector.transform_splits(data=data, splits=self.SPLITS)
+
+    def run_on_main_metadata(self):
+        modified_metadata = self._set_unique_audio_ids_for_main_metadata()
+
+        self.logger.info("SetAudioIDsPipeline on main metadata completed, saving results.")
+        self.collector._write_data_to_csv(data=modified_metadata)

@@ -33,8 +33,8 @@ class FeatureLoader(BasePreprocessor):
         speakers_ids_df = pd.read_csv(speakers_ids_path)
         return speakers_ids_df
 
-    def load_metadata_file(self, file_path: Path, index_col: int | None = None) -> pd.DataFrame:
-        if file_path.exists() is False:
+    def load_metadata_file(self, file_path: Path | None = None, index_col: int | None = None) -> pd.DataFrame:
+        if file_path is None:
             file_path = self.meta
         self.logger.info(f"Loading metadata from {file_path}")
         metadata_df = pd.read_csv(file_path, index_col=index_col)
@@ -59,5 +59,6 @@ class FeatureLoader(BasePreprocessor):
 
         loaded_meta = self.load_metadata_file(file_path, index_col=index_col)
         loaded_embeddings = self.load_embeddings_from_metadata(loaded_meta)
+        loaded_meta = loaded_meta.reset_index(drop=True)
 
         return loaded_meta, loaded_embeddings

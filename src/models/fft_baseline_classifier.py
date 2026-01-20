@@ -1,12 +1,11 @@
 import numpy as np
 import optuna
 import xgboost as xgb
-from sklearn.metrics import f1_score
+from sklearn.metrics import classification_report, f1_score
 
 from src.common.logger import raise_error_logger
 from src.common.record_iterator import RecordIterator
 from src.models.base_model import BaseModel
-from sklearn.metrics import classification_report
 
 
 class FFTBaselineClassifier(BaseModel):
@@ -14,16 +13,6 @@ class FFTBaselineClassifier(BaseModel):
         super().__init__(model_name=self.__class__.__name__)
         self.is_chunk_prediction = is_chunk_prediction
         self.dev_uq_audio_ids = dev_uq_audio_ids
-
-    def _calculate_scale_pos_weight(self, y_train):
-        n_neg = np.sum(y_train == 0)
-        n_pos = np.sum(y_train == 1)
-        scale_pos_weight = n_neg / n_pos
-
-        self.logger.info(f"Scale pos weight: {scale_pos_weight}")
-        self.logger.info(f"Positive samples: {n_pos}, Negative samples: {n_neg}")
-
-        return scale_pos_weight
 
     def _majority_vote(self, predictions: np.ndarray) -> list[int]:
         vote = int((predictions.mean() >= 0.5))
@@ -45,7 +34,7 @@ class FFTBaselineClassifier(BaseModel):
         params["device"] = self.device
         return xgb.XGBClassifier(**params)
 
-    def objective(self, trial, X_train, y_train, X_dev, y_dev, scale_pos_weight):
+    def objective(self, trial, X_train, y_train, X_dev, y_dev):
         params = {
             "max_depth": trial.suggest_int("max_depth", 3, 10),
             "learning_rate": trial.suggest_float("learning_rate", 1e-4, 0.3, log=True),
@@ -55,7 +44,7 @@ class FFTBaselineClassifier(BaseModel):
             "alpha": trial.suggest_float("alpha", 1e-8, 10.0, log=True),
             "gamma": trial.suggest_float("gamma", 1e-8, 10.0, log=True),
             "n_estimators": trial.suggest_int("n_estimators", 100, 1000),
-            "scale_pos_weight": scale_pos_weight,
+            "scale_pos_weight": trial.suggest_float("scale_pos_weight", 1e-8, 25, log=True),
             "tree_method": "hist",
             "device": self.device,
         }
@@ -80,20 +69,14 @@ class FFTBaselineClassifier(BaseModel):
             X_dev = self._to_cupy(X_dev)
             y_dev = self._to_cupy(y_dev)
 
-        scale_pos_weight = self._calculate_scale_pos_weight(y_train=y_train)
-        self.study = optuna.create_study(
-            direction="maximize", sampler=optuna.samplers.RandomSampler()
-        )
+        self.study = optuna.create_study(direction="maximize", sampler=optuna.samplers.RandomSampler())
         self.study.optimize(
-            lambda trial: self.objective(
-                trial, X_train, y_train, X_dev, y_dev, scale_pos_weight
-            ),
+            lambda trial: self.objective(trial, X_train, y_train, X_dev, y_dev),
             n_trials=n_trials,
             gc_after_trial=True,
         )
 
         self.best_params = self.study.best_params
-        self.best_params["scale_pos_weight"] = scale_pos_weight
 
         best_model = self.get_model(self.best_params)
         best_model.fit(X_train, y_train)
@@ -122,10 +105,8 @@ class FFTBaselineClassifier(BaseModel):
 
     def fit(self, X_train, y_train):
         if self.eval_model is None:
-            raise_error_logger(
-                self.logger, "Model is not set. Call set_model() before fit()."
-            )
-        if self._is_cupy_available():
+            raise_error_logger(self.logger, "Model is not set. Call set_model() before fit().")
+        if self._is_cupy_available() and not self._is_cupy_array(X_train) and not self._is_cupy_array(y_train):
             X_train = self._to_cupy(X_train)
             y_train = self._to_cupy(y_train)
 
@@ -133,17 +114,13 @@ class FFTBaselineClassifier(BaseModel):
 
     def predict(self, X):
         if self.eval_model is None:
-            raise_error_logger(
-                self.logger, "Model is not trained. Call fit() before predict()."
-            )
+            raise_error_logger(self.logger, "Model is not trained. Call fit() before predict().")
 
         y_pred = self.eval_model.predict(X)
         if self.is_chunk_prediction and self.dev_uq_audio_ids is not None:
             record_iterator = RecordIterator()
             predictions = np.full(X.shape[0], -1)
-            for record_preds, mask in record_iterator.iterate_records(
-                self.dev_uq_audio_ids, y_pred
-            ):
+            for record_preds, mask in record_iterator.iterate_records(self.dev_uq_audio_ids, y_pred):
                 majority_voted_preds = self._majority_vote(record_preds)
                 predictions[mask] = majority_voted_preds
         else:

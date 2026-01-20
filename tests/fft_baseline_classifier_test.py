@@ -42,9 +42,7 @@ class TestFFTBaselineClassifier:
     def test_majority_vote(self):
         np.random.seed(42)
         self.meta_dev.copy()
-        classifier = FFTBaselineClassifier(
-            is_chunk_prediction=True, dev_uq_audio_ids=self.meta_dev["unique_audio_id"]
-        )
+        classifier = FFTBaselineClassifier(is_chunk_prediction=True, dev_uq_audio_ids=self.meta_dev["unique_audio_id"])
         model = RandomModel()
         classifier.eval_model = model
 
@@ -71,9 +69,7 @@ class TestFFTBaselineClassifier:
         expected_res = [mapper[i] for i in self.meta_dev["unique_audio_id"]]
         print("Expected results:", expected_res)
         model = DummyModel(expected_results=expected_res)
-        classifier = FFTBaselineClassifier(
-            is_chunk_prediction=True, dev_uq_audio_ids=self.meta_dev["unique_audio_id"]
-        )
+        classifier = FFTBaselineClassifier(is_chunk_prediction=True, dev_uq_audio_ids=self.meta_dev["unique_audio_id"])
         classifier.eval_model = model
         all_preds = classifier.predict(self.X_dev)
         print("Obtained results:", all_preds.tolist())

@@ -1,16 +1,7 @@
 from abc import ABC, abstractmethod
 
-import numpy as np
-
 from src.common.basic_functions import get_device
 from src.common.logger import setup_logger
-
-try:
-    import cupy as cp
-
-    CUPY_AVAILABLE = True
-except ImportError:
-    CUPY_AVAILABLE = False
 
 
 class BaseModel(ABC):
@@ -24,8 +15,6 @@ class BaseModel(ABC):
         self.logger = setup_logger(f"audio_deepfake.{self.model_name}", log_to_console=True)
         self.logger.info(f"Initialized model: {self.model_name}")
         self.logger.info(f"Using device: {self.device}")
-
-    
 
     def get_best_value(self):
         if self.study is not None:

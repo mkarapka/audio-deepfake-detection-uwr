@@ -14,6 +14,7 @@ try:
 except ImportError:
     CUPY_AVAILABLE = False
 
+
 class FFTBaselineClassifier(BaseModel):
     def __init__(self, is_chunk_prediction: bool, dev_uq_audio_ids: str | None = None):
         super().__init__(model_name=self.__class__.__name__)
@@ -131,7 +132,7 @@ class FFTBaselineClassifier(BaseModel):
     def set_model(self, params):
         self.eval_model = self.get_model(params)
 
-    def fit(self, X_train, y_train, pos_label : str | None = None):
+    def fit(self, X_train, y_train, pos_label: str | None = None):
         if self.eval_model is None:
             raise_error_logger(self.logger, "Model is not set. Call set_model() before fit().")
         if pos_label is not None:

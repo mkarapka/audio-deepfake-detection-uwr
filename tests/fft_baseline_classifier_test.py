@@ -131,7 +131,7 @@ class TestFFTBaselineClassifier:
             "scale_pos_weight": 1.0,
         }
         classifier.set_model(params)
-        classifier.fit(self.X_train, self.y_train)
+        classifier.fit(self.X_train, self.y_train, pos_label="bonafide")
         predictions = classifier.predict(self.X_dev)
         assert len(predictions) == self.X_dev.shape[0]
         print("test_fit_and_predict passed.")

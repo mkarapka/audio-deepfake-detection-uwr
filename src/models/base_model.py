@@ -25,27 +25,7 @@ class BaseModel(ABC):
         self.logger.info(f"Initialized model: {self.model_name}")
         self.logger.info(f"Using device: {self.device}")
 
-        if self._is_cupy_available():
-            self.logger.info("CuPy is available for GPU acceleration")
-        else:
-            self.logger.info("CuPy is not available, using NumPy (CPU)")
-
-    def _is_cupy_available(self):
-        return CUPY_AVAILABLE
-
-    def _to_cupy(self, np_data: np.ndarray):
-        if self._is_cupy_available():
-            return cp.asarray(np_data)
-        self.logger.warning("CuPy is not available. Returning original NumPy array.")
-        return np_data
-
-    def _to_numpy(self, data):
-        return cp.asnumpy(data)
-
-    def _is_cupy_array(self, data):
-        if self._is_cupy_available():
-            return isinstance(data, cp.ndarray)
-        return False
+    
 
     def get_best_value(self):
         if self.study is not None:

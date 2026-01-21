@@ -7,12 +7,40 @@ from src.common.logger import raise_error_logger
 from src.common.record_iterator import RecordIterator
 from src.models.base_model import BaseModel
 
+try:
+    import cupy as cp
+
+    CUPY_AVAILABLE = True
+except ImportError:
+    CUPY_AVAILABLE = False
 
 class FFTBaselineClassifier(BaseModel):
     def __init__(self, is_chunk_prediction: bool, dev_uq_audio_ids: str | None = None):
         super().__init__(model_name=self.__class__.__name__)
         self.is_chunk_prediction = is_chunk_prediction
         self.dev_uq_audio_ids = dev_uq_audio_ids
+
+        if self._is_cupy_available():
+            self.logger.info("CuPy is available for GPU acceleration")
+        else:
+            self.logger.info("CuPy is not available, using NumPy (CPU)")
+
+    def _is_cupy_available(self):
+        return CUPY_AVAILABLE
+
+    def _to_cupy(self, np_data: np.ndarray):
+        if self._is_cupy_available():
+            return cp.asarray(np_data)
+        self.logger.warning("CuPy is not available. Returning original NumPy array.")
+        return np_data
+
+    def _to_numpy(self, data):
+        return cp.asnumpy(data)
+
+    def _is_cupy_array(self, data):
+        if self._is_cupy_available():
+            return isinstance(data, cp.ndarray)
+        return False
 
     def _majority_vote(self, predictions: np.ndarray) -> list[int]:
         vote = int((predictions.mean() >= 0.5))
@@ -103,9 +131,12 @@ class FFTBaselineClassifier(BaseModel):
     def set_model(self, params):
         self.eval_model = self.get_model(params)
 
-    def fit(self, X_train, y_train):
+    def fit(self, X_train, y_train, pos_label : str | None = None):
         if self.eval_model is None:
             raise_error_logger(self.logger, "Model is not set. Call set_model() before fit().")
+        if pos_label is not None:
+            y_train = self._convert_labels_to_ints(y_train, label=pos_label)
+
         if self._is_cupy_available() and not self._is_cupy_array(X_train) and not self._is_cupy_array(y_train):
             X_train = self._to_cupy(X_train)
             y_train = self._to_cupy(y_train)

@@ -121,7 +121,47 @@ class TestFeatureLoader:
 
         print("FeatureLoader load_metadata_file test passed. Metadata match successfully.")
 
+    def test_transfrorm_all(self):
+        delete_test_files()
+
+        # Przygotuj przykładowe dane do zapisania
+        sample_meta_data = {
+            "key_id": ["id1", "id2", "id3"],
+            "feature1": [0.1, 0.2, 0.3],
+            "feature2": [1.0, 1.1, 1.2],
+        }
+        sample_df = pd.DataFrame(sample_meta_data)
+        sample_embeddings = np.array(
+            [
+                [0.1, 0.2, 0.3],
+                [0.4, 0.5, 0.6],
+                [0.7, 0.8, 0.9],
+            ]
+        )
+        np.save(TEST_FILE_PATH.with_suffix(consts.embeddings_extension), sample_embeddings)
+        sample_df.to_csv(
+            TEST_DIR / f"{self.FILE_NAME}{consts.metadata_extension}",
+            include_index=False,
+        )
+
+        # Wczytaj dane za pomocą FeatureLoader
+        loaded_meta, loaded_embeddings = self.loader.transfrorm_all()
+        # Sprawdź czy wczytane dane są poprawne
+        (
+            pd.testing.assert_frame_equal(sample_df, loaded_meta),
+            "Metadata does not match.",
+        )
+        (
+            np.testing.assert_array_equal(sample_embeddings, loaded_embeddings),
+            "Embeddings do not match.",
+        )
+        _, counts = np.unique(loaded_meta.index, return_counts=True)
+        assert all(count == 1 for count in counts), "There are duplicate indices in loaded metadata."
+        print(loaded_meta)
+        print("FeatureLoader transfrorm_all test passed. Metadata and embeddings match successfully.")
+
 
 TestFeatureLoader().test_transform()
 TestFeatureLoader().test_load_speakers_ids()
 TestFeatureLoader().test_load_metadata_file_when_there_is_no_index_in_column_zero()
+TestFeatureLoader().test_transfrorm_all()

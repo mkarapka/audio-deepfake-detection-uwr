@@ -54,11 +54,28 @@ class FeatureLoader(BasePreprocessor):
         reduced_split = metadata.sample(n=sample_size, random_state=42)
         return reduced_split
 
+    def sample_fraction_metadata_and_embeddings(
+        self, metadata: pd.DataFrame, embeddings: np.ndarray, fraction=0.4
+    ) -> tuple[pd.DataFrame, np.ndarray]:
+        sampled_metadata = self.sample_fraction(metadata, fraction=fraction)
+        sampled_embeddings = embeddings[sampled_metadata.index]
+        sampled_metadata = sampled_metadata.reset_index(drop=True)
+        return sampled_metadata, sampled_embeddings
+
     def transform(self, split_name: str, index_col: int | None = 0) -> tuple[pd.DataFrame, np.ndarray]:
         file_path = self._get_file_path(split_name)
         self.logger.info(f"Loading features from {file_path}")
 
         loaded_meta = self.load_metadata_file(file_path, index_col=index_col)
+        loaded_embeddings = self.load_embeddings_from_metadata(loaded_meta)
+        loaded_meta = loaded_meta.reset_index(drop=True)
+
+        return loaded_meta, loaded_embeddings
+
+    def transfrorm_all(self) -> tuple[pd.DataFrame, np.ndarray]:
+        self.logger.info(f"Loading features from {self.meta_path}")
+
+        loaded_meta = self.load_metadata_file(self.meta_path)
         loaded_embeddings = self.load_embeddings_from_metadata(loaded_meta)
         loaded_meta = loaded_meta.reset_index(drop=True)
 

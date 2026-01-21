@@ -41,6 +41,7 @@ class Collector(BasePreprocessor):
     def _write_data_to_csv(self, data: pd.DataFrame, file_path: Path = None, include_index: bool = False):
         if file_path is None:
             file_path = self.meta_data_file_path
+        self.logger.info(f"Saving metadata to {file_path}")
         if file_path.exists() is True:
             data.to_csv(file_path, mode="a+", index=include_index, header=False)
         else:

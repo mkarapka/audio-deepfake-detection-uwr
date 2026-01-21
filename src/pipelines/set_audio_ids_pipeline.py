@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from src.common.basic_functions import setup_logger
 from src.common.constants import Constants as consts
 from src.preprocessing.collector import Collector
@@ -29,7 +27,7 @@ class SetAudioIDsPipeline:
 
     def _set_unique_audio_ids_for_main_metadata(self):
         self.logger.info("Loading main metadata")
-        metadata = self.feature_loader.load_metadata_file(Path("!#"))
+        metadata = self.feature_loader.load_metadata_file()
 
         self.logger.info("Setting unique audio IDs for main metadata")
         modified_metadata = self.uq_audio_id_mapper.transform(metadata=metadata)

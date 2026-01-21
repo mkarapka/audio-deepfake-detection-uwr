@@ -18,11 +18,12 @@ class FeatureLoader(BasePreprocessor):
         self.data_dir = data_dir
         self.split_dir = split_dir
         self.emb_path = data_dir / (file_name + consts.embeddings_extension)
-        self.meta = data_dir / (file_name + consts.metadata_extension)
+        self.meta_path = data_dir / (file_name + consts.metadata_extension)
         self.file_name = file_name
 
     def _get_file_path(self, split_name: str) -> Path:
         file_path = self.split_dir / (self.file_name + "_" + split_name + consts.metadata_extension)
+        self.logger.info(f"Constructed file path: {file_path}")
         if not file_path.exists():
             self.logger.error(f"File {file_path} does not exist.")
         return file_path
@@ -35,7 +36,7 @@ class FeatureLoader(BasePreprocessor):
 
     def load_metadata_file(self, file_path: Path | None = None, index_col: int | None = None) -> pd.DataFrame:
         if file_path is None:
-            file_path = self.meta
+            file_path = self.meta_path
         self.logger.info(f"Loading metadata from {file_path}")
         metadata_df = pd.read_csv(file_path, index_col=index_col)
         return metadata_df
@@ -54,8 +55,8 @@ class FeatureLoader(BasePreprocessor):
         return reduced_split
 
     def transform(self, split_name: str, index_col: int | None = 0) -> tuple[pd.DataFrame, np.ndarray]:
-        self.logger.info(f"Loading features from {self.file_name + split_name}.csv")
         file_path = self._get_file_path(split_name)
+        self.logger.info(f"Loading features from {file_path}")
 
         loaded_meta = self.load_metadata_file(file_path, index_col=index_col)
         loaded_embeddings = self.load_embeddings_from_metadata(loaded_meta)

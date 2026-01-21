@@ -112,3 +112,11 @@ class Constants:
         "metric": "cosine",
         "random_state": 42,
     }
+
+    hdbscan_config = {
+        "min_cluster_size": 335,
+        "min_samples": 3,
+        "metric": "euclidean",
+        "cluster_selection_method": "eom",
+        "prediction_data": True,
+    }

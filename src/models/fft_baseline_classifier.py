@@ -4,7 +4,6 @@ import xgboost as xgb
 from sklearn.metrics import classification_report, f1_score
 
 from src.common.logger import raise_error_logger
-from src.common.record_iterator import RecordIterator
 from src.models.base_model import BaseModel
 
 try:

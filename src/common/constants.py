@@ -118,7 +118,7 @@ class Constants:
         "n_neighbors": 30,
         "min_dist": 0.1,
         "metric": "cosine",
-        "random_state": 42
+        "random_state": 42,
     }
 
     hdbscan_config = {

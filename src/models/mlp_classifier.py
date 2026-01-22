@@ -4,7 +4,6 @@ import torch.nn as nn
 from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader, TensorDataset
 
-from src.common.basic_functions import get_batch_size
 from src.models.base_model import BaseModel
 
 
@@ -67,7 +66,7 @@ class MLPClassifier(BaseModel):
             "lr": trial.suggest_float("lr", 1e-4, 5e-3, log=True),
             "weight_decay": trial.suggest_float("weight_decay", 1e-6, 1e-3, log=True),
             "epochs": trial.suggest_int("epochs", 10, 25),
-            "batch_size": trial.suggest_categorical("batch_size", [64, 128, 256]),
+            "batch_size": trial.suggest_categorical("batch_size", [64, 128, 256, 512]),
         }
 
         model = self.get_model(
@@ -98,7 +97,7 @@ class MLPClassifier(BaseModel):
             input_size=input_size,
             hidden_size=hidden_size,
             n_layers=n_layers,
-            dropout_rate=dropout_rate
+            dropout_rate=dropout_rate,
         ).to(self.device)
 
     def optuna_fit(self, n_trials, X_train, y_train, X_dev, y_dev):

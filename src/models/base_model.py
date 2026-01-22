@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 
-from src.common.basic_functions import get_device
-from src.common.logger import setup_logger
 import numpy as np
+
+from src.common.basic_functions import get_device
+from src.common.logger import raise_error_logger, setup_logger
 from src.common.record_iterator import RecordIterator
-from src.common.logger import raise_error_logger
+
+
 class BaseModel(ABC):
     def __init__(self, model_name, include_mps=False):
         self.model_name = model_name

@@ -113,6 +113,14 @@ class Constants:
         "random_state": 42,
     }
 
+    umap_2d_config = {
+        "n_components": 2,
+        "n_neighbors": 30,
+        "min_dist": 0.1,
+        "metric": "cosine",
+        "random_state": 42
+    }
+
     hdbscan_config = {
         "min_cluster_size": 335,
         "min_samples": 3,

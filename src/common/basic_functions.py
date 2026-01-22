@@ -1,6 +1,7 @@
 import functools
 import time
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from datasets import load_dataset
@@ -85,3 +86,58 @@ def get_batch_size():
         return 8
     else:
         return 4
+
+
+def plot_embeddings_2d(
+    embeddings: np.ndarray,
+    title: str,
+    labels: list[int] | None = None,
+    figsize: tuple[int, int] = (8, 8),
+    alpha: float = 0.7,
+    size: int = 1,
+    cmap: str = "tab20",
+):
+    plt.figure(figsize=figsize)
+    if embeddings.shape[1] != 2:
+        print("Warning: Embeddings are not 2D. Plot may not be meaningful.")
+    if labels is not None:
+        scatter = plt.scatter(embeddings[:, 0], embeddings[:, 1], c=labels, cmap=cmap, alpha=alpha, s=size)
+        plt.legend(*scatter.legend_elements(), title="Clusters")
+    else:
+        plt.scatter(embeddings[:, 0], embeddings[:, 1], alpha=alpha, s=size)
+    plt.title(title)
+    plt.xlabel("Dimension 1")
+    plt.ylabel("Dimension 2")
+    plt.show()
+
+
+def plot_embeddings_subplots(
+    embeddings: np.ndarray,
+    titles: list[str],
+    labels_list: list[list[int]] | None = None,
+    subplot_size: tuple[int, int] = (5, 5),
+    n_cols: int = 2,
+    alpha: float = 0.7,
+    size: int = 1,
+    cmap: str = "tab20",
+):
+    if embeddings.shape[0] != len(titles):
+        raise ValueError("Number of embeddings sets must match number of titles.")
+    n_rows = (len(titles) + n_cols - 1) // n_cols
+    plt.figure(figsize=(n_cols * subplot_size[0], n_rows * subplot_size[1]))
+    for i in range(len(titles)):
+        plt.subplot(n_rows, n_cols, i + 1)
+        if embeddings[i].shape[1] != 2:
+            print(f"Warning: Embeddings set {i} is not 2D. Plot may not be meaningful.")
+        if labels_list is not None and labels_list[i] is not None:
+            scatter = plt.scatter(
+                embeddings[i][:, 0], embeddings[i][:, 1], c=labels_list[i], cmap=cmap, alpha=alpha, s=size
+            )
+            plt.legend(*scatter.legend_elements(), title="Clusters")
+        else:
+            plt.scatter(embeddings[i][:, 0], embeddings[i][:, 1], alpha=alpha, s=size)
+        plt.title(titles[i])
+        plt.xlabel("Dimension 1")
+        plt.ylabel("Dimension 2")
+    plt.tight_layout()
+    plt.show()

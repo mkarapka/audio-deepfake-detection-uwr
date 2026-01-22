@@ -47,9 +47,6 @@ class FFTBaselineClassifier(BaseModel):
         vote = int((predictions.mean() >= 0.5))
         return [vote] * len(predictions)
 
-    def _convert_labels_to_ints(self, y: np.ndarray, label: str):
-        return (y == label).astype(int)
-
     def _log_classification_report(self, y_true, y_pred, n_digits=4):
         if self._is_cupy_array(y_true):
             y_true = self._to_numpy(y_true)
@@ -150,15 +147,8 @@ class FFTBaselineClassifier(BaseModel):
 
         y_pred = self.eval_model.predict(X)
         if self.is_chunk_prediction and self.dev_uq_audio_ids is not None:
-            record_iterator = RecordIterator()
-            predictions = np.full(X.shape[0], -1)
-            for record_preds, mask in record_iterator.iterate_records(self.dev_uq_audio_ids, y_pred):
-                majority_voted_preds = self._majority_vote(record_preds)
-                predictions[mask] = majority_voted_preds
+            predictions = self.majority_voting(X, self.dev_uq_audio_ids)
         else:
             predictions = y_pred
-
-        if np.any(predictions == -1):
-            raise_error_logger(self.logger, "Some records were not predicted!")
 
         return predictions

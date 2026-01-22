@@ -100,7 +100,7 @@ class Constants:
         "mix": [[0.5, 0.75], [0.5, 1.0], [0.75, 1.0]],
     }
 
-    only_equal_ratios_config = {"oversample": [1.0], "undersample": [1.0], "mix": [[0.5, 1.0]]}
+    only_equal_ratios_config = {"undersample": [1.0], "mix": [[0.5, 1.0]], "oversample": [1.0]}
 
     only_mix_equal_ratio_config = {"mix": [[0.5, 1.0]]}
     mix_and_unbalanced_config = {"mix": [[0.5, 1.0]], "unbalanced": [None]}

@@ -14,6 +14,7 @@ class MLP(nn.Module):
         for i in range(n_layers):
             in_size = input_size if i == 0 else hidden_size
             layers.append(nn.Linear(in_size, hidden_size))
+            layers.append(nn.BatchNorm1d(hidden_size))
             layers.append(nn.ReLU())
             layers.append(nn.Dropout(dropout_rate))
         layers.append(nn.Linear(hidden_size, 1))
@@ -66,13 +67,13 @@ class MLPClassifier(BaseModel):
 
     def objective(self, trial, X_train: torch.Tensor, y_train: torch.Tensor, X_dev: torch.Tensor, y_dev: torch.Tensor):
         params = {
-            "n_layers": trial.suggest_int("n_layers", 1, 2),
+            "n_layers": trial.suggest_int("n_layers", 1, 3),
             "hidden_size": trial.suggest_int("hidden_size", 64, 256, step=64),
             "dropout_rate": trial.suggest_float("dropout_rate", 0.1, 0.4),
             "lr": trial.suggest_float("lr", 1e-4, 5e-3, log=True),
             "weight_decay": trial.suggest_float("weight_decay", 1e-6, 1e-3, log=True),
             "epochs": trial.suggest_int("epochs", 10, 25),
-            "batch_size": trial.suggest_categorical("batch_size", [64, 128, 256, 512]),
+            "batch_size": trial.suggest_categorical("batch_size", [512, 1024]),
         }
 
         model = self.get_model(
@@ -86,7 +87,7 @@ class MLPClassifier(BaseModel):
         criterion = self.make_criterion(y_train=y_train)
 
         train_loader = DataLoader(TensorDataset(X_train, y_train), batch_size=params["batch_size"], shuffle=True)
-        dev_loader = DataLoader(TensorDataset(X_dev, y_dev), batch_size=params["batch_size"], shuffle=True)
+        dev_loader = DataLoader(TensorDataset(X_dev, y_dev), batch_size=params["batch_size"], shuffle=False)
 
         for epoch in range(params["epochs"]):
             self.train_model(model, optimizer, criterion, train_loader)
@@ -119,7 +120,8 @@ class MLPClassifier(BaseModel):
         self.study.optimize(
             lambda trial: self.objective(trial, X_train_tensor, y_train_tensor, X_dev_tensor, y_dev_tensor),
             n_trials=n_trials,
-            gc_after_trial=True,
+            # gc_after_trial=True,
+            show_progress_bar=True
         )
 
         self.best_params = self.study.best_params

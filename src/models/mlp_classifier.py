@@ -58,6 +58,12 @@ class MLPClassifier(BaseModel):
         f1 = f1_score(all_labels, all_preds)
         return f1
 
+    def make_criterion(self, y_train : torch.Tensor):
+        n_neg = (y_train == 0).sum().item()
+        n_pos = (y_train == 1).sum().item()
+        pos_weight = n_neg / max(n_pos, 1)
+        return nn.BCEWithLogitsLoss(pos_weight=torch.tensor([pos_weight], device=self.device))
+
     def objective(self, trial, X_train: torch.Tensor, y_train: torch.Tensor, X_dev: torch.Tensor, y_dev: torch.Tensor):
         params = {
             "n_layers": trial.suggest_int("n_layers", 1, 2),
@@ -77,7 +83,7 @@ class MLPClassifier(BaseModel):
         )
 
         optimizer = torch.optim.AdamW(model.parameters(), lr=params["lr"], weight_decay=params["weight_decay"])
-        criterion = torch.nn.BCEWithLogitsLoss()
+        criterion = self.make_criterion(y_train=y_train)
 
         train_loader = DataLoader(TensorDataset(X_train, y_train), batch_size=params["batch_size"], shuffle=True)
         dev_loader = DataLoader(TensorDataset(X_dev, y_dev), batch_size=params["batch_size"], shuffle=True)

@@ -1,8 +1,9 @@
-from src.preprocessing.feature_loader import FeatureLoader
-from src.preprocessing.collector import Collector
-from src.models.mlp_classifier import MLPClassifier
 from src.common.constants import Constants as consts
 from src.common.logger import setup_logger
+from src.models.mlp_classifier import MLPClassifier
+from src.preprocessing.collector import Collector
+from src.preprocessing.feature_loader import FeatureLoader
+
 
 class TrainEvalPipeline:
     def __init__(self):
@@ -23,10 +24,11 @@ class TrainEvalPipeline:
         self.classifier.optuna_fit(
             n_trials=50,
             X_train=sampled_train_embeddings,
-            y_train=sampled_train_meta['target'].values,
+            y_train=sampled_train_meta["target"].values,
             X_dev=dev_embeddings,
-            y_dev=dev_meta['target'].values
+            y_dev=dev_meta["target"].values,
         )
+
 
 if __name__ == "__main__":
     pipeline = TrainEvalPipeline()

@@ -3,7 +3,6 @@ import pandas as pd
 from src.common.basic_functions import setup_logger
 from src.common.constants import Constants as consts
 from src.common.record_iterator import RecordIterator
-from src.models.fft_baseline_classifier import FFTBaselineClassifier
 from src.preprocessing.collector import Collector
 from src.preprocessing.data_balancers.mix_blancer import MixBalancer
 from src.preprocessing.data_balancers.oversample_real_balancer import (
@@ -18,10 +17,12 @@ from src.preprocessing.feature_loader import FeatureLoader
 class BestBalancePipeline:
     def __init__(
         self,
+        clf_model,
         RATIOS_CONFIG=consts.ratios_config,
         objective="f1",
         is_chunk_prediction=False,
     ):
+        self.clf_model = clf_model
         self.trained_models = {}
         self.RATIOS_CONFIG = RATIOS_CONFIG
         self.objective = objective
@@ -63,7 +64,7 @@ class BestBalancePipeline:
             train_embeddings = self.feature_loader.load_embeddings_from_metadata(balanced_train_split)
             dev_embeddings = self.feature_loader.load_embeddings_from_metadata(dev_split)
 
-            clf = FFTBaselineClassifier(
+            clf = self.clf_model(
                 is_chunk_prediction=self.is_chunk_prediction, dev_uq_audio_ids=dev_split["unique_audio_id"]
             )
             clf.optuna_fit(

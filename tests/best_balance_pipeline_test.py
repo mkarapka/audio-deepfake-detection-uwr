@@ -1,10 +1,11 @@
 from src.common.constants import Constants as consts
 from src.pipelines.best_balance_pipeline import BestBalancePipeline
-
+from src.models.mlp_classifier import MLPClassifier
 
 class TestBestBalancePipeline:
     def test_initialization(self):
         pipeline = BestBalancePipeline(
+            clf_model=MLPClassifier,
             RATIOS_CONFIG=consts.only_mix_equal_ratio_config,
             objective="f1",
             is_chunk_prediction=True,
@@ -16,6 +17,7 @@ class TestBestBalancePipeline:
 
     def test_sample_fraction_uq_audios_from_split(self, is_train, fraction=0.1, check_size=20):
         pipeline = BestBalancePipeline(
+            clf_model=MLPClassifier,
             RATIOS_CONFIG=consts.only_mix_equal_ratio_config,
             objective="f1",
             is_chunk_prediction=True,
@@ -37,6 +39,7 @@ class TestBestBalancePipeline:
 
     def test_sample_fraction_from_split_basic(self, is_train, fraction=0.1, check_size=20):
         pipeline = BestBalancePipeline(
+            clf_model=MLPClassifier,
             RATIOS_CONFIG=consts.only_mix_equal_ratio_config,
             objective="f1",
             is_chunk_prediction=True,

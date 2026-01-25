@@ -15,9 +15,12 @@ class Constants:
     embeddings_extension = ".npy"
     metadata_extension = ".csv"
     feature_extracted = "feature_extracted"
+    wavlm_emb_suffix = "_wavlm"
+    fft_emb_suffix = "_fft"
 
     # Wavlm
     wavlm_file_name_prefix = "wavlm_extracted"
+
     embeddings_file = wavlm_file_name_prefix + embeddings_extension
     wavlm_metadata_file = wavlm_file_name_prefix + metadata_extension
 

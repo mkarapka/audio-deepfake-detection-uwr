@@ -11,13 +11,22 @@ class FeatureLoader(BasePreprocessor):
     def __init__(
         self,
         file_name=consts.wavlm_file_name_prefix,
+        emb_suffix: str = "",
         data_dir: Path = consts.collected_data_dir,
         split_dir: Path = consts.splited_data_dir,
     ):
         super().__init__(class_name=__class__.__name__)
+        if "wavlm" in emb_suffix:
+            self.logger.info("Using WavLM embeddings suffix")
+            emb_suffix = consts.wavlm_emb_suffix
+        elif "fft" in emb_suffix:
+            self.logger.info("Using FFT embeddings suffix")
+            emb_suffix = consts.fft_emb_suffix
+        else:
+            self.logger.info("No embeddings suffix specified, using default")
         self.data_dir = data_dir
         self.split_dir = split_dir
-        self.emb_path = data_dir / (file_name + consts.embeddings_extension)
+        self.emb_path = data_dir / (file_name + emb_suffix + consts.embeddings_extension)
         self.meta_path = data_dir / (file_name + consts.metadata_extension)
         self.file_name = file_name
 

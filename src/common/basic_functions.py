@@ -112,7 +112,7 @@ def plot_embeddings_2d(
 
 
 def plot_embeddings_subplots(
-    embeddings: np.ndarray,
+    embeddings: list[np.ndarray],
     titles: list[str],
     labels_list: list[list[int]] | None = None,
     subplot_size: tuple[int, int] = (5, 5),
@@ -121,7 +121,7 @@ def plot_embeddings_subplots(
     size: int = 1,
     cmap: str = "tab20",
 ):
-    if embeddings.shape[0] != len(titles):
+    if len(embeddings) != len(titles):
         raise ValueError("Number of embeddings sets must match number of titles.")
     n_rows = (len(titles) + n_cols - 1) // n_cols
     plt.figure(figsize=(n_cols * subplot_size[0], n_rows * subplot_size[1]))

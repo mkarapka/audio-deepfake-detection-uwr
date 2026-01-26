@@ -1,3 +1,4 @@
+import numpy as np
 import optuna
 import torch
 import torch.nn as nn
@@ -27,6 +28,13 @@ class MLP(nn.Module):
 class MLPClassifier(BaseModel):
     def __init__(self, is_chunk_prediction=False):
         super().__init__(model_name=__class__.__name__, include_mps=True)
+
+    def _convert_labels_to_ints(self, y, label="bonafide"):
+        """Convert string labels to binary integers"""
+        y_arr = np.asarray(y)
+        if y_arr.dtype.kind in ("i", "u", "b", "f"):
+            return y_arr.astype(np.float32)
+        return (y_arr == label).astype(np.float32)
 
     def _np_to_tensor(self, np_data):
         if isinstance(np_data, torch.Tensor):
@@ -59,21 +67,35 @@ class MLPClassifier(BaseModel):
         f1 = f1_score(all_labels, all_preds)
         return f1
 
-    def make_criterion(self, y_train : torch.Tensor):
+    def make_criterion(self, y_train: torch.Tensor):
         n_neg = (y_train == 0).sum().item()
         n_pos = (y_train == 1).sum().item()
         pos_weight = n_neg / max(n_pos, 1)
         return nn.BCEWithLogitsLoss(pos_weight=torch.tensor([pos_weight], device=self.device))
 
-    def objective(self, trial, X_train: torch.Tensor, y_train: torch.Tensor, X_dev: torch.Tensor, y_dev: torch.Tensor):
+    def objective(
+        self,
+        trial,
+        X_train: torch.Tensor,
+        y_train: torch.Tensor,
+        X_dev: torch.Tensor,
+        y_dev: torch.Tensor,
+        train_cluster_id: torch.Tensor = None,
+        dev_cluster_id: torch.Tensor = None,
+    ):
+        # Dodaj cluster_id jako feature jeśli podane
+        if train_cluster_id is not None:
+            X_train = torch.cat([X_train, train_cluster_id.unsqueeze(1)], dim=1)
+            X_dev = torch.cat([X_dev, dev_cluster_id.unsqueeze(1)], dim=1)
+
         params = {
             "n_layers": trial.suggest_int("n_layers", 1, 3),
-            "hidden_size": trial.suggest_int("hidden_size", 64, 256, step=64),
+            "hidden_size": trial.suggest_int("hidden_size", 64, 512, step=64),
             "dropout_rate": trial.suggest_float("dropout_rate", 0.1, 0.4),
             "lr": trial.suggest_float("lr", 1e-4, 5e-3, log=True),
             "weight_decay": trial.suggest_float("weight_decay", 1e-6, 1e-3, log=True),
-            "epochs": trial.suggest_int("epochs", 10, 25),
-            "batch_size": trial.suggest_categorical("batch_size", [512, 1024]),
+            "epochs": trial.suggest_int("epochs", 10, 50),
+            "batch_size": trial.suggest_categorical("batch_size", [64, 128, 256, 512, 1024]),
         }
 
         model = self.get_model(
@@ -86,7 +108,11 @@ class MLPClassifier(BaseModel):
         optimizer = torch.optim.AdamW(model.parameters(), lr=params["lr"], weight_decay=params["weight_decay"])
         criterion = self.make_criterion(y_train=y_train)
 
-        train_loader = DataLoader(TensorDataset(X_train, y_train), batch_size=params["batch_size"], shuffle=True)
+        train_loader = DataLoader(
+            TensorDataset(X_train, y_train),
+            batch_size=params["batch_size"],
+            shuffle=True,
+        )
         dev_loader = DataLoader(TensorDataset(X_dev, y_dev), batch_size=params["batch_size"], shuffle=False)
 
         for epoch in range(params["epochs"]):
@@ -107,21 +133,51 @@ class MLPClassifier(BaseModel):
             dropout_rate=dropout_rate,
         ).to(self.device)
 
-    def optuna_fit(self, n_trials, X_train, y_train, X_dev, y_dev):
+    def optuna_fit(
+        self,
+        n_trials,
+        X_train,
+        y_train,
+        X_dev,
+        y_dev,
+        train_cluster_id=None,
+        dev_cluster_id=None,
+    ):
         y_train = self._convert_labels_to_ints(y=y_train, label="bonafide")
         y_dev = self._convert_labels_to_ints(y=y_dev, label="bonafide")
+        print(np.unique(y_train, return_counts=True), np.unique(y_dev, return_counts=True))
 
         X_train_tensor = self._np_to_tensor(X_train)
         y_train_tensor = self._np_to_tensor(y_train)
         X_dev_tensor = self._np_to_tensor(X_dev)
         y_dev_tensor = self._np_to_tensor(y_dev)
 
+        # Konwertuj cluster_id jeśli podane
+        train_cluster_tensor = None
+        dev_cluster_tensor = None
+        if train_cluster_id is not None:
+            train_cluster_tensor = self._np_to_tensor(train_cluster_id)
+            dev_cluster_tensor = self._np_to_tensor(dev_cluster_id)
+            self.logger.info(
+                f"Using cluster_id as additional feature (train clusters: {
+                    torch.unique(train_cluster_tensor).numel()}, dev clusters: {
+                    torch.unique(dev_cluster_tensor).numel()})"
+            )
+
         self.study = optuna.create_study(direction="maximize", sampler=optuna.samplers.RandomSampler())
         self.study.optimize(
-            lambda trial: self.objective(trial, X_train_tensor, y_train_tensor, X_dev_tensor, y_dev_tensor),
+            lambda trial: self.objective(
+                trial,
+                X_train_tensor,
+                y_train_tensor,
+                X_dev_tensor,
+                y_dev_tensor,
+                train_cluster_tensor,
+                dev_cluster_tensor,
+            ),
             n_trials=n_trials,
             # gc_after_trial=True,
-            show_progress_bar=True
+            show_progress_bar=True,
         )
 
         self.best_params = self.study.best_params

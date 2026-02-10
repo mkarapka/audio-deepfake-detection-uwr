@@ -1,98 +1,48 @@
-from abc import ABC, abstractmethod
-
 import numpy as np
+import pandas as pd
+from torch import Tensor
 
 from src.common.basic_functions import get_device
+from src.common.constants import Constants as consts
 from src.common.logger import raise_error_logger, setup_logger
-from src.common.record_iterator import RecordIterator
 
 
-class BaseModel(ABC):
-    def __init__(self, model_name, include_mps=False):
-        self.model_name = model_name
-        self.eval_model = None
-        self.study = None
-        self.best_params = None
+class BaseModel:
+    def __init__(self, class_name: str, models_dir: str = consts.models_dir, include_mps=False):
+        self.models_dir = models_dir
         self.device = get_device(include_mps=include_mps)
 
-        self.logger = setup_logger(f"audio_deepfake.{self.model_name}", log_to_console=True)
-        self.logger.info(f"Initialized model: {self.model_name}")
+        self.class_name = self.__class__.__name__ if class_name is None else class_name
+        self.logger = setup_logger(f"audio_deepfake.{self.class_name}", log_to_console=True)
         self.logger.info(f"Using device: {self.device}")
 
-    def _convert_labels_to_ints(self, y, label: str):
-        return (y == label).astype(int)
+    def _majority_vote(self, y_preds: np.ndarray):
+        vote = int((y_preds.mean() >= 0.5))
+        return vote
 
-    def get_best_value(self):
-        if self.study is not None:
-            return self.study.best_value
-        else:
-            self.logger.warning("Study is not initialized. No best value available.")
-            return None
+    def _to_numpy(self, data):
+        if isinstance(data, Tensor):
+            return data.cpu().numpy()
+        return data
 
-    def majority_voting(self, X_dev, dev_uq_audio_ids):
-        if self.eval_model is None:
-            raise_error_logger(self.logger, "Model is not trained. Call fit() before majority_voting().")
+    def iterate_records(self, uq_audio_ids: pd.Series, predictions: np.ndarray):
+        unique_records_ids = uq_audio_ids.unique()
 
-        y_pred = self.eval_model.predict(X_dev)
-        record_iterator = RecordIterator()
-        predictions = np.full(X_dev.shape[0], -1)
-        for record_preds, mask in record_iterator.iterate_records(dev_uq_audio_ids, y_pred):
-            majority_voted_preds = self._majority_vote(record_preds)
-            predictions[mask] = majority_voted_preds
+        for unique_audio_id in unique_records_ids:
+            mask = uq_audio_ids == unique_audio_id
+            record_predictions = predictions[mask]
 
-        if np.any(predictions == -1):
-            raise_error_logger(self.logger, "Some records were not predicted!")
+            yield record_predictions, mask
 
-        return predictions
+    def majority_voting(self, model, X: np.ndarray | Tensor, audio_ids: pd.Series):
+        y_pred = model.predict(X)
+        y_pred = self._to_numpy(y_pred)
 
-    @abstractmethod
-    def objective(self, trial, params):
-        """Create optuna objective function
+        majority_voted_preds = np.full(X.shape[0], -1)
+        for record_preds, mask in self.iterate_records(audio_ids, y_pred):
+            majority_voted_preds[mask] = self._majority_vote(record_preds)
 
-        Args:
-            trial (any): Optuna trial object
-            params (any): Parameters for the objective function
-        """
+        if np.any(majority_voted_preds == -1):
+            raise_error_logger(self.logger, "Some predictions were not assigned during majority voting.")
 
-    @abstractmethod
-    def optuna_fit(self, n_trials: int, X_train, y_train):
-        """Optimize model using Optuna
-        Args:
-            n_trials (int): Number of Optuna trials
-            X_train (np.ndarray | cp.asarray | torch.Tensor): Training data features
-            y_train (np.ndarray | cp.asarray | torch.Tensor): Training data labels
-        """
-
-    @abstractmethod
-    def get_model(self, params):
-        """Get evaluation model with given parameters
-        Args:
-            params (dict): Model parameters
-        Returns:
-            any: Evaluation model
-        """
-
-    @abstractmethod
-    def get_best_params(self):
-        """Get best parameters found by Optuna
-        Returns:
-            dict: Best parameters
-        """
-
-    # @abstractmethod
-    # def fit(self, X_train, y_train):
-    #     """Fit eval model to training data
-
-    #     Args:
-    #         X_train (np.ndarray | cp.asarray | torch.Tensor): Training data features
-    #         y_train (np.ndarray | cp.asarray | torch.Tensor): Training data labels
-    #     """
-
-    @abstractmethod
-    def predict(self, X_test):
-        """Predict using eval model
-        Args:
-            X_test (np.ndarray | cp.asarray | torch.Tensor): Test data features
-        Returns:
-            np.ndarray | cp.asarray | torch.Tensor: Predictions
-        """
+        return majority_voted_preds

@@ -26,12 +26,12 @@ class FeatureLoader(BasePreprocessor):
             self.logger.info("No embeddings suffix specified, using default")
         self.data_dir = data_dir
         self.split_dir = split_dir
-        self.emb_path = data_dir / (file_name + emb_suffix + consts.embeddings_extension)
-        self.meta_path = data_dir / (file_name + consts.metadata_extension)
+        self.emb_path = data_dir / (file_name + emb_suffix + consts.npy_ext)
+        self.meta_path = data_dir / (file_name + consts.csv_ext)
         self.file_name = file_name
 
     def _get_file_path(self, split_name: str) -> Path:
-        file_path = self.split_dir / (self.file_name + "_" + split_name + consts.metadata_extension)
+        file_path = self.split_dir / (self.file_name + "_" + split_name + consts.csv_ext)
         self.logger.info(f"Constructed file path: {file_path}")
         if not file_path.exists():
             self.logger.error(f"File {file_path} does not exist.")

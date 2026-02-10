@@ -12,8 +12,8 @@ TEST_SPLIT_DIR = TEST_DATA_DIR / "splited_data"
 
 
 def delete_test_files():
-    meta_data_file_path = TEST_DATA_DIR / f"{TEST_FILE_NAME}{consts.metadata_extension}"
-    embeddings_file_path = TEST_DATA_DIR / f"{TEST_FILE_NAME}{consts.embeddings_extension}"
+    meta_data_file_path = TEST_DATA_DIR / f"{TEST_FILE_NAME}{consts.csv_ext}"
+    embeddings_file_path = TEST_DATA_DIR / f"{TEST_FILE_NAME}{consts.npy_ext}"
     if meta_data_file_path.exists():
         meta_data_file_path.unlink()
     if embeddings_file_path.exists():

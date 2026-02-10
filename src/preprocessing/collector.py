@@ -10,7 +10,10 @@ from src.preprocessing.base_preprocessor import BasePreprocessor
 
 class Collector(BasePreprocessor):
     def __init__(
-        self, save_file_name: str, data_dir: Path = consts.collected_data_dir, split_dir: Path = consts.splited_data_dir
+        self,
+        save_file_name: str,
+        data_dir: Path = consts.collected_data_dir,
+        split_dir: Path = consts.splited_data_dir,
     ):
         super().__init__(class_name=__class__.__name__)
         self.data_dir = data_dir
@@ -25,8 +28,8 @@ class Collector(BasePreprocessor):
             self.split_dir.mkdir(parents=True, exist_ok=True)
 
         if save_file_name is not None:
-            self.meta_data_file_path = self._create_file_path(f_name_suffix=consts.metadata_extension)
-            self.embeddings_file_path = self._create_file_path(f_name_suffix=consts.embeddings_extension)
+            self.meta_data_file_path = self._create_file_path(f_name_suffix=consts.csv_ext)
+            self.embeddings_file_path = self._create_file_path(f_name_suffix=consts.npy_ext)
             logging.info(f"Metadata will be saved to: {self.meta_data_file_path}")
             logging.info(f"Embeddings will be saved to: {self.embeddings_file_path}")
         else:
@@ -70,8 +73,7 @@ class Collector(BasePreprocessor):
     def transform_splits(self, data: list[pd.DataFrame], splits=["train", "dev", "test"]):
         for meta, split_name in zip(data, splits):
             new_meta_path = self._create_file_path(
-                f_name_suffix=f"_{split_name}{
-                    consts.metadata_extension}",
+                f_name_suffix=f"_{split_name}{consts.csv_ext}",
                 data_dir=self.split_dir,
             )
             self._write_data_to_csv(data=meta, file_path=new_meta_path, include_index=True)

@@ -1,6 +1,7 @@
 from src.common.constants import Constants as consts
-from src.pipelines.best_balance_pipeline import BestBalancePipeline
 from src.models.mlp_classifier import MLPClassifier
+from src.pipelines.best_balance_pipeline import BestBalancePipeline
+
 
 class TestBestBalancePipeline:
     def test_initialization(self):

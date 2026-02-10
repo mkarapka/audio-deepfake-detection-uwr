@@ -7,13 +7,15 @@ class Constants:
     data_dir = root / "data"
     logs_dir = data_dir / "logs"
     collected_data_dir = data_dir / "collected_data"
+    results_dir = data_dir / "results"
+    models_dir = data_dir / "models"
     training_dir = "spoof_and_bonafide"
     splited_data_dir = collected_data_dir / "splited_data"
 
     # File names
     speakers_ids_file = "speakers_ids.csv"
-    embeddings_extension = ".npy"
-    metadata_extension = ".csv"
+    npy_ext = ".npy"
+    csv_ext = ".csv"
     feature_extracted = "feature_extracted"
     wavlm_emb_suffix = "_wavlm"
     fft_emb_suffix = "_fft"
@@ -21,21 +23,21 @@ class Constants:
     # Wavlm
     wavlm_file_name_prefix = "wavlm_extracted"
 
-    embeddings_file = wavlm_file_name_prefix + embeddings_extension
-    wavlm_metadata_file = wavlm_file_name_prefix + metadata_extension
+    embeddings_file = wavlm_file_name_prefix + npy_ext
+    wavlm_metadata_file = wavlm_file_name_prefix + csv_ext
 
-    train_wavlm_file = wavlm_file_name_prefix + "_train" + metadata_extension
-    dev_wavlm_file = wavlm_file_name_prefix + "_dev" + metadata_extension
-    test_wavlm_file = wavlm_file_name_prefix + "_test" + metadata_extension
+    train_wavlm_file = wavlm_file_name_prefix + "_train" + csv_ext
+    dev_wavlm_file = wavlm_file_name_prefix + "_dev" + csv_ext
+    test_wavlm_file = wavlm_file_name_prefix + "_test" + csv_ext
 
     # FFT
     fft_file_name_prefix = "fft_extracted"
-    fft_embeddings_file = fft_file_name_prefix + embeddings_extension
-    fft_metadata_file = fft_file_name_prefix + metadata_extension
+    fft_embeddings_file = fft_file_name_prefix + npy_ext
+    fft_metadata_file = fft_file_name_prefix + csv_ext
 
-    train_fft_file = fft_file_name_prefix + "_train" + metadata_extension
-    dev_fft_file = fft_file_name_prefix + "_dev" + metadata_extension
-    test_fft_file = fft_file_name_prefix + "_test" + metadata_extension
+    train_fft_file = fft_file_name_prefix + "_train" + csv_ext
+    dev_fft_file = fft_file_name_prefix + "_dev" + csv_ext
+    test_fft_file = fft_file_name_prefix + "_test" + csv_ext
 
     # Audio settings
     g_sample_rate = 16_000
@@ -44,13 +46,13 @@ class Constants:
     ESTIMATED_RECORDS_IN_DATASET = (
         3800  # Approximate number of records in AUDETER and MLS English datasets in single split
     )
-    mls_eng_config = "mls-bonafide"
 
-    # Dataset paths
+    # Datasets paths
     audeter_ds_path = "wqz995/AUDETER"
     mls_eng_ds_path = "parler-tts/mls_eng"
 
-    # TTS and Vocoders configs
+    # TTS, Vocoders and MLS English configs
+    mls_eng_config = "mls-bonafide"
     tts_configs = [
         "mls-tts-bark",
         "mls-tts-chattts",
@@ -81,33 +83,30 @@ class Constants:
     spoof = "spoof"
     bonafide = "bonafide"
 
-    # Configs for functions
+    # Splits configs
     base_splits_names = ["train", "dev", "test"]
-
     basic_train_dev_test_config = {
         "train": 0.7,
         "dev": 0.15,
         "test": 0.15,
     }
 
-    bigger_dataset_train_dev_test_config = {
-        "train": 0.8,
-        "dev": 0.1,
-        "test": 0.1,
-    }
-
+    # Balancing configs
     ratios_config = {
         "unbalanced": [None],
         "oversample": [0.5, 0.75, 1.0],
         "undersample": [0.5, 0.75, 1.0],
         "mix": [[0.5, 0.75], [0.5, 1.0], [0.75, 1.0]],
     }
-
-    only_equal_ratios_config = {"undersample": [1.0], "mix": [[0.5, 1.0]], "oversample": [1.0]}
-
+    only_equal_ratios_config = {
+        "undersample": [1.0],
+        "mix": [[0.5, 1.0]],
+        "oversample": [1.0],
+    }
     only_mix_equal_ratio_config = {"mix": [[0.5, 1.0]]}
     mix_and_unbalanced_config = {"mix": [[0.5, 1.0]], "unbalanced": [None]}
 
+    # UMAP and HDBSCAN configs
     umap_20d_config = {
         "n_components": 20,
         "n_neighbors": 30,
@@ -115,7 +114,6 @@ class Constants:
         "metric": "cosine",
         "random_state": 42,
     }
-
     umap_2d_config = {
         "n_components": 2,
         "n_neighbors": 30,
@@ -123,7 +121,6 @@ class Constants:
         "metric": "cosine",
         "random_state": 42,
     }
-
     hdbscan_config = {
         "min_cluster_size": 335,
         "min_samples": 3,

@@ -45,10 +45,10 @@ class TestFeatureLoader:
                 [0.7, 0.8, 0.9],
             ]
         )
-        np.save(TEST_FILE_PATH.with_suffix(consts.embeddings_extension), sample_embeddings)
+        np.save(TEST_FILE_PATH.with_suffix(consts.npy_ext), sample_embeddings)
         for split in ["train", "dev", "test"]:
             sample_df.to_csv(
-                f"{SPLIT_DIR}/{self.FILE_NAME}_{split}{consts.metadata_extension}",
+                f"{SPLIT_DIR}/{self.FILE_NAME}_{split}{consts.csv_ext}",
                 index=True,
             )
 
@@ -101,12 +101,12 @@ class TestFeatureLoader:
         }
         sample_df = pd.DataFrame(sample_meta_data)
         sample_df.to_csv(
-            TEST_DIR / f"{self.FILE_NAME}_metadata{consts.metadata_extension}",
+            TEST_DIR / f"{self.FILE_NAME}_metadata{consts.csv_ext}",
             index=False,
         )
 
         # Wczytaj dane za pomocą FeatureLoader
-        loaded_meta = self.loader.load_metadata_file(TEST_DIR / f"{self.FILE_NAME}_metadata{consts.metadata_extension}")
+        loaded_meta = self.loader.load_metadata_file(TEST_DIR / f"{self.FILE_NAME}_metadata{consts.csv_ext}")
 
         print("Loaded metadata index:")
         print(loaded_meta.index)
@@ -138,9 +138,9 @@ class TestFeatureLoader:
                 [0.7, 0.8, 0.9],
             ]
         )
-        np.save(TEST_FILE_PATH.with_suffix(consts.embeddings_extension), sample_embeddings)
+        np.save(TEST_FILE_PATH.with_suffix(consts.npy_ext), sample_embeddings)
         sample_df.to_csv(
-            TEST_DIR / f"{self.FILE_NAME}{consts.metadata_extension}",
+            TEST_DIR / f"{self.FILE_NAME}{consts.csv_ext}",
             include_index=False,
         )
 

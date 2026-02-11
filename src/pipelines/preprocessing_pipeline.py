@@ -77,14 +77,14 @@ class PreprocessingPipeline:
             collector.transform(meta_df=modified_segs_metadata, embeddings=embeddings)
             logger.info(f"✓ Saved to {file_name}\n")
 
-    def preprocess_dataset_wavlm(self, file_name=consts.wavlm_file_name_prefix, batch_size=8):
+    def preprocess_dataset_wavlm(self, file_name=consts.feature_extracted + consts.wavlm_emb_suffix, batch_size=8):
         self._preprocess_dataset(
             file_name=file_name,
             feature_extractor=WavLmExtractor(batch_size=batch_size),
             batch_size=batch_size,
         )
 
-    def preprocess_dataset_fft(self, file_name=consts.fft_file_name_prefix, batch_size=8):
+    def preprocess_dataset_fft(self, file_name=consts.feature_extracted + consts.fft_emb_suffix, batch_size=8):
         self._preprocess_dataset(
             file_name=file_name,
             feature_extractor=FFTExtractor(batch_size=batch_size),

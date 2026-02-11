@@ -37,7 +37,7 @@ class TestMapClustersIDsPipeline:
             test_train_emb_file_path.unlink()
 
         tmp_feature_loader = FeatureLoader(consts.feature_extracted)
-        tmp_all_meta, tmp_all_embeddings = tmp_feature_loader.transform(split_name="train")
+        tmp_all_meta, tmp_all_embeddings = tmp_feature_loader.load_data_split(split_name="train")
         test_all_metadata = tmp_all_meta.iloc[:TEST_DATA_SIZE]
         test_all_embeddings = tmp_all_embeddings[:TEST_DATA_SIZE]
 

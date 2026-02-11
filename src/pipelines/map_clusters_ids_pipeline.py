@@ -9,7 +9,12 @@ from src.preprocessing.feature_loader import FeatureLoader
 
 
 class MapClustersIDsPipeline:
-    def __init__(self, output_file: str, umap_config: dict[str, any], hdbscan_config: dict[str, any]):
+    def __init__(
+        self,
+        output_file: str,
+        umap_config: dict[str, any],
+        hdbscan_config: dict[str, any],
+    ):
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.output_file = output_file
 
@@ -26,8 +31,8 @@ class MapClustersIDsPipeline:
 
     def map_clusters(self, fraction: float = 0.1):
         self.logger.info("Loading and sampling training data for UMAP and HDBSCAN fitting.")
-        train_meta, train_embeddings = self.feature_loader.transform(split_name="train")
-        sampled_train_meta = self.feature_loader.sample_fraction(train_meta, fraction=fraction)
+        train_meta, train_embeddings = self.feature_loader.load_data_split(split_name="train")
+        sampled_train_meta = self.feature_loader.sample_data(train_meta, fraction=fraction)
         sampled_train_embeddings = train_embeddings[sampled_train_meta.index]
         sampled_train_meta = sampled_train_meta.reset_index(drop=True)
 
@@ -49,5 +54,5 @@ class MapClustersIDsPipeline:
         self._log_summary_of_clusters(clusters)
 
         self.logger.info("Mapping clusters completed, saving data.")
-        self.collector._write_data_to_csv(data=all_metadata)
+        self.collector.write_data_to_csv(data=all_metadata)
         self.logger.info("Clusters mapping completed and data saved.")

@@ -17,7 +17,7 @@ class SetAudioIDsPipeline:
 
     def _set_unique_audio_ids(self, split_name: str):
         self.logger.info(f"Loading metadata for split: {split_name}")
-        metadata = self.feature_loader.load_split_file(split_name=split_name)
+        metadata = self.feature_loader.load_meta_split(split_name=split_name)
 
         self.logger.info("Setting unique audio IDs")
         modified_metadata = self.uq_audio_id_mapper.transform(metadata=metadata)
@@ -48,4 +48,4 @@ class SetAudioIDsPipeline:
         modified_metadata = self._set_unique_audio_ids_for_main_metadata()
 
         self.logger.info("SetAudioIDsPipeline on main metadata completed, saving results.")
-        self.collector._write_data_to_csv(data=modified_metadata)
+        self.collector.write_data_to_csv(data=modified_metadata)

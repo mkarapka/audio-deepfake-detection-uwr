@@ -4,8 +4,8 @@ from src.preprocessing.feature_loader import FeatureLoader
 
 if __name__ == "__main__":
     feature_loader = FeatureLoader(file_name=consts.feature_extracted)
-    train_split = feature_loader.load_split_file(split_name="train")
-    dev_split = feature_loader.load_split_file(split_name="dev")
+    train_split = feature_loader.load_meta_split(split_name="train")
+    dev_split = feature_loader.load_meta_split(split_name="dev")
 
     train_embeddings = feature_loader.load_embeddings_from_metadata(train_split)
     dev_embeddings = feature_loader.load_embeddings_from_metadata(dev_split)

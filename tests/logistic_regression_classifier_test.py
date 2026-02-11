@@ -7,8 +7,8 @@ from src.preprocessing.feature_loader import FeatureLoader
 class LogisticRegressionClassifierTest:
     def __init__(self, feature_loader: FeatureLoader):
         self.feature_loader = feature_loader
-        self.train_split = self.feature_loader.load_split_file(split_name="train")
-        self.dev_split = self.feature_loader.load_split_file(split_name="dev")
+        self.train_split = self.feature_loader.load_meta_split(split_name="train")
+        self.dev_split = self.feature_loader.load_meta_split(split_name="dev")
 
     def test_logistic_regression_trainer(self):
         print("Testing Logistic Regression Trainer...")

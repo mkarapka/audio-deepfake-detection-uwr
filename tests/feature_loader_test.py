@@ -28,7 +28,7 @@ class TestFeatureLoader:
             split_dir=SPLIT_DIR,
         )
 
-    def test_transform(self):
+    def test_load_data_split(self):
         delete_test_files()
 
         # Przygotuj przykładowe dane do zapisania
@@ -53,7 +53,7 @@ class TestFeatureLoader:
             )
 
             # Wczytaj dane za pomocą FeatureLoader
-            loaded_meta, loaded_embeddings = self.loader.transform(f"{split}")
+            loaded_meta, loaded_embeddings = self.loader.load_data_split(f"{split}")
 
             # Sprawdź czy wczytane dane są poprawne
             (
@@ -121,7 +121,7 @@ class TestFeatureLoader:
 
         print("FeatureLoader load_metadata_file test passed. Metadata match successfully.")
 
-    def test_transfrorm_all(self):
+    def test_load_data(self):
         delete_test_files()
 
         # Przygotuj przykładowe dane do zapisania
@@ -145,7 +145,7 @@ class TestFeatureLoader:
         )
 
         # Wczytaj dane za pomocą FeatureLoader
-        loaded_meta, loaded_embeddings = self.loader.transfrorm_all()
+        loaded_meta, loaded_embeddings = self.loader.load_data()
         # Sprawdź czy wczytane dane są poprawne
         (
             pd.testing.assert_frame_equal(sample_df, loaded_meta),
@@ -158,10 +158,10 @@ class TestFeatureLoader:
         _, counts = np.unique(loaded_meta.index, return_counts=True)
         assert all(count == 1 for count in counts), "There are duplicate indices in loaded metadata."
         print(loaded_meta)
-        print("FeatureLoader transfrorm_all test passed. Metadata and embeddings match successfully.")
+        print("FeatureLoader load_data test passed. Metadata and embeddings match successfully.")
 
 
-TestFeatureLoader().test_transform()
+TestFeatureLoader().test_load_data_split()
 TestFeatureLoader().test_load_speakers_ids()
 TestFeatureLoader().test_load_metadata_file_when_there_is_no_index_in_column_zero()
-TestFeatureLoader().test_transfrorm_all()
+TestFeatureLoader().test_load_data()

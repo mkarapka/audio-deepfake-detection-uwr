@@ -7,37 +7,18 @@ class Constants:
     data_dir = root / "data"
     logs_dir = data_dir / "logs"
     collected_data_dir = data_dir / "collected_data"
-    results_dir = data_dir / "results"
+    train_results_dir = data_dir / "results"
     models_dir = data_dir / "models"
-    training_dir = "spoof_and_bonafide"
     splited_data_dir = collected_data_dir / "splited_data"
+    tests_data_dir = data_dir / "tests_data"
 
     # File names
     speakers_ids_file = "speakers_ids.csv"
-    npy_ext = ".npy"
-    csv_ext = ".csv"
     feature_extracted = "feature_extracted"
     wavlm_emb_suffix = "_wavlm"
     fft_emb_suffix = "_fft"
-
-    # Wavlm
-    wavlm_file_name_prefix = "wavlm_extracted"
-
-    embeddings_file = wavlm_file_name_prefix + npy_ext
-    wavlm_metadata_file = wavlm_file_name_prefix + csv_ext
-
-    train_wavlm_file = wavlm_file_name_prefix + "_train" + csv_ext
-    dev_wavlm_file = wavlm_file_name_prefix + "_dev" + csv_ext
-    test_wavlm_file = wavlm_file_name_prefix + "_test" + csv_ext
-
-    # FFT
-    fft_file_name_prefix = "fft_extracted"
-    fft_embeddings_file = fft_file_name_prefix + npy_ext
-    fft_metadata_file = fft_file_name_prefix + csv_ext
-
-    train_fft_file = fft_file_name_prefix + "_train" + csv_ext
-    dev_fft_file = fft_file_name_prefix + "_dev" + csv_ext
-    test_fft_file = fft_file_name_prefix + "_test" + csv_ext
+    npy_ext = ".npy"
+    csv_ext = ".csv"
 
     # Audio settings
     g_sample_rate = 16_000

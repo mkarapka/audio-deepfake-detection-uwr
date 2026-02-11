@@ -14,11 +14,11 @@ class TrainEvalPipeline:
 
     def run(self):
         self.logger.info("Loading training and evaluation data.")
-        train_meta, train_embeddings = self.feature_loader.transform(split_name="train")
-        sampled_train_meta, sampled_train_embeddings = self.feature_loader.sample_fraction_metadata_and_embeddings(
+        train_meta, train_embeddings = self.feature_loader.load_data_split(split_name="train")
+        sampled_train_meta, sampled_train_embeddings = self.feature_loader.sample_data(
             train_meta, train_embeddings, fraction=0.4
         )
-        dev_meta, dev_embeddings = self.feature_loader.transform(split_name="dev")
+        dev_meta, dev_embeddings = self.feature_loader.load_data_split(split_name="dev")
 
         self.logger.info("Starting model training.")
         self.classifier.optuna_fit(

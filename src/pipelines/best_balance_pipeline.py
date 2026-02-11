@@ -28,8 +28,8 @@ class BestBalancePipeline:
         self.objective = objective
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.feature_loader = FeatureLoader(file_name=consts.feature_extracted)
-        self.train_split = self.feature_loader.load_split_file(split_name="train")
-        self.dev_split = self.feature_loader.load_split_file(split_name="dev")
+        self.train_split = self.feature_loader.load_meta_split(split_name="train")
+        self.dev_split = self.feature_loader.load_meta_split(split_name="dev")
         self.is_chunk_prediction = is_chunk_prediction
 
     def _get_balancer_instance(self, balancer_type: str, ratio_args):
@@ -65,7 +65,8 @@ class BestBalancePipeline:
             dev_embeddings = self.feature_loader.load_embeddings_from_metadata(dev_split)
 
             clf = self.clf_model(
-                is_chunk_prediction=self.is_chunk_prediction, dev_uq_audio_ids=dev_split["unique_audio_id"]
+                is_chunk_prediction=self.is_chunk_prediction,
+                dev_uq_audio_ids=dev_split["unique_audio_id"],
             )
             clf.optuna_fit(
                 n_trials=n_trials,
@@ -129,7 +130,7 @@ class BestBalancePipeline:
             df["best_params"].append(params)
         results_df = pd.DataFrame(df)
         collector = Collector(save_file_name=file_name)
-        collector._write_data_to_csv(results_df, include_index=False)
+        collector.write_data_to_csv(results_df, include_index=False)
 
     def pick_best_model(self):
         best_model_name = None

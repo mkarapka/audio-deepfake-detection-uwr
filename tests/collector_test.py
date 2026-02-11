@@ -7,7 +7,7 @@ from src.common.constants import Constants as consts
 from src.preprocessing.collector import Collector
 
 TEST_FILE_NAME = "test_file"
-TEST_DATA_DIR = consts.collected_data_dir / Path("test_collected_data")
+TEST_DATA_DIR = consts.tests_data_dir / Path("test_collected_data")
 TEST_SPLIT_DIR = TEST_DATA_DIR / "splited_data"
 
 

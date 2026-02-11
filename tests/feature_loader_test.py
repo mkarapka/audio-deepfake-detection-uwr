@@ -4,7 +4,7 @@ import pandas as pd
 from src.common.constants import Constants as consts
 from src.preprocessing.feature_loader import FeatureLoader
 
-TEST_DIR = consts.collected_data_dir / "test_feature_loader"
+TEST_DIR = consts.tests_data_dir / "test_feature_loader"
 TEST_FILE_PATH = TEST_DIR / "test_file"
 TEST_DIR.mkdir(parents=True, exist_ok=True)
 SPLIT_DIR = TEST_DIR / "splited_data"
@@ -141,7 +141,7 @@ class TestFeatureLoader:
         np.save(TEST_FILE_PATH.with_suffix(consts.npy_ext), sample_embeddings)
         sample_df.to_csv(
             TEST_DIR / f"{self.FILE_NAME}{consts.csv_ext}",
-            include_index=False,
+            index=False,
         )
 
         # Wczytaj dane za pomocą FeatureLoader

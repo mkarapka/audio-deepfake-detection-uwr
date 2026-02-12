@@ -9,7 +9,7 @@ class Constants:
     collected_data_dir = data_dir / "collected_data"
     train_results_dir = data_dir / "results"
     models_dir = data_dir / "models"
-    splited_data_dir = collected_data_dir / "splited_data"
+    split_dir = collected_data_dir / "splited_data"
     tests_data_dir = data_dir / "tests_data"
 
     # File names

@@ -13,7 +13,7 @@ class Collector(BasePreprocessor):
         self,
         save_file_name: str,
         data_dir: Path = consts.collected_data_dir,
-        split_dir: Path = consts.splited_data_dir,
+        split_dir: Path = consts.split_dir,
     ):
         super().__init__(class_name=__class__.__name__)
         self.data_dir = data_dir

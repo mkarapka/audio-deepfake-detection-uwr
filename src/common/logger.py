@@ -49,7 +49,7 @@ def setup_logger(
         consts.logs_dir.mkdir(parents=True, exist_ok=True)
 
         # Nazwa pliku z datą
-        log_filename = f"{"audio_deepfake"}_{datetime.now().strftime('%Y-%m-%d')}.log"
+        log_filename = f"{'audio_deepfake'}_{datetime.now().strftime('%Y-%m-%d')}.log"
         log_filepath = consts.logs_dir / log_filename
 
         file_handler = logging.FileHandler(log_filepath, encoding="utf-8")

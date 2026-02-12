@@ -13,7 +13,7 @@ class FeatureLoader:
         file_name=consts.feature_extracted,
         emb_suffix: str = "",
         data_dir: Path = consts.collected_data_dir,
-        split_dir: Path = consts.splited_data_dir,
+        split_dir: Path = consts.split_dir,
     ):
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         if "wavlm" in emb_suffix:

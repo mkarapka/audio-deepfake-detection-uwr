@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from src.common.constants import Constants as consts
-from src.preprocessing.io.base_IO import BaseIO
+from src.preprocessing.io.base_io import BaseIO
 
 
 class FeatureLoader(BaseIO):

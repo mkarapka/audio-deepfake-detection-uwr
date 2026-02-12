@@ -1,8 +1,8 @@
 from src.common.constants import Constants as consts
 from src.common.logger import setup_logger
 from src.models.mlp_classifier import MLPClassifier
-from src.preprocessing.collector import Collector
-from src.preprocessing.feature_loader import FeatureLoader
+from src.preprocessing.io.collector import Collector
+from src.preprocessing.io.feature_loader import FeatureLoader
 
 
 class TrainEvalPipeline:

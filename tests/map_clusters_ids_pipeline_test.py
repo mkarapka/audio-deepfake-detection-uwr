@@ -6,8 +6,8 @@ import pandas as pd
 from src.common.constants import Constants as consts
 from src.common.logger import setup_logger
 from src.pipelines.map_clusters_ids_pipeline import MapClustersIDsPipeline
-from src.preprocessing.collector import Collector
-from src.preprocessing.feature_loader import FeatureLoader
+from src.preprocessing.io.collector import Collector
+from src.preprocessing.io.feature_loader import FeatureLoader
 
 TEST_DATA_SIZE = 10000
 

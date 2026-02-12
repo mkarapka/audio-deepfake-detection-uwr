@@ -3,7 +3,7 @@ import pandas as pd
 from src.common.basic_functions import setup_logger
 from src.common.constants import Constants as consts
 from src.common.record_iterator import RecordIterator
-from src.preprocessing.collector import Collector
+from src.preprocessing.io.collector import Collector
 from src.preprocessing.data_balancers.mix_blancer import MixBalancer
 from src.preprocessing.data_balancers.oversample_real_balancer import (
     OversampleRealBalancer,
@@ -11,7 +11,7 @@ from src.preprocessing.data_balancers.oversample_real_balancer import (
 from src.preprocessing.data_balancers.undersample_spoof_balancer import (
     UndersampleSpoofBalancer,
 )
-from src.preprocessing.feature_loader import FeatureLoader
+from src.preprocessing.io.feature_loader import FeatureLoader
 
 
 class BestBalancePipeline:

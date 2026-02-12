@@ -6,7 +6,7 @@ import pandas as pd
 
 from src.common.constants import Constants as consts
 from src.preprocessing.base_preprocessor import BasePreprocessor
-
+from preprocessing.io.base_IO import BaseIO
 
 class Collector(BasePreprocessor):
     def __init__(

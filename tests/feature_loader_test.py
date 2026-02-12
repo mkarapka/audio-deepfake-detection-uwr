@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from src.common.constants import Constants as consts
-from src.preprocessing.feature_loader import FeatureLoader
+from src.preprocessing.io.feature_loader import FeatureLoader
 
 TEST_DIR = consts.tests_data_dir / "test_feature_loader"
 TEST_FILE_PATH = TEST_DIR / "test_file"

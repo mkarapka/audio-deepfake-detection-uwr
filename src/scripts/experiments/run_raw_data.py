@@ -1,6 +1,6 @@
 from src.common.constants import Constants as consts
 from src.models.logistic_regression_classifier import LogisticRegressionClassifier
-from src.preprocessing.feature_loader import FeatureLoader
+from src.preprocessing.io.feature_loader import FeatureLoader
 
 if __name__ == "__main__":
     feature_loader = FeatureLoader(file_name=consts.feature_extracted)

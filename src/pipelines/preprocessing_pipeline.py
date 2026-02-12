@@ -3,7 +3,7 @@ from pathlib import Path
 from src.common.constants import Constants as consts
 from src.common.logger import get_logger, setup_logger
 from src.preprocessing.audio_segmentator import AudioSegmentator
-from src.preprocessing.collector import Collector
+from src.preprocessing.io.collector import Collector
 from src.preprocessing.config_loader import ConfigLoader
 from src.preprocessing.dataset_spliter import DatasetSpliter
 from src.preprocessing.feature_extractors.base_feature_extractor import (
@@ -11,7 +11,7 @@ from src.preprocessing.feature_extractors.base_feature_extractor import (
 )
 from src.preprocessing.feature_extractors.fft_extractor import FFTExtractor
 from src.preprocessing.feature_extractors.wavlm_extractor import WavLmExtractor
-from src.preprocessing.feature_loader import FeatureLoader
+from src.preprocessing.io.feature_loader import FeatureLoader
 from src.preprocessing.metadata_modifier import MetadataModifier
 
 LOGGER_NAME = "PreprocessingPipeline"

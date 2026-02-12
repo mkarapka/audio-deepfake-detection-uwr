@@ -1,7 +1,7 @@
 from sklearn.metrics import accuracy_score
 
 from src.models.logistic_regression_classifier import LogisticRegressionClassifier
-from src.preprocessing.feature_loader import FeatureLoader
+from src.preprocessing.io.feature_loader import FeatureLoader
 
 
 class LogisticRegressionClassifierTest:

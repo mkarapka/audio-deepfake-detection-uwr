@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from src.common.constants import Constants as consts
-from src.preprocessing.collector import Collector
+from src.preprocessing.io.collector import Collector
 
 TEST_FILE_NAME = "test_file"
 TEST_DATA_DIR = consts.tests_data_dir / Path("test_collected_data")

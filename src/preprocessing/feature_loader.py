@@ -4,38 +4,20 @@ import numpy as np
 import pandas as pd
 
 from src.common.constants import Constants as consts
-from src.common.logger import setup_logger
+from src.preprocessing.base_IO import BaseIO
 
 
-class FeatureLoader:
+class FeatureLoader(BaseIO):
     def __init__(
         self,
         file_name=consts.feature_extracted,
-        emb_suffix: str = "",
+        feat_suffix: str = "",
         data_dir: Path = consts.collected_data_dir,
         split_dir: Path = consts.split_dir,
     ):
-        self.logger = setup_logger(__class__.__name__, log_to_console=True)
-        if "wavlm" in emb_suffix:
-            self.logger.info("Using WavLM embeddings suffix")
-            emb_suffix = consts.wavlm_emb_suffix
-        elif "fft" in emb_suffix:
-            self.logger.info("Using FFT embeddings suffix")
-            emb_suffix = consts.fft_emb_suffix
-        else:
-            self.logger.info("No embeddings suffix specified, using default")
-        self.data_dir = data_dir
-        self.split_dir = split_dir
-        self.emb_path = data_dir / (file_name + emb_suffix + consts.npy_ext)
-        self.meta_path = data_dir / (file_name + consts.csv_ext)
-        self.file_name = file_name
-
-    def _get_file_path(self, split_name: str) -> Path:
-        file_path = self.split_dir / (self.file_name + "_" + split_name + consts.csv_ext)
-        self.logger.info(f"Constructed file path: {file_path}")
-        if not file_path.exists():
-            self.logger.error(f"File {file_path} does not exist.")
-        return file_path
+        super().__init__(self.__class__.__name__, file_name, feat_suffix, data_dir, split_dir)
+        self.emb_path = self._create_file_path(file_ext=consts.npy_ext)
+        self.meta_path = self._create_file_path(file_ext=consts.csv_ext)
 
     def _sample_meta(self, metadata: pd.DataFrame, fraction=0.4) -> pd.DataFrame:
         sample_size = int(len(metadata) * fraction)
@@ -68,7 +50,7 @@ class FeatureLoader:
         return metadata_df
 
     def load_meta_split(self, split_name: str) -> pd.DataFrame:
-        file_path = self._get_file_path(split_name)
+        file_path = self.create_read_file_path(file_ext=consts.csv_ext, split_name=split_name)
         return self.load_metadata_file(file_path, index_col=0)
 
     def load_embeddings_from_metadata(self, metadata: pd.DataFrame) -> np.ndarray:
@@ -76,7 +58,7 @@ class FeatureLoader:
         return embeddings_mmap[metadata.index].copy()
 
     def load_data_split(self, split_name: str, index_col: int | None = 0) -> tuple[pd.DataFrame, np.ndarray]:
-        file_path = self._get_file_path(split_name)
+        file_path = self.create_read_file_path(file_ext=consts.csv_ext, split_name=split_name)
         self.logger.info(f"Loading features from {file_path}")
 
         loaded_meta = self.load_metadata_file(file_path, index_col=index_col)

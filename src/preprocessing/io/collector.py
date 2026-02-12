@@ -5,41 +5,33 @@ import numpy as np
 import pandas as pd
 
 from src.common.constants import Constants as consts
-from src.preprocessing.base_preprocessor import BasePreprocessor
-from preprocessing.io.base_IO import BaseIO
+from src.preprocessing.io.base_IO import BaseIO
 
-class Collector(BasePreprocessor):
+
+class Collector(BaseIO):
     def __init__(
         self,
         save_file_name: str,
         data_dir: Path = consts.collected_data_dir,
         split_dir: Path = consts.split_dir,
     ):
-        super().__init__(class_name=__class__.__name__)
-        self.data_dir = data_dir
-        self.split_dir = split_dir
-        self.file_name = save_file_name
-        self.meta_data_file_path = None
-        self.embeddings_file_path = None
+        super().__init__(
+            class_name=__class__.__name__,
+            file_name=save_file_name,
+            feat_suffix="",
+            data_dir=data_dir,
+            split_dir=split_dir,
+        )
+
+        self.meta_data_file_path = self._create_file_path(file_ext=consts.csv_ext)
+        self.embeddings_file_path = self._create_file_path(file_ext=consts.npy_ext)
+        logging.info(f"Metadata will be saved to: {self.meta_data_file_path}")
+        logging.info(f"Embeddings will be saved to: {self.embeddings_file_path}")
 
         if self.data_dir.exists() is False:
             self.data_dir.mkdir(parents=True, exist_ok=True)
         if self.split_dir.exists() is False:
             self.split_dir.mkdir(parents=True, exist_ok=True)
-
-        if save_file_name is not None:
-            self.meta_data_file_path = self._create_file_path(f_name_suffix=consts.csv_ext)
-            self.embeddings_file_path = self._create_file_path(f_name_suffix=consts.npy_ext)
-            logging.info(f"Metadata will be saved to: {self.meta_data_file_path}")
-            logging.info(f"Embeddings will be saved to: {self.embeddings_file_path}")
-        else:
-            logging.error("Save file name must be provided for Collector.")
-
-    def _create_file_path(self, f_name_suffix: str, data_dir: Path = None) -> Path:
-        if data_dir is None:
-            data_dir = self.data_dir
-        file_path = data_dir / Path(f"{self.file_name}{f_name_suffix}")
-        return file_path
 
     def _write_embeddings_to_npy(self, embeddings: np.ndarray, file_path: Path = None):
         if file_path is None:
@@ -72,8 +64,5 @@ class Collector(BasePreprocessor):
 
     def transform_splits(self, data: list[pd.DataFrame], splits=["train", "dev", "test"]):
         for meta, split_name in zip(data, splits):
-            new_meta_path = self._create_file_path(
-                f_name_suffix=f"_{split_name}{consts.csv_ext}",
-                data_dir=self.split_dir,
-            )
+            new_meta_path = self._create_file_path(file_ext=consts.csv_ext, split_name=split_name)
             self.write_data_to_csv(data=meta, file_path=new_meta_path, include_index=True)

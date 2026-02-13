@@ -141,3 +141,10 @@ def plot_embeddings_subplots(
         plt.ylabel("Dimension 2")
     plt.tight_layout()
     plt.show()
+
+
+def print_green(message: str, *, end: str = "\n"):
+    """Wypisuje tekst na zielono bezpośrednio do konsoli."""
+    GREEN = "\033[32m"
+    RESET = "\033[0m"
+    print(f"{GREEN}{message}{RESET}", end=end)

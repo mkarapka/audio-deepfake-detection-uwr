@@ -25,12 +25,12 @@ class BaseModel:
             return data.cpu().numpy()
         return data
 
-    def iterate_records(self, uq_audio_ids: pd.Series, predictions: np.ndarray):
+    def iterate_records(self, uq_audio_ids: pd.Series, y_preds: np.ndarray):
         unique_records_ids = uq_audio_ids.unique()
 
         for unique_audio_id in unique_records_ids:
             mask = uq_audio_ids == unique_audio_id
-            record_predictions = predictions[mask]
+            record_predictions = y_preds[mask]
 
             yield record_predictions, mask
 

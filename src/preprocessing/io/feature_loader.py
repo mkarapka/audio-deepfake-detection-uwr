@@ -24,12 +24,35 @@ class FeatureLoader(BaseIO):
         reduced_split = metadata.sample(n=sample_size, random_state=42)
         return reduced_split
 
+    def _sample_uq_audio_ids(self, metadata: pd.DataFrame, fraction: int, random_state=42):
+        audio_ids = metadata["audio_id"].unique()
+
+        np.random.seed(random_state)
+        np.random.shuffle(audio_ids)
+
+        sample_size = int(len(audio_ids) * fraction)
+        return audio_ids[:sample_size]
+
     def sample_data(
         self, metadata: pd.DataFrame, embeddings: np.ndarray | None = None, fraction=0.4
-    ) -> tuple[pd.DataFrame, np.ndarray | None]:
+    ) -> tuple[pd.DataFrame, np.ndarray] | pd.DataFrame:
         sampled_metadata = self._sample_meta(metadata, fraction=fraction)
         if embeddings is None:
-            return sampled_metadata, None
+            return sampled_metadata
+
+        sampled_embeddings = embeddings[sampled_metadata.index]
+        sampled_metadata = sampled_metadata.reset_index(drop=True)
+
+        return sampled_metadata, sampled_embeddings
+
+    def sample_data_by_audio_id(
+        self, metadata: pd.DataFrame, embeddings: np.ndarray | None = None, fraction=0.4
+    ) -> tuple[pd.DataFrame, np.ndarray | None]:
+        sampled_audio_ids = self._sample_uq_audio_ids(metadata, fraction=fraction)
+
+        sampled_metadata = metadata[metadata["audio_id"].isin(sampled_audio_ids)]
+        if embeddings is None:
+            return sampled_metadata
 
         sampled_embeddings = embeddings[sampled_metadata.index]
         sampled_metadata = sampled_metadata.reset_index(drop=True)

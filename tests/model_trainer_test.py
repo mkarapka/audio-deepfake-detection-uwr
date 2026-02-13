@@ -47,9 +47,20 @@ class ModelTrainerTest:
                 saved_df[attr].iloc[-1] == params[attr]
             ), f"Expected value '{params[attr]}' for column '{attr}', got '{saved_df[attr].iloc[-1]}'"
 
+    def test_get_target(self):
+        example_metadata = pd.DataFrame(
+            {"target": ["bonafide", "spoof", "bonafide", "spoof"], "other_info": [1, 2, 3, 4]}
+        )
+
+        y = self.trainer.get_target(example_metadata, pos_label="bonafide")
+        expected_y = np.array([1, 0, 1, 0])  # bonafide -> 1, spoof -> 0
+
+        assert np.all(y == expected_y), f"Expected y {expected_y}, got {y}"
+
 
 ModelTrainerTest().test_get_best_params_without_training()
 ModelTrainerTest().test_convert_labels_to_ints()
 ModelTrainerTest().test_optuna_train()
 ModelTrainerTest().test_save_results()
+ModelTrainerTest().test_get_target()
 print_green("All ModelTrainer tests passed successfully!")

@@ -1,3 +1,4 @@
+import numpy as np
 import optuna
 import pandas as pd
 
@@ -12,8 +13,12 @@ class ModelTrainer:
         self.is_majority_voting = is_majority_voting
         self.study = None
 
-    def _convert_labels_to_ints(self, y, pos_label: str):
+    def _convert_labels_to_ints(self, y: pd.Series, pos_label: str) -> np.ndarray:
         return (y == pos_label).astype(int)
+
+    def get_target(self, metadata: pd.DataFrame, pos_label="bonafide") -> np.ndarray:
+        y = self._convert_labels_to_ints(metadata["target"], pos_label=pos_label)
+        return y
 
     def optuna_train(self, model: BaseModel, objective, n_trials: int, direct: str = "maximize", **params):
         self.logger.info("Starting Optuna hyperparameter optimization...")

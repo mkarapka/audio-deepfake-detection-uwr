@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import torch
 
 from src.models.base_model import BaseModel
 
@@ -53,7 +54,16 @@ class BaseModelTest:
             majority_vote = self.model._majority_vote(bucket_preds)
             assert np.all(majoirity_voted_preds[mask] == majority_vote)
 
+    def test_to_numpy(self):
+        tensor_data = torch.tensor([1, 2, 3])
+        numpy_data = self.model._to_numpy(tensor_data)
+        print(f"Tensor data: {tensor_data}, Numpy data: {numpy_data}")
+        assert isinstance(numpy_data, np.ndarray)
+        assert np.array_equal(numpy_data, tensor_data.numpy())
+
 
 BaseModelTest().test_iterate_records()
 BaseModelTest().test_majority_vote()
 BaseModelTest().test_majority_voting()
+BaseModelTest().test_to_numpy()
+print("All BaseModel tests passed successfully!")

@@ -1,3 +1,4 @@
+import joblib
 import numpy as np
 import pandas as pd
 
@@ -57,10 +58,28 @@ class ModelTrainerTest:
 
         assert np.all(y == expected_y), f"Expected y {expected_y}, got {y}"
 
+    def test_save_model(self):
+        DUMMY_CONTENT = "dummy model content"
+
+        class DummyModel:
+            def save(self, file_path):
+                joblib.dump(DUMMY_CONTENT, file_path)
+
+        dummy_model = DummyModel()
+        FILE_NAME = "test_dummy_model"
+        self.trainer.save_model(dummy_model, FILE_NAME, ext="txt")
+
+        saved_files = list(consts.models_dir.glob(f"{FILE_NAME}*.txt"))
+        assert len(saved_files) > 0, "Expected at least one saved model file."
+        with open(saved_files[0], "rb") as f:
+            content = joblib.load(f)
+            assert content == DUMMY_CONTENT, f"Expected '{DUMMY_CONTENT}', got '{content}'"
+
 
 ModelTrainerTest().test_get_best_params_without_training()
 ModelTrainerTest().test_convert_labels_to_ints()
 ModelTrainerTest().test_optuna_train()
 ModelTrainerTest().test_save_results()
 ModelTrainerTest().test_get_target()
+ModelTrainerTest().test_save_model()
 print_green("All ModelTrainer tests passed successfully!")

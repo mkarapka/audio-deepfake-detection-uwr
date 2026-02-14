@@ -40,9 +40,9 @@ class BaseModelTest:
         class DummyModel:
             def predict(self, X):
                 return X
+
         self.model.model = DummyModel
-        majoirity_voted_preds = self.model.majority_voting(y_pred=y_pred, audio_ids=pd.Series(y_preds_buckets)
-        )
+        majoirity_voted_preds = self.model.majority_voting(y_pred=y_pred, audio_ids=pd.Series(y_preds_buckets))
         print(f"Original Predictions:       {y_pred}")
         print(f"Bucket Assignments:         {y_preds_buckets}")
         print(f"Majority Voted Predictions: {majoirity_voted_preds}")

@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import optuna
 import pandas as pd
@@ -8,9 +10,8 @@ from src.models.base_model import BaseModel
 
 
 class ModelTrainer:
-    def __init__(self, is_majority_voting: bool = False):
+    def __init__(self):
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
-        self.is_majority_voting = is_majority_voting
         self.study = None
 
     def _convert_labels_to_ints(self, y: pd.Series, pos_label: str) -> np.ndarray:
@@ -49,3 +50,11 @@ class ModelTrainer:
             save_df.to_csv(file_path, index=False)
 
         self.logger.info("Results saved successfully with columns: " + ", ".join(save_df.columns))
+
+    def save_model(self, model: BaseModel, save_file_name: str, ext: str):
+        file_path = consts.models_dir / f"{save_file_name}_{time.strftime('%Y-%m-%d_%H-%M-%S')}.{ext}"
+        if not consts.models_dir.exists():
+            consts.models_dir.mkdir(parents=True, exist_ok=True)
+        self.logger.info(f"Saving model to {file_path}")
+        model.save(file_path)
+        self.logger.info("Model saved successfully.")

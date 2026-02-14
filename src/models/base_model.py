@@ -35,7 +35,7 @@ class BaseModel:
 
             yield record_predictions, mask
 
-    def majority_voting(self, y_pred : np.ndarray, audio_ids: pd.Series):
+    def majority_voting(self, y_pred: np.ndarray, audio_ids: pd.Series):
         majority_voted_preds = np.full(y_pred.shape[0], -1)
         for record_preds, mask in self.iterate_records(audio_ids, y_pred):
             majority_voted_preds[mask] = self._majority_vote(record_preds)

@@ -1,3 +1,4 @@
+import joblib
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
@@ -16,6 +17,13 @@ class LogisticRegressionClf(BaseModel):
         X = self._to_numpy(X)
         y = self._to_numpy(y)
         self.model.fit(X, y)
+
+    def save(self, file_path):
+        joblib.dump(self.model, file_path)
+
+    def load(self, file_path):
+        self.model = joblib.load(file_path)
+
 
 def objective_acc(trial, model: LogisticRegressionClf, max_iter: int, X_train, y_train, X_dev, y_dev):
     C = trial.suggest_float("C", 0.01, 10.0, log=True)

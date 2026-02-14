@@ -1,7 +1,7 @@
 import optuna
 
-from models.logistic_regression_clf import LogisticRegressionClf, objective_acc
-
+from src.models.logistic_regression_clf import LogisticRegressionClf, objective_acc
+from src.common.basic_functions import print_green
 
 class LogisticRegressionClassifierTest:
     def test_model_initialization(self):
@@ -39,9 +39,24 @@ class LogisticRegressionClassifierTest:
         except Exception as e:
             assert False, f"Objective function raised an exception: {e}"
 
+    def test_predict(self):
+        print("Testing Predict Method of Logistic Regression Classifier...")
+        clf = LogisticRegressionClf(C=1.0, class_weight="balanced", max_iter=100, random_state=42)
+        X_train = [[0], [1]]
+        y_train = [0, 1]
+        clf.fit(X_train, y_train)
+
+        X_test = [[0], [1]]
+        expected_predictions = [0, 1]
+        predictions = clf.predict(X_test)
+        print("Predictions:", predictions)
+        assert list(predictions) == expected_predictions, f"Expected predictions {expected_predictions}, got {predictions}"
+        print("Predict Method Test Passed!")
+
 
 if __name__ == "__main__":
     test = LogisticRegressionClassifierTest()
     test.test_model_initialization()
     test.test_objective_function()
-    print("All Logistic Regression Classifier tests passed successfully!")
+    test.test_predict()
+    print_green("All Logistic Regression Classifier tests passed successfully!")

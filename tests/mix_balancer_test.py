@@ -50,7 +50,6 @@ class MixBalancerTest:
         bonafide_count = balanced_metadata[balanced_metadata["target"] == "bonafide"].shape[0]
         spoof_count = balanced_metadata[balanced_metadata["target"] == "spoof"].shape[0]
 
-        # assert bonafide_count == spoof_count, "The number of bonafide and spoof samples should be equal after balancing."
         assert (
             balanced_embeddings.shape[0] == balanced_metadata.shape[0]
         ), "Embeddings and metadata should have the same number of samples."

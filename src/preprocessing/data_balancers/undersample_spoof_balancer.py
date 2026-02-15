@@ -27,7 +27,7 @@ class UndersampleSpoofBalancer(BaseBalancer):
             spoof_samples_no=meta_spoof.shape[0],
             bonafide_samples_no=meta_bonafide.shape[0],
         )
-        
+
         sampled_spoof_meta = meta_spoof.iloc[sampled_ids]
         new_meta = pd.concat((meta_bonafide, sampled_spoof_meta))
         balanced_metadata = self.shuffle_data(new_meta)

@@ -5,7 +5,7 @@ import pandas as pd
 
 from src.common.constants import Constants as consts
 from src.common.logger import setup_logger
-from src.pipelines.map_clusters_ids_pipeline import MapClustersIDsPipeline
+from src.pipelines.preprocessing.map_clusters_ids_pipeline import MapClustersIDsPipeline
 from src.preprocessing.io.collector import Collector
 from src.preprocessing.io.feature_loader import FeatureLoader
 
@@ -51,9 +51,17 @@ class TestMapClustersIDsPipeline:
 
         print("Loaded test data for MapClustersIDsPipeline tests.")
         print("Loaded all metadata:", pd.read_csv(test_all_meta_file_path))
-        print("All metadata and embeddings shapes:", test_all_metadata.shape, test_all_embeddings.shape)
+        print(
+            "All metadata and embeddings shapes:",
+            test_all_metadata.shape,
+            test_all_embeddings.shape,
+        )
         print("Loaded train metadata:", pd.read_csv(test_train_meta_file_path))
-        print("Train metadata and embeddings shapes:", test_train_metadata.shape, tests_train_embeddings.shape)
+        print(
+            "Train metadata and embeddings shapes:",
+            test_train_metadata.shape,
+            tests_train_embeddings.shape,
+        )
 
     def test_map_clusters_ids_pipeline(self):
         umap_config = consts.umap_20d_config

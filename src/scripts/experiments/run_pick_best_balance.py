@@ -1,5 +1,5 @@
 from src.models.mlp_classifier import MLPClassifier
-from src.pipelines.best_balance_pipeline import BestBalancePipeline
+from src.pipelines.experiments.best_balance_pipeline import BestBalancePipeline
 
 if __name__ == "__main__":
     pipeline = BestBalancePipeline(

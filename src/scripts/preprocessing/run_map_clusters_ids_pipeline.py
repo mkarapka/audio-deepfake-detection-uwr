@@ -1,5 +1,5 @@
 from src.common.constants import Constants as consts
-from src.pipelines.map_clusters_ids_pipeline import MapClustersIDsPipeline
+from src.pipelines.preprocessing.map_clusters_ids_pipeline import MapClustersIDsPipeline
 
 if __name__ == "__main__":
     output_file = "mapped_clusters_ids_feature_extracted"

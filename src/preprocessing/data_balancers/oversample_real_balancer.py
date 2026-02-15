@@ -17,9 +17,9 @@ class OversampleRealBalancer(BaseBalancer):
             return np.array([], dtype=int)
         return np.random.choice(bonafide_samples, size=adjusted_bonafide_count, replace=True)
 
-    def transform(self, metadata: pd.DataFrame):
+    def transform(self, metadata: pd.DataFrame, features: np.ndarray) -> tuple[pd.DataFrame, np.ndarray]:
         if not self.is_need_to_balance(metadata):
-            return metadata
+            return metadata, features
         meta_bonafide, meta_spoof = self.get_bonafide_spoof_data(metadata)
 
         np.random.seed(self.seed)
@@ -27,8 +27,13 @@ class OversampleRealBalancer(BaseBalancer):
             total_spoof_samples=meta_spoof.shape[0],
             bonafide_samples=meta_bonafide.shape[0],
         )
-        sampled_bonafide_meta = meta_bonafide.iloc[sampled_ids]
 
+        sampled_bonafide_meta = meta_bonafide.iloc[sampled_ids]
         new_meta = pd.concat((metadata, sampled_bonafide_meta))
         balanced_metadata = self.shuffle_data(new_meta)
-        return balanced_metadata
+
+        balanced_features = features[balanced_metadata.index]
+        self.previous_index = balanced_metadata.index
+        balanced_metadata = balanced_metadata.reset_index(drop=True)
+
+        return balanced_metadata, balanced_features

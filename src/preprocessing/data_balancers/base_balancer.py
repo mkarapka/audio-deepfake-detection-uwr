@@ -7,6 +7,7 @@ from src.preprocessing.base_preprocessor import BasePreprocessor
 class BaseBalancer(BasePreprocessor):
     def __init__(self, name: str):
         super().__init__(name)
+        self.previous_index = None
 
     def is_need_to_balance(self, metadata: pd.DataFrame):
         bonafide_count = np.sum(metadata["target"] != "spoof")

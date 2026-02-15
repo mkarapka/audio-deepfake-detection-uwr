@@ -46,8 +46,7 @@ class TestDatasetBalancer:
         print("Target Column", metadata[f"{TARGET_COL}"].value_counts().to_dict())
 
         embeddings = np.random.rand(total_rows, 768)  # Example embeddings with 768 dimensions
-        balanced_metadata = self.balancer.transform(metadata)
-        balanced_embeddings = embeddings[balanced_metadata.index]
+        balanced_metadata, balanced_embeddings = self.balancer.transform(metadata, embeddings)
 
         bonafide_mask = balanced_metadata[f"{TARGET_COL}"] == "bonafide"
         spoof_mask = balanced_metadata[f"{TARGET_COL}"] == "spoof"
@@ -79,7 +78,7 @@ class TestDatasetBalancer:
         ), "Embeddings content should remain unchanged after balancing."
 
         # Test index consistency - sprawdź czy embeddingi odpowiadają metadata przez indeksy
-        for i, (idx, row) in enumerate(balanced_metadata.iterrows()):
+        for i, idx in enumerate(self.balancer.previous_index):
             original_embedding = embeddings[idx]
             balanced_embedding = balanced_embeddings[i]
             assert np.array_equal(
@@ -87,6 +86,7 @@ class TestDatasetBalancer:
             ), f"Embedding at balanced position {i} should match original embedding at index {idx}"
             # Dodatkowo sprawdź czy feature1 się zgadza (feature1 = index + 1 w oryginalnych danych)
             expected_feature1 = idx + 1
+            row = metadata.iloc[idx]
             assert (
                 row["feature1"] == expected_feature1
             ), f"Metadata feature1 should match original data: expected {expected_feature1}, got {row['feature1']}"
@@ -128,10 +128,8 @@ class TestDatasetBalancer:
         )
         embeddings = np.random.rand(ROWS_NO, 768)  # Example embeddings with 768 dimensions
 
-        balanced_metadata1 = self.balancer.transform(metadata)
-        balanced_embeddings1 = embeddings[balanced_metadata1.index]
-        balanced_metadata2 = self.balancer.transform(metadata)
-        balanced_embeddings2 = embeddings[balanced_metadata2.index]
+        balanced_metadata1, balanced_embeddings1 = self.balancer.transform(metadata, embeddings)
+        balanced_metadata2, balanced_embeddings2 = self.balancer.transform(metadata, embeddings)
 
         assert balanced_metadata1.equals(balanced_metadata2), "Balanced metadata should be the same for the same seed."
         assert np.array_equal(

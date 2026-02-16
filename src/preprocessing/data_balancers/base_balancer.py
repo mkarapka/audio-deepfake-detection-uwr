@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+from src.common.logger import raise_error_logger
 from src.preprocessing.base_preprocessor import BasePreprocessor
 
 
@@ -26,3 +27,6 @@ class BaseBalancer(BasePreprocessor):
         bonafide_mask = ~spoof_mask
 
         return metadata[bonafide_mask], metadata[spoof_mask]
+
+    def transform(self, metadata: pd.DataFrame, features: np.ndarray) -> tuple[pd.DataFrame, np.ndarray]:
+        raise_error_logger(self.logger, "Subclasses should implement this method.", error_type=NotImplementedError)

@@ -3,7 +3,7 @@ import pandas as pd
 from src.common.basic_functions import setup_logger
 from src.common.constants import Constants as consts
 from src.common.record_iterator import RecordIterator
-from src.preprocessing.data_balancers.mix_blancer import MixBalancer
+from src.preprocessing.data_balancers.mix_balancer import MixBalancer
 from src.preprocessing.data_balancers.oversample_real_balancer import (
     OversampleRealBalancer,
 )

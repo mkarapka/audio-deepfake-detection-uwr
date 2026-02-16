@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from src.preprocessing.data_balancers.mix_blancer import MixBalancer
+from src.preprocessing.data_balancers.mix_balancer import MixBalancer
 
 COLUMN_LENGTH = 200
 CONFIGS_RATIOS = [[0.5, 0.5], [0.75, 1.0], [1.0, 1.0]]

@@ -69,7 +69,7 @@ def get_logger(name: str = "audio_deepfake") -> logging.Logger:
     return logger
 
 
-def raise_error_logger(logger: logging.Logger, message: str):
+def raise_error_logger(logger: logging.Logger, message: str, error_type: type = Exception):
     """Loguje błąd i podnosi wyjątek z podaną wiadomością."""
     logger.error(message)
-    raise Exception(message)
+    raise error_type(message)

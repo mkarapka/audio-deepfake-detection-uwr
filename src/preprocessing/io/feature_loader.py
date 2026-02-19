@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from src.common.constants import Constants as consts
+from src.common.logger import raise_error_logger
 from src.preprocessing.io.base_io import BaseIO
 
 
@@ -25,7 +26,14 @@ class FeatureLoader(BaseIO):
         return reduced_split
 
     def _sample_uq_audio_ids(self, metadata: pd.DataFrame, fraction: int, random_state=42):
-        audio_ids = metadata["audio_id"].unique()
+        try:
+            audio_ids = metadata["audio_id"].unique()
+        except KeyError:
+            raise_error_logger(
+                self.logger,
+                "Metadata does not contain 'audio_id' column.",
+                error_type=KeyError,
+            )
 
         np.random.seed(random_state)
         np.random.shuffle(audio_ids)
@@ -34,27 +42,27 @@ class FeatureLoader(BaseIO):
         return audio_ids[:sample_size]
 
     def sample_data(
-        self, metadata: pd.DataFrame, embeddings: np.ndarray | None = None, fraction=0.4
+        self, metadata: pd.DataFrame, features: np.ndarray | None = None, fraction=0.4
     ) -> tuple[pd.DataFrame, np.ndarray] | pd.DataFrame:
         sampled_metadata = self._sample_meta(metadata, fraction=fraction)
-        if embeddings is None:
+        if features is None:
             return sampled_metadata
 
-        sampled_embeddings = embeddings[sampled_metadata.index]
+        sampled_features = features[sampled_metadata.index]
         sampled_metadata = sampled_metadata.reset_index(drop=True)
 
-        return sampled_metadata, sampled_embeddings
+        return sampled_metadata, sampled_features
 
-    def sample_data_by_audio_id(
-        self, metadata: pd.DataFrame, embeddings: np.ndarray = None, fraction=0.4
+    def sample_by_audio_ids(
+        self, metadata: pd.DataFrame, features: np.ndarray = None, fraction=0.4
     ) -> tuple[pd.DataFrame, np.ndarray]:
         sampled_audio_ids = self._sample_uq_audio_ids(metadata, fraction=fraction)
 
         sampled_metadata = metadata[metadata["audio_id"].isin(sampled_audio_ids)]
-        if embeddings is None:
+        if features is None:
             return sampled_metadata
 
-        sampled_embeddings = embeddings[sampled_metadata.index]
+        sampled_embeddings = features[sampled_metadata.index]
         sampled_metadata = sampled_metadata.reset_index(drop=True)
 
         return sampled_metadata, sampled_embeddings

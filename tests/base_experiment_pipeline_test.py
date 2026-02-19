@@ -3,6 +3,7 @@ import pandas as pd
 
 from src.common.constants import BalanceType, SplitConfig
 from src.pipelines.experiments.base_experiment_pipeline import BaseExperimentPipeline
+from src.preprocessing.io.feature_loader import FeatureLoader
 
 
 def generate_split(size):
@@ -17,22 +18,31 @@ def generate_split(size):
     return metadata, features
 
 
+TRAIN_SIZE, DEV_SIZE, TEST_SIZE = 100, 70, 70
+
+
 class FeatureLoaderMock:
     def load_data_split(self, split_name):
         # Return dummy metadata and features based on split name
         if split_name == "train":
-            return generate_split(100)
+            return generate_split(TRAIN_SIZE)
         elif split_name == "dev":
-            return generate_split(70)
+            return generate_split(DEV_SIZE)
         elif split_name == "test":
-            return generate_split(70)
+            return generate_split(TEST_SIZE)
         else:
             raise ValueError(f"Unknown split name: {split_name}")
+
+    def sample_data(self, metadata, features, fraction=0.4):
+        return FeatureLoader().sample_data(metadata, features, fraction)
+
+    def sample_by_audio_ids(self, metadata, features, fraction=0.4):
+        return FeatureLoader().sample_by_audio_ids(metadata, features, fraction)
 
 
 class BaseExperimentPipelineTest:
     def test_get_balancer_instance(self):
-        pipeline = BaseExperimentPipeline(splits_config={}, feat_suffix="")
+        pipeline = BaseExperimentPipeline(splits_config={})
         balancer = pipeline._get_balancer_instance(BalanceType.UNDERSAMPLE, 0.5)
         assert balancer is not None
         assert balancer.real_to_spoof_ratio == 0.5
@@ -50,23 +60,26 @@ class BaseExperimentPipelineTest:
         assert balancer is None
 
     def test_prepare_data_for_experiment(self):
-        args_ratio = [0.5, 1.0, None]
-        splits_config = {
-            "train": SplitConfig(balance_type=BalanceType.UNDERSAMPLE, ratio_args=0.5),
-            "dev": SplitConfig(balance_type=BalanceType.MIX, ratio_args=[0.5, 1.0]),
-            "test": SplitConfig(balance_type=BalanceType.UNBALANCED, ratio_args=None),
-        }
-        pipeline = BaseExperimentPipeline(splits_config=splits_config, feat_suffix="")
-        pipeline.feature_loader = FeatureLoaderMock()  # Use the mock feature loader
-        data_for_exp = pipeline.prepare_data_for_experiment()
+        for enabled_audio_ids_sampling in [False, True]:
+            undersample_ratio, oversample_ratio, unbalanced_ratio = 0.5, 1.0, None
+            args_ratio = [undersample_ratio, oversample_ratio, unbalanced_ratio]
+            splits_config = {
+                "train": SplitConfig(balance_type=BalanceType.UNDERSAMPLE, ratio_args=undersample_ratio),
+                "dev": SplitConfig(balance_type=BalanceType.MIX, ratio_args=[undersample_ratio, oversample_ratio]),
+                "test": SplitConfig(balance_type=BalanceType.UNBALANCED, ratio_args=unbalanced_ratio),
+            }
+            pipeline = BaseExperimentPipeline(splits_config=splits_config)
+            pipeline.feature_loader = FeatureLoaderMock()
+            data_for_exp = pipeline.preprocess_data(is_audio_ids_sampling=enabled_audio_ids_sampling, fraction=1.0)
 
-        for i, (_, (meta, feat)) in enumerate(data_for_exp.items()):
-            assert isinstance(meta, pd.DataFrame)
-            assert isinstance(feat, np.ndarray)
-            assert len(meta) == len(feat)
-            bonafide_count = meta[meta["target"] == "bonafide"].shape[0]
-            if args_ratio[i] is not None:
-                assert args_ratio[i] == bonafide_count / (meta.shape[0] - bonafide_count)
+            for i, (_, (meta, feat)) in enumerate(data_for_exp.items()):
+                assert isinstance(meta, pd.DataFrame)
+                assert isinstance(feat, np.ndarray)
+                assert len(meta) == len(feat)
+                bonafide_count = meta[meta["target"] == "bonafide"].shape[0]
+                if args_ratio[i] is not None:
+                    assert args_ratio[i] == bonafide_count / (meta.shape[0] - bonafide_count)
+                    assert (meta.shape[0] - bonafide_count) > 0  # Ensure there are spoof samples
 
 
 BaseExperimentPipelineTest().test_get_balancer_instance()

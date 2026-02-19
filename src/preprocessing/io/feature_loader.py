@@ -46,8 +46,8 @@ class FeatureLoader(BaseIO):
         return sampled_metadata, sampled_embeddings
 
     def sample_data_by_audio_id(
-        self, metadata: pd.DataFrame, embeddings: np.ndarray | None = None, fraction=0.4
-    ) -> tuple[pd.DataFrame, np.ndarray | None]:
+        self, metadata: pd.DataFrame, embeddings: np.ndarray = None, fraction=0.4
+    ) -> tuple[pd.DataFrame, np.ndarray]:
         sampled_audio_ids = self._sample_uq_audio_ids(metadata, fraction=fraction)
 
         sampled_metadata = metadata[metadata["audio_id"].isin(sampled_audio_ids)]

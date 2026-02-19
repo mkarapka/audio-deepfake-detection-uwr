@@ -21,11 +21,9 @@ from src.preprocessing.io.feature_loader import FeatureLoader
 class BaseExperimentPipeline:
     def __init__(
         self,
-        splits_config: dict[str, SplitConfig],
         file_name=consts.feature_extracted,
     ):
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
-        self.splits_config = splits_config
         self.feature_loader = FeatureLoader(file_name=file_name, feat_suffix="")
         self.collector = Collector(save_file_name=file_name, feat_suffix="")
         self.trainer = ModelTrainer()
@@ -54,9 +52,11 @@ class BaseExperimentPipeline:
             return self.feature_loader.sample_data(metadata=metadata, features=features, fraction=fraction)
         return self.feature_loader.sample_by_audio_ids(metadata=metadata, features=features, fraction=fraction)
 
-    def preprocess_data(self, is_audio_ids_sampling: bool, fraction: float) -> dict[str, tuple[DataFrame, ndarray]]:
+    def preprocess_data(
+        self, splits_config: dict[str, SplitConfig], fraction: float, is_audio_ids_sampling: bool
+    ) -> dict[str, tuple[DataFrame, ndarray]]:
         data_for_exp = {}
-        for split_name, config in self.splits_config.items():
+        for split_name, config in splits_config.items():
             meta, feat = self.feature_loader.load_data_split(split_name=split_name)
             sampled_meta, sampled_feat = self._sample_data(
                 metadata=meta,

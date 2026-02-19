@@ -42,7 +42,7 @@ class FeatureLoaderMock:
 
 class BaseExperimentPipelineTest:
     def test_get_balancer_instance(self):
-        pipeline = BaseExperimentPipeline(splits_config={})
+        pipeline = BaseExperimentPipeline()
         balancer = pipeline._get_balancer_instance(BalanceType.UNDERSAMPLE, 0.5)
         assert balancer is not None
         assert balancer.real_to_spoof_ratio == 0.5
@@ -68,9 +68,11 @@ class BaseExperimentPipelineTest:
                 "dev": SplitConfig(balance_type=BalanceType.MIX, ratio_args=[undersample_ratio, oversample_ratio]),
                 "test": SplitConfig(balance_type=BalanceType.UNBALANCED, ratio_args=unbalanced_ratio),
             }
-            pipeline = BaseExperimentPipeline(splits_config=splits_config)
+            pipeline = BaseExperimentPipeline()
             pipeline.feature_loader = FeatureLoaderMock()
-            data_for_exp = pipeline.preprocess_data(is_audio_ids_sampling=enabled_audio_ids_sampling, fraction=1.0)
+            data_for_exp = pipeline.preprocess_data(
+                splits_config=splits_config, fraction=1.0, is_audio_ids_sampling=enabled_audio_ids_sampling
+            )
 
             for i, (_, (meta, feat)) in enumerate(data_for_exp.items()):
                 assert isinstance(meta, pd.DataFrame)

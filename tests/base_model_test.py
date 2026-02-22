@@ -2,12 +2,14 @@ import numpy as np
 import pandas as pd
 import torch
 
-from src.models.base_model import BaseModel
 from src.common.constants import Constants as consts
+from src.models.base_model import BaseModel
+
 np.random.seed(27)
 y_pred = np.random.choice([0, 1], 20)
 buckets = np.array([0, 1, 2, 3])
 y_preds_buckets = np.random.choice(buckets, size=len(y_pred))
+
 
 class BaseModelTest:
     def __init__(self):

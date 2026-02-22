@@ -14,13 +14,13 @@ from src.preprocessing.data_balancers.undersample_spoof_balancer import (
 )
 from src.preprocessing.io.collector import Collector
 from src.preprocessing.io.feature_loader import FeatureLoader
-from src.common.constants import Constants as consts
+
 
 class BaseExperimentPipeline:
-    def __init__(self, file_name: str = consts.feature_extracted):
+    def __init__(self, load_file_name: str, save_file_name: str, feat_suffix: str):
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
-        self.feature_loader = FeatureLoader(file_name=file_name, feat_suffix="")
-        self.collector = Collector(save_file_name=file_name, feat_suffix="")
+        self.feature_loader = FeatureLoader(file_name=load_file_name, feat_suffix=feat_suffix)
+        self.collector = Collector(save_file_name=save_file_name, feat_suffix=feat_suffix)
         self.trainer = ModelTrainer()
 
     def _get_balancer_instance(self, balancer_type: BalanceType, ratio_args: float | list[float]) -> BaseBalancer:

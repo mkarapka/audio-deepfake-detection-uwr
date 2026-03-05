@@ -3,7 +3,6 @@ import pandas as pd
 
 from src.common.constants import BalanceType
 from src.common.constants import Constants as consts
-from src.common.constants import SplitConfig
 from src.pipelines.experiments.base_experiment_pipeline import BaseExperimentPipeline
 from src.preprocessing.io.feature_loader import FeatureLoader
 
@@ -45,7 +44,9 @@ class FeatureLoaderMock:
 class BaseExperimentPipelineTest:
     def test_get_balancer_instance(self):
         pipeline = BaseExperimentPipeline(
-            load_file_name=consts.feature_extracted, save_file_name=consts.feature_extracted, feat_suffix=""
+            load_file_name=consts.feature_extracted,
+            save_file_name=consts.feature_extracted,
+            feat_suffix="",
         )
         balancer = pipeline._get_balancer_instance(BalanceType.UNDERSAMPLE, 0.5)
         assert balancer is not None
@@ -67,18 +68,27 @@ class BaseExperimentPipelineTest:
         for enabled_audio_ids_sampling in [False, True]:
             undersample_ratio, oversample_ratio, unbalanced_ratio = 0.5, 1.0, None
             args_ratio = [undersample_ratio, oversample_ratio, unbalanced_ratio]
-            splits_config = {
-                "train": SplitConfig(balance_type=BalanceType.UNDERSAMPLE, ratio_args=undersample_ratio),
-                "dev": SplitConfig(balance_type=BalanceType.MIX, ratio_args=[undersample_ratio, oversample_ratio]),
-                "test": SplitConfig(balance_type=BalanceType.UNBALANCED, ratio_args=unbalanced_ratio),
-            }
+
             pipeline = BaseExperimentPipeline(
-                load_file_name=consts.feature_extracted, save_file_name=consts.feature_extracted, feat_suffix=""
+                load_file_name=consts.feature_extracted,
+                save_file_name=consts.feature_extracted,
+                feat_suffix="",
             )
             pipeline.feature_loader = FeatureLoaderMock()
-            data_for_exp = pipeline.preprocess_data(
-                splits_config=splits_config, fraction=1.0, is_audio_ids_sampling=enabled_audio_ids_sampling
-            )
+
+            splits_config = {
+                "train": [BalanceType.UNDERSAMPLE, undersample_ratio],
+                "dev": [BalanceType.MIX, [undersample_ratio, oversample_ratio]],
+                "test": [BalanceType.UNBALANCED, unbalanced_ratio],
+            }
+            preprocess_config = {
+                "splits_names": ["train", "dev", "test"],
+                "fraction": 1.0,
+                "is_audio_ids_sampling": enabled_audio_ids_sampling,
+                "balance_configs": splits_config,
+            }
+
+            data_for_exp = pipeline.preprocess_data(**preprocess_config)
 
             for i, (_, (meta, feat)) in enumerate(data_for_exp.items()):
                 assert isinstance(meta, pd.DataFrame)

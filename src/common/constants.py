@@ -121,6 +121,8 @@ class BalanceType(Enum):
 
 
 @dataclass
-class SplitConfig:
-    balance_type: BalanceType
-    ratio_args: float | list[float]
+class ExperimentPreprocessConfig:
+    splits_names: list[str]
+    fraction: float
+    is_audio_ids_sampling: bool
+    balance_configs: dict[str, list] | None

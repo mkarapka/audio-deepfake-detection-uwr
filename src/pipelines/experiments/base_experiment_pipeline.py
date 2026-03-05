@@ -1,7 +1,7 @@
 from numpy import ndarray
 from pandas import DataFrame
 
-from src.common.constants import BalanceType, SplitConfig
+from src.common.constants import BalanceType
 from src.common.logger import raise_error_logger, setup_logger
 from src.models.model_trainer import ModelTrainer
 from src.preprocessing.data_balancers.base_balancer import BaseBalancer
@@ -21,6 +21,7 @@ class BaseExperimentPipeline:
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.feature_loader = FeatureLoader(file_name=load_file_name, feat_suffix=feat_suffix)
         self.collector = Collector(save_file_name=save_file_name, feat_suffix=feat_suffix)
+        self.results = {}
         self.trainer = ModelTrainer()
 
     def _get_balancer_instance(self, balancer_type: BalanceType, ratio_args: float | list[float]) -> BaseBalancer:
@@ -47,26 +48,38 @@ class BaseExperimentPipeline:
             return self.feature_loader.sample_data(metadata=metadata, features=features, fraction=fraction)
         return self.feature_loader.sample_by_audio_ids(metadata=metadata, features=features, fraction=fraction)
 
-    def preprocess_data(
-        self, splits_config: dict[str, SplitConfig], fraction: float, is_audio_ids_sampling: bool
-    ) -> dict[str, tuple[DataFrame, ndarray]]:
+    def preprocess_data(self, **preprocess_config: dict[str, any]) -> dict[str, tuple[DataFrame, ndarray]]:
+        split_names = preprocess_config["splits_names"]
+        fraction = preprocess_config["fraction"]
+        is_audio_ids_sampling = preprocess_config["is_audio_ids_sampling"]
+        balance_configs = preprocess_config["balance_configs"]
+
         data_for_exp = {}
-        for split_name, config in splits_config.items():
+        for split_name in split_names:
             meta, feat = self.feature_loader.load_data_split(split_name=split_name)
 
-            sampled_meta, sampled_feat = self._sample_data(
-                metadata=meta,
-                features=feat,
-                fraction=fraction,
-                is_audio_ids_sampling=is_audio_ids_sampling,
-            )
+            if fraction < 1.0:
+                meta, feat = self._sample_data(
+                    metadata=meta,
+                    features=feat,
+                    fraction=fraction,
+                    is_audio_ids_sampling=is_audio_ids_sampling,
+                )
 
-            balancer = self._get_balancer_instance(balancer_type=config.balance_type, ratio_args=config.ratio_args)
-            if balancer is not None:
-                balanced_meta, balanced_feat = balancer.transform(metadata=sampled_meta, features=sampled_feat)
-            data_for_exp[split_name] = (balanced_meta, balanced_feat)
+            if balance_configs is not None and split_name in balance_configs:
+                balance_type, ratio_args = balance_configs[split_name]
+                balancer = self._get_balancer_instance(balancer_type=balance_type, ratio_args=ratio_args)
+                if balancer is not None:
+                    meta, feat = balancer.transform(metadata=meta, features=feat)
+
+            data_for_exp[split_name] = (meta, feat)
 
         return data_for_exp
+
+    def remove_subclass_from_split(
+        self, metadata: DataFrame, features: ndarray, subclass_label: int
+    ) -> tuple[DataFrame, ndarray]:
+        pass
 
     def create_params_dictionary(self):
         raise_error_logger(self.logger, "Subclasses should implement this method.", error_type=NotImplementedError)

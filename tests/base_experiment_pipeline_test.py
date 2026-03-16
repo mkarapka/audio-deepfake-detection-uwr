@@ -3,7 +3,7 @@ import pandas as pd
 
 from src.common.constants import BalanceType
 from src.common.constants import Constants as consts
-from src.pipelines.experiments.base_experiment_pipeline import BaseExperimentPipeline
+from src.preprocessing.experiment_preprocessor import ExperimentPreprocessor
 from src.preprocessing.io.feature_loader import FeatureLoader
 
 
@@ -43,7 +43,7 @@ class FeatureLoaderMock:
 
 class BaseExperimentPipelineTest:
     def test_get_balancer_instance(self):
-        pipeline = BaseExperimentPipeline(
+        pipeline = ExperimentPreprocessor(
             load_file_name=consts.feature_extracted,
             save_file_name=consts.feature_extracted,
             feat_suffix="",
@@ -69,7 +69,7 @@ class BaseExperimentPipelineTest:
             undersample_ratio, oversample_ratio, unbalanced_ratio = 0.5, 1.0, None
             args_ratio = [undersample_ratio, oversample_ratio, unbalanced_ratio]
 
-            pipeline = BaseExperimentPipeline(
+            pipeline = ExperimentPreprocessor(
                 load_file_name=consts.feature_extracted,
                 save_file_name=consts.feature_extracted,
                 feat_suffix="",

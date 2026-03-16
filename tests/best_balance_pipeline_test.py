@@ -49,7 +49,6 @@ class TestBestBalancePipeline:
             "is_audio_ids_sampling": False,
             "balance_configs": None,
         }
-        preprocess_config = ExperimentPreprocessConfig(**preprocess_config)
 
         balance_configs_for_experiment = {
             bt.UNDERSAMPLE: [0.5, 0.75, 1.0],

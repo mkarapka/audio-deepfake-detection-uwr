@@ -16,7 +16,7 @@ from src.preprocessing.io.collector import Collector
 from src.preprocessing.io.feature_loader import FeatureLoader
 
 
-class BaseExperimentPipeline:
+class ExperimentPreprocessor:
     def __init__(self, load_file_name: str, save_file_name: str, feat_suffix: str):
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.feature_loader = FeatureLoader(file_name=load_file_name, feat_suffix=feat_suffix)
@@ -80,9 +80,3 @@ class BaseExperimentPipeline:
         self, metadata: DataFrame, features: ndarray, subclass_label: int
     ) -> tuple[DataFrame, ndarray]:
         pass
-
-    def create_params_dictionary(self):
-        raise_error_logger(self.logger, "Subclasses should implement this method.", error_type=NotImplementedError)
-
-    def run(self):
-        raise_error_logger(self.logger, "Subclasses should implement this method.", error_type=NotImplementedError)

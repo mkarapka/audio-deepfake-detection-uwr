@@ -18,7 +18,7 @@ class FeatureLoader(BaseIO):
     ):
         super().__init__(self.__class__.__name__, file_name, feat_suffix, data_dir, split_dir)
         self.emb_path = self._create_file_path(file_ext=consts.npy_ext)
-        self.meta_path = self._create_file_path(file_ext=consts.csv_ext)
+        self.meta_path = self._create_file_path(file_ext=consts.csv_ext, full_file_name=file_name)
 
     def _sample_meta(self, metadata: pd.DataFrame, fraction=0.4) -> pd.DataFrame:
         sample_size = int(len(metadata) * fraction)

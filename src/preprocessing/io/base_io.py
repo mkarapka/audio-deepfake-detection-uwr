@@ -29,16 +29,19 @@ class BaseIO:
         if self.split_dir.exists() is False:
             self.split_dir.mkdir(parents=True, exist_ok=True)
 
-    def _create_file_path(self, file_ext: str, dir: str = None, split_name: str = None) -> Path:
+    def _create_file_path(self, file_ext: str, full_file_name : str = None, dir: str = None, split_name: str = None) -> Path:
         if dir is None:
             dir = self.data_dir
             if split_name is not None:
                 dir = self.split_dir
 
+        if full_file_name is None:
+            full_file_name = self.full_file_name
+
         if split_name is not None:
-            new_file_name = f"{self.full_file_name}_{split_name}{file_ext}"
+            new_file_name = f"{full_file_name}_{split_name}{file_ext}"
         else:
-            new_file_name = f"{self.full_file_name}{file_ext}"
+            new_file_name = f"{full_file_name}{file_ext}"
 
         file_path = Path(dir) / new_file_name
         self.logger.info(f"Constructed file path: {file_path}")

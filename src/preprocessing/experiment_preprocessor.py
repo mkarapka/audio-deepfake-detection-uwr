@@ -52,7 +52,7 @@ class ExperimentPreprocessor:
         split_names = preprocess_config["splits_names"]
         fraction = preprocess_config["fraction"]
         is_audio_ids_sampling = preprocess_config["is_audio_ids_sampling"]
-        balance_configs = preprocess_config["balance_configs"]
+        balance_splits_configs = preprocess_config["balance_splits_configs"]
 
         data_for_exp = {}
         for split_name in split_names:
@@ -66,8 +66,8 @@ class ExperimentPreprocessor:
                     is_audio_ids_sampling=is_audio_ids_sampling,
                 )
 
-            if balance_configs is not None and split_name in balance_configs:
-                balance_type, ratio_args = balance_configs[split_name]
+            if balance_splits_configs is not None and split_name in balance_splits_configs:
+                balance_type, ratio_args = balance_splits_configs[split_name]
                 balancer = self._get_balancer_instance(balancer_type=balance_type, ratio_args=ratio_args)
                 if balancer is not None:
                     meta, feat = balancer.transform(metadata=meta, features=feat)

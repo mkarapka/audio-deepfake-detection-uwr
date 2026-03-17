@@ -41,7 +41,7 @@ class FeatureLoaderMock:
         return FeatureLoader().sample_by_audio_ids(metadata, features, fraction)
 
 
-class BaseExperimentPipelineTest:
+class ExperimentPreprocessorTest:
     def test_get_balancer_instance(self):
         pipeline = ExperimentPreprocessor(
             load_file_name=consts.feature_extracted,
@@ -85,7 +85,7 @@ class BaseExperimentPipelineTest:
                 "splits_names": ["train", "dev", "test"],
                 "fraction": 1.0,
                 "is_audio_ids_sampling": enabled_audio_ids_sampling,
-                "balance_configs": splits_config,
+                "balance_splits_configs": splits_config,
             }
 
             data_for_exp = pipeline.preprocess_data(**preprocess_config)
@@ -100,5 +100,5 @@ class BaseExperimentPipelineTest:
                     assert (meta.shape[0] - bonafide_count) > 0  # Ensure there are spoof samples
 
 
-BaseExperimentPipelineTest().test_get_balancer_instance()
-BaseExperimentPipelineTest().test_prepare_data_for_experiment()
+ExperimentPreprocessorTest().test_get_balancer_instance()
+ExperimentPreprocessorTest().test_prepare_data_for_experiment()

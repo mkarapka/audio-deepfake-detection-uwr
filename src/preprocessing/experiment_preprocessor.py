@@ -48,14 +48,16 @@ class ExperimentPreprocessor:
             return self.feature_loader.sample_data(metadata=metadata, features=features, fraction=fraction)
         return self.feature_loader.sample_by_audio_ids(metadata=metadata, features=features, fraction=fraction)
 
-    def preprocess_data(self, **preprocess_config: dict[str, any]) -> dict[str, tuple[DataFrame, ndarray]]:
-        split_names = preprocess_config["splits_names"]
-        fraction = preprocess_config["fraction"]
-        is_audio_ids_sampling = preprocess_config["is_audio_ids_sampling"]
-        balance_splits_configs = preprocess_config["balance_splits_configs"]
+    def preprocess_data(
+        self,
+        splits_names: list[str],
+        fraction: float,
+        is_audio_ids_sampling: bool,
+        balance_splits_config: tuple[BalanceType, float | list[float]],
+    ) -> dict[str, tuple[DataFrame, ndarray]]:
 
         data_for_exp = {}
-        for split_name in split_names:
+        for split_name in splits_names:
             meta, feat = self.feature_loader.load_data_split(split_name=split_name)
 
             if fraction < 1.0:
@@ -66,8 +68,8 @@ class ExperimentPreprocessor:
                     is_audio_ids_sampling=is_audio_ids_sampling,
                 )
 
-            if balance_splits_configs is not None and split_name in balance_splits_configs:
-                balance_type, ratio_args = balance_splits_configs[split_name]
+            if balance_splits_config is not None:
+                balance_type, ratio_args = balance_splits_config
                 balancer = self._get_balancer_instance(balancer_type=balance_type, ratio_args=ratio_args)
                 if balancer is not None:
                     meta, feat = balancer.transform(metadata=meta, features=feat)

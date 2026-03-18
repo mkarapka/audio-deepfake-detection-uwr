@@ -75,7 +75,7 @@ class Constants:
     }
 
     # Balancing configs
-    ratios_config = {
+    default_balance_strategy_ratios = {
         "unbalanced": [None],
         "oversample": [0.5, 0.75, 1.0],
         "undersample": [0.5, 0.75, 1.0],
@@ -126,3 +126,13 @@ class ExperimentPreprocessConfig:
     fraction: float
     is_audio_ids_sampling: bool
     balance_configs: dict[str, list] | None
+
+
+@dataclass
+class ExperimentParamsInfo:
+    model: str
+    majority_vote: bool
+    trials_iter: int
+    data_type: str
+    data_fraction: float
+    balance_strategy: str

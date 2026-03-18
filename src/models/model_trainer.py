@@ -21,10 +21,26 @@ class ModelTrainer:
         y = self._convert_labels_to_ints(metadata["target"], pos_label=pos_label)
         return y
 
-    def optuna_train(self, model: BaseModel, objective, n_trials: int, direct: str = "maximize", **params):
+    def optuna_train(
+        self,
+        *,
+        model: BaseModel,
+        objective,
+        n_trials: int,
+        X_train,
+        y_train,
+        X_dev,
+        y_dev,
+        direct: str = "maximize",
+        **params,
+    ):
         self.logger.info("Starting Optuna hyperparameter optimization...")
         self.study = optuna.create_study(direction=direct)
-        self.study.optimize(lambda trial: objective(trial, model, **params), n_trials=n_trials, show_progress_bar=True)
+        self.study.optimize(
+            lambda trial: objective(trial, model, X_train, y_train, X_dev, y_dev, **params),
+            n_trials=n_trials,
+            show_progress_bar=True,
+        )
 
         self.logger.info(f"Best trial: {self.study.best_trial.number}")
 
@@ -33,6 +49,13 @@ class ModelTrainer:
             return self.study.best_params
         else:
             self.logger.warning("Best parameters are not set yet.")
+            return None
+
+    def get_best_value(self):
+        if self.study is not None:
+            return self.study.best_value
+        else:
+            self.logger.warning("Best value is not set yet.")
             return None
 
     def save_results(self, save_file_name: str, params: dict):

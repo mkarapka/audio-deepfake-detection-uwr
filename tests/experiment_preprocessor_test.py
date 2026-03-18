@@ -11,7 +11,7 @@ def generate_split(size):
     targets = ["bonafide", "spoof"]
     metadata = pd.DataFrame(
         {
-            "audio_id": range(size),
+            "unique_audio_id": range(size),
             "target": np.random.choice(targets, size=size, p=[0.2, 0.8]),
         }
     )
@@ -66,8 +66,8 @@ class ExperimentPreprocessorTest:
 
     def test_prepare_data_for_experiment(self):
         for enabled_audio_ids_sampling in [False, True]:
-            undersample_ratio, oversample_ratio, unbalanced_ratio = 0.5, 1.0, None
-            args_ratio = [undersample_ratio, oversample_ratio, unbalanced_ratio]
+            undersample_ratio = 1.0
+            args_ratio = [undersample_ratio] * 3
 
             pipeline = ExperimentPreprocessor(
                 load_file_name=consts.feature_extracted,
@@ -76,16 +76,13 @@ class ExperimentPreprocessorTest:
             )
             pipeline.feature_loader = FeatureLoaderMock()
 
-            splits_config = {
-                "train": [BalanceType.UNDERSAMPLE, undersample_ratio],
-                "dev": [BalanceType.MIX, [undersample_ratio, oversample_ratio]],
-                "test": [BalanceType.UNBALANCED, unbalanced_ratio],
-            }
+            splits_config = (BalanceType.UNDERSAMPLE, undersample_ratio)
+
             preprocess_config = {
                 "splits_names": ["train", "dev", "test"],
                 "fraction": 1.0,
                 "is_audio_ids_sampling": enabled_audio_ids_sampling,
-                "balance_splits_configs": splits_config,
+                "balance_splits_config": splits_config,
             }
 
             data_for_exp = pipeline.preprocess_data(**preprocess_config)
@@ -96,7 +93,9 @@ class ExperimentPreprocessorTest:
                 assert len(meta) == len(feat)
                 bonafide_count = meta[meta["target"] == "bonafide"].shape[0]
                 if args_ratio[i] is not None:
-                    assert args_ratio[i] == bonafide_count / (meta.shape[0] - bonafide_count)
+                    assert args_ratio[i] == bonafide_count / (
+                        meta.shape[0] - bonafide_count
+                    ), f"Expected ratio: {args_ratio[i]}, got: {bonafide_count / (meta.shape[0] - bonafide_count)}"
                     assert (meta.shape[0] - bonafide_count) > 0  # Ensure there are spoof samples
 
 

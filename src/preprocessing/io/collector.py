@@ -24,7 +24,7 @@ class Collector(BaseIO):
             split_dir=split_dir,
         )
 
-        self.meta_data_file_path = self._create_file_path(file_ext=consts.csv_ext, full_file_name=save_file_name)
+        self.meta_data_file_path = self._create_file_path(file_ext=consts.csv_ext)
         self.embeddings_file_path = self._create_file_path(file_ext=consts.npy_ext)
         logging.info(f"Metadata will be saved to: {self.meta_data_file_path}")
         logging.info(f"Embeddings will be saved to: {self.embeddings_file_path}")

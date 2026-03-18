@@ -18,7 +18,7 @@ class FeatureLoader(BaseIO):
     ):
         super().__init__(self.__class__.__name__, file_name, feat_suffix, data_dir, split_dir)
         self.emb_path = self._create_file_path(file_ext=consts.npy_ext)
-        self.meta_path = self._create_file_path(file_ext=consts.csv_ext, full_file_name=file_name)
+        self.meta_path = self._create_file_path(file_ext=consts.csv_ext)
 
     def _sample_meta(self, metadata: pd.DataFrame, fraction=0.4) -> pd.DataFrame:
         sample_size = int(len(metadata) * fraction)
@@ -27,11 +27,11 @@ class FeatureLoader(BaseIO):
 
     def _sample_uq_audio_ids(self, metadata: pd.DataFrame, fraction: int, random_state=42):
         try:
-            audio_ids = metadata["audio_id"].unique()
+            audio_ids = metadata["unique_audio_id"].unique()
         except KeyError:
             raise_error_logger(
                 self.logger,
-                "Metadata does not contain 'audio_id' column.",
+                "Metadata does not contain 'unique_audio_id' column.",
                 error_type=KeyError,
             )
 
@@ -58,7 +58,7 @@ class FeatureLoader(BaseIO):
     ) -> tuple[pd.DataFrame, np.ndarray]:
         sampled_audio_ids = self._sample_uq_audio_ids(metadata, fraction=fraction)
 
-        sampled_metadata = metadata[metadata["audio_id"].isin(sampled_audio_ids)]
+        sampled_metadata = metadata[metadata["unique_audio_id"].isin(sampled_audio_ids)]
         if features is None:
             return sampled_metadata
 

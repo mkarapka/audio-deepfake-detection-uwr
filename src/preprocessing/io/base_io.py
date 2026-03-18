@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from src.common.constants import Constants as consts
 from src.common.logger import raise_error_logger, setup_logger
 
 
@@ -21,6 +22,7 @@ class BaseIO:
             self.logger.warning("Not matching feature suffix specified")
 
         self.full_file_name = file_name + feat_suffix
+        self.file_name_no_suffix = file_name
         self.data_dir = data_dir
         self.split_dir = split_dir
 
@@ -29,13 +31,15 @@ class BaseIO:
         if self.split_dir.exists() is False:
             self.split_dir.mkdir(parents=True, exist_ok=True)
 
-    def _create_file_path(self, file_ext: str, full_file_name : str = None, dir: str = None, split_name: str = None) -> Path:
+    def _create_file_path(self, file_ext: str, dir: str = None, split_name: str = None) -> Path:
         if dir is None:
             dir = self.data_dir
             if split_name is not None:
                 dir = self.split_dir
 
-        if full_file_name is None:
+        if file_ext == consts.csv_ext:
+            full_file_name = self.file_name_no_suffix
+        else:
             full_file_name = self.full_file_name
 
         if split_name is not None:

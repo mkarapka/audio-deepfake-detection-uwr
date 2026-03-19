@@ -1,7 +1,6 @@
 from numpy import ndarray
 from pandas import DataFrame
 
-from src.common.constants import BalanceType
 from src.common.logger import raise_error_logger, setup_logger
 from src.models.model_trainer import ModelTrainer
 from src.preprocessing.data_balancers.base_balancer import BaseBalancer
@@ -24,15 +23,15 @@ class ExperimentPreprocessor:
         self.results = {}
         self.trainer = ModelTrainer()
 
-    def _get_balancer_instance(self, balancer_type: BalanceType, ratio_args: float | list[float]) -> BaseBalancer:
-        if balancer_type == BalanceType.UNDERSAMPLE:
+    def _get_balancer_instance(self, balancer_type: str, ratio_args: float | list[float]) -> BaseBalancer:
+        if balancer_type == "undersample":
             return UndersampleSpoofBalancer(real_to_spoof_ratio=ratio_args)
-        elif balancer_type == BalanceType.OVERSAMPLE:
+        elif balancer_type == "oversample":
             return OversampleRealBalancer(real_to_spoof_ratio=ratio_args)
-        elif balancer_type == BalanceType.MIX:
+        elif balancer_type == "mix":
             undersample_ratio, oversample_ratio = ratio_args
             return MixBalancer(undersample_ratio=undersample_ratio, oversample_ratio=oversample_ratio)
-        elif balancer_type == BalanceType.UNBALANCED:
+        elif balancer_type == "unbalanced":
             return None
         else:
             raise_error_logger(self.logger, f"Unknown balancer type: {balancer_type}")
@@ -53,7 +52,7 @@ class ExperimentPreprocessor:
         splits_names: list[str],
         fraction: float,
         is_audio_ids_sampling: bool,
-        balance_splits_config: tuple[BalanceType, float | list[float]],
+        balance_splits_config: tuple[str, float | list[float]],
     ) -> dict[str, tuple[DataFrame, ndarray]]:
 
         data_for_exp = {}

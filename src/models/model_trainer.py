@@ -37,7 +37,15 @@ class ModelTrainer:
         self.logger.info("Starting Optuna hyperparameter optimization...")
         self.study = optuna.create_study(direction=direct)
         self.study.optimize(
-            lambda trial: objective(trial, model, X_train, y_train, X_dev, y_dev, **params),
+            lambda trial: objective(
+                trial=trial,
+                model=model,
+                X_train=X_train,
+                y_train=y_train,
+                X_dev=X_dev,
+                y_dev=y_dev,
+                **params,
+            ),
             n_trials=n_trials,
             show_progress_bar=True,
         )

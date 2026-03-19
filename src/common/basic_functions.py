@@ -1,10 +1,8 @@
 import functools
 import time
-from dataclasses import asdict
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import torch
 from datasets import load_dataset
 
@@ -150,9 +148,3 @@ def print_green(message: str, *, end: str = "\n"):
     GREEN = "\033[32m"
     RESET = "\033[0m"
     print(f"{GREEN}{message}{RESET}", end=end)
-
-
-def get_df_from_dataclass(dataclass_instance) -> pd.DataFrame:
-    data_dict = asdict(dataclass_instance)
-    df = pd.DataFrame([data_dict])
-    return df

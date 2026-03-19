@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
 
@@ -125,7 +125,10 @@ class ExperimentPreprocessConfig:
     splits_names: list[str]
     fraction: float
     is_audio_ids_sampling: bool
-    balance_configs: dict[str, list] | None
+    balance_splits_config: dict[str, list] | None
+
+    def get_dict(self):
+        return asdict(self)
 
 
 @dataclass
@@ -136,3 +139,6 @@ class ExperimentParamsInfo:
     data_type: str
     data_fraction: float
     balance_strategy: str
+
+    def get_dict(self):
+        return asdict(self)

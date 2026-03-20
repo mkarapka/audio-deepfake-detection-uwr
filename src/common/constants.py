@@ -125,7 +125,7 @@ class ExperimentPreprocessConfig:
     splits_names: list[str]
     fraction: float
     is_audio_ids_sampling: bool
-    balance_splits_config: dict[str, list] | None
+    balance_splits_strategy: dict[str, list] | None
 
     def get_dict(self):
         return asdict(self)

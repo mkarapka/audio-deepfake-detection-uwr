@@ -52,7 +52,7 @@ class ExperimentPreprocessor:
         splits_names: list[str],
         fraction: float,
         is_audio_ids_sampling: bool,
-        balance_splits_config: tuple[str, float | list[float]],
+        balance_splits_strategy: tuple[str, float | list[float]],
     ) -> dict[str, tuple[DataFrame, ndarray]]:
 
         data_for_exp = {}
@@ -67,8 +67,8 @@ class ExperimentPreprocessor:
                     is_audio_ids_sampling=is_audio_ids_sampling,
                 )
 
-            if balance_splits_config is not None:
-                balance_type, ratio_args = balance_splits_config
+            if balance_splits_strategy is not None:
+                balance_type, ratio_args = balance_splits_strategy
                 balancer = self._get_balancer_instance(balancer_type=balance_type, ratio_args=ratio_args)
                 if balancer is not None:
                     meta, feat = balancer.transform(metadata=meta, features=feat)

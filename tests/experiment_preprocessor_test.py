@@ -82,7 +82,7 @@ class ExperimentPreprocessorTest:
                 "splits_names": ["train", "dev", "test"],
                 "fraction": 1.0,
                 "is_audio_ids_sampling": enabled_audio_ids_sampling,
-                "balance_splits_config": splits_config,
+                "balance_splits_strategy": splits_config,
             }
 
             data_for_exp = pipeline.preprocess_data(**preprocess_config)

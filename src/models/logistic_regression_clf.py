@@ -25,10 +25,12 @@ class LogisticRegressionClf(BaseModel):
         self.model = joblib.load(file_path)
 
 
-def objective_acc(trial, model: LogisticRegressionClf, max_iter: int, X_train, y_train, X_dev, y_dev):
+def objective_acc(trial, model: LogisticRegressionClf, X_train, y_train, X_dev, y_dev, max_iter=None):
     C = trial.suggest_float("C", 0.01, 10.0, log=True)
     class_weight = trial.suggest_categorical("class_weight", [None, "balanced"])
     l1_ratio = trial.suggest_float("l1_ratio", 0.0, 1.0)
+    if max_iter is None:
+        max_iter = trial.suggest_int("max_iter", 100, 1000)
     rs = 42
 
     clf = model(C=C, l1_ratio=l1_ratio, class_weight=class_weight, max_iter=max_iter, random_state=rs)

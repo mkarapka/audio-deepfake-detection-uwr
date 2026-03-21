@@ -1,6 +1,6 @@
 import joblib
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score
 
 from src.models.base_model import BaseModel
 

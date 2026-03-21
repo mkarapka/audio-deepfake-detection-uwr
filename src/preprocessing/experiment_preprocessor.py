@@ -1,5 +1,5 @@
-from numpy import ndarray
-from pandas import DataFrame
+import numpy as np
+import pandas as pd
 
 from src.common.logger import raise_error_logger, setup_logger
 from src.models.model_trainer import ModelTrainer
@@ -38,14 +38,17 @@ class ExperimentPreprocessor:
 
     def _sample_data(
         self,
-        metadata: DataFrame,
-        features: ndarray,
+        metadata: pd.DataFrame,
+        features: np.ndarray,
         fraction: float,
         is_audio_ids_sampling: bool,
-    ) -> tuple[DataFrame, ndarray]:
+    ) -> tuple[pd.DataFrame, np.ndarray]:
         if is_audio_ids_sampling:
             return self.feature_loader.sample_data(metadata=metadata, features=features, fraction=fraction)
         return self.feature_loader.sample_by_audio_ids(metadata=metadata, features=features, fraction=fraction)
+
+    def _convert_labels_to_ints(self, y: pd.Series, pos_label: str) -> np.ndarray:
+        return (y == pos_label).astype(int)
 
     def preprocess_data(
         self,
@@ -53,7 +56,7 @@ class ExperimentPreprocessor:
         fraction: float,
         is_audio_ids_sampling: bool,
         balance_splits_strategy: tuple[str, float | list[float]],
-    ) -> dict[str, tuple[DataFrame, ndarray]]:
+    ) -> dict[str, tuple[pd.DataFrame, np.ndarray]]:
 
         data_for_exp = {}
         for split_name in splits_names:
@@ -77,7 +80,15 @@ class ExperimentPreprocessor:
 
         return data_for_exp
 
+    def get_target(self, metadata: pd.DataFrame, pos_label="bonafide") -> np.ndarray:
+        y = self._convert_labels_to_ints(metadata["target"], pos_label=pos_label)
+        return y
+
+    def get_X_y(self, metadata: pd.DataFrame, features: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        y = self.get_target(metadata=metadata)
+        return features, y
+
     def remove_subclass_from_split(
-        self, metadata: DataFrame, features: ndarray, subclass_label: int
-    ) -> tuple[DataFrame, ndarray]:
+        self, metadata: pd.DataFrame, features: np.ndarray, subclass_label: int
+    ) -> tuple[pd.DataFrame, np.ndarray]:
         pass

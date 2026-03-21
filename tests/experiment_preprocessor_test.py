@@ -42,26 +42,33 @@ class FeatureLoaderMock:
 
 
 class ExperimentPreprocessorTest:
+    def __init__(self):
+        self.pipeline = ExperimentPreprocessor(
+            load_file_name=consts.feature_extracted,
+            save_file_name=consts.feature_extracted,
+            feat_suffix="",
+        )
+
     def test_get_balancer_instance(self):
         pipeline = ExperimentPreprocessor(
             load_file_name=consts.feature_extracted,
             save_file_name=consts.feature_extracted,
             feat_suffix="",
         )
-        balancer = pipeline._get_balancer_instance(BalanceType.UNDERSAMPLE, 0.5)
+        balancer = pipeline._get_balancer_instance("undersample", 0.5)
         assert balancer is not None
         assert balancer.real_to_spoof_ratio == 0.5
 
-        balancer = pipeline._get_balancer_instance(BalanceType.OVERSAMPLE, 0.75)
+        balancer = pipeline._get_balancer_instance("oversample", 0.75)
         assert balancer is not None
         assert balancer.real_to_spoof_ratio == 0.75
 
-        balancer = pipeline._get_balancer_instance(BalanceType.MIX, [0.5, 1.0])
+        balancer = pipeline._get_balancer_instance("mix", [0.5, 1.0])
         assert balancer is not None
         assert balancer.undersample_ratio == 0.5
         assert balancer.oversample_ratio == 1.0
 
-        balancer = pipeline._get_balancer_instance(BalanceType.UNBALANCED, None)
+        balancer = pipeline._get_balancer_instance("unbalanced", None)
         assert balancer is None
 
     def test_prepare_data_for_experiment(self):
@@ -69,14 +76,9 @@ class ExperimentPreprocessorTest:
             undersample_ratio = 1.0
             args_ratio = [undersample_ratio] * 3
 
-            pipeline = ExperimentPreprocessor(
-                load_file_name=consts.feature_extracted,
-                save_file_name=consts.feature_extracted,
-                feat_suffix="",
-            )
-            pipeline.feature_loader = FeatureLoaderMock()
+            self.pipeline.feature_loader = FeatureLoaderMock()
 
-            splits_config = (BalanceType.UNDERSAMPLE, undersample_ratio)
+            splits_config = ("undersample", undersample_ratio)
 
             preprocess_config = {
                 "splits_names": ["train", "dev", "test"],
@@ -85,7 +87,7 @@ class ExperimentPreprocessorTest:
                 "balance_splits_strategy": splits_config,
             }
 
-            data_for_exp = pipeline.preprocess_data(**preprocess_config)
+            data_for_exp = self.pipeline.preprocess_data(**preprocess_config)
 
             for i, (_, (meta, feat)) in enumerate(data_for_exp.items()):
                 assert isinstance(meta, pd.DataFrame)
@@ -98,6 +100,14 @@ class ExperimentPreprocessorTest:
                     ), f"Expected ratio: {args_ratio[i]}, got: {bonafide_count / (meta.shape[0] - bonafide_count)}"
                     assert (meta.shape[0] - bonafide_count) > 0  # Ensure there are spoof samples
 
+    def test_convert_labels_to_ints(self):
+        y = np.array(["fake", "real", "fake", "real"])
+        pos_label = "real"
+        expected = np.array([0, 1, 0, 1])
+        converted = self.pipeline._convert_labels_to_ints(y, pos_label)
+        assert np.all(converted == expected), f"Expected {expected}, got {converted}"
+
 
 ExperimentPreprocessorTest().test_get_balancer_instance()
 ExperimentPreprocessorTest().test_prepare_data_for_experiment()
+ExperimentPreprocessorTest().test_convert_labels_to_ints()

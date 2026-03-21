@@ -14,13 +14,6 @@ class ModelTrainer:
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.study = None
 
-    def _convert_labels_to_ints(self, y: pd.Series, pos_label: str) -> np.ndarray:
-        return (y == pos_label).astype(int)
-
-    def get_target(self, metadata: pd.DataFrame, pos_label="bonafide") -> np.ndarray:
-        y = self._convert_labels_to_ints(metadata["target"], pos_label=pos_label)
-        return y
-
     def optuna_train(
         self,
         *,

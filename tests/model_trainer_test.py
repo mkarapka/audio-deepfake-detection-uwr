@@ -15,13 +15,6 @@ class ModelTrainerTest:
         best_params = self.trainer.get_best_params()
         assert best_params is None, "Expected None when no training has been done."
 
-    def test_convert_labels_to_ints(self):
-        y = np.array(["fake", "real", "fake", "real"])
-        pos_label = "real"
-        expected = np.array([0, 1, 0, 1])
-        converted = self.trainer._convert_labels_to_ints(y, pos_label)
-        assert np.all(converted == expected), f"Expected {expected}, got {converted}"
-
     def test_optuna_train(self):
         def dummy_objective(trial, model, **params):
             return trial.suggest_float("x", 0, 1)
@@ -29,7 +22,20 @@ class ModelTrainerTest:
         class DummyModel:
             pass
 
-        self.trainer.optuna_train(model=DummyModel(), objective=dummy_objective, n_trials=10)
+        X_train = np.array([[0.0], [1.0]])
+        y_train = np.array([0, 1])
+        X_dev = np.array([[0.0], [1.0]])
+        y_dev = np.array([0, 1])
+
+        self.trainer.optuna_train(
+            model=DummyModel,
+            objective=dummy_objective,
+            n_trials=10,
+            X_train=X_train,
+            y_train=y_train,
+            X_dev=X_dev,
+            y_dev=y_dev,
+        )
         best_params = self.trainer.get_best_params()
         assert "x" in best_params, "Expected 'x' in best parameters."
 
@@ -77,7 +83,6 @@ class ModelTrainerTest:
 
 
 ModelTrainerTest().test_get_best_params_without_training()
-ModelTrainerTest().test_convert_labels_to_ints()
 ModelTrainerTest().test_optuna_train()
 ModelTrainerTest().test_save_results()
 ModelTrainerTest().test_get_target()

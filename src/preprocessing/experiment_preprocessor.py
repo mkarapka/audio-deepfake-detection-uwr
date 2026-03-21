@@ -13,7 +13,7 @@ from src.preprocessing.data_balancers.undersample_spoof_balancer import (
 )
 from src.preprocessing.io.collector import Collector
 from src.preprocessing.io.feature_loader import FeatureLoader
-
+from sklearn.preprocessing import StandardScaler
 
 class ExperimentPreprocessor:
     def __init__(self, load_file_name: str, save_file_name: str, feat_suffix: str):
@@ -41,9 +41,9 @@ class ExperimentPreprocessor:
         metadata: pd.DataFrame,
         features: np.ndarray,
         fraction: float,
-        is_audio_ids_sampling: bool,
+        use_audio_id_sampling: bool,
     ) -> tuple[pd.DataFrame, np.ndarray]:
-        if is_audio_ids_sampling:
+        if use_audio_id_sampling:
             return self.feature_loader.sample_data(metadata=metadata, features=features, fraction=fraction)
         return self.feature_loader.sample_by_audio_ids(metadata=metadata, features=features, fraction=fraction)
 
@@ -54,8 +54,9 @@ class ExperimentPreprocessor:
         self,
         splits_names: list[str],
         fraction: float,
-        is_audio_ids_sampling: bool,
-        balance_splits_strategy: tuple[str, float | list[float]],
+        use_audio_id_sampling: bool = False,
+        balance_splits_strategy: tuple[str, float | list[float]] = None,
+        use_standardize: bool = False,
     ) -> dict[str, tuple[pd.DataFrame, np.ndarray]]:
 
         data_for_exp = {}
@@ -67,7 +68,7 @@ class ExperimentPreprocessor:
                     metadata=meta,
                     features=feat,
                     fraction=fraction,
-                    is_audio_ids_sampling=is_audio_ids_sampling,
+                    use_audio_id_sampling=use_audio_id_sampling,
                 )
 
             if balance_splits_strategy is not None:
@@ -75,6 +76,10 @@ class ExperimentPreprocessor:
                 balancer = self._get_balancer_instance(balancer_type=balance_type, ratio_args=ratio_args)
                 if balancer is not None:
                     meta, feat = balancer.transform(metadata=meta, features=feat)
+
+            if use_standardize:
+                scaler = StandardScaler()
+                feat = scaler.fit_transform(feat)
 
             data_for_exp[split_name] = (meta, feat)
 

@@ -45,7 +45,7 @@ class TestBestBalancePipeline:
         preprocess_config = {
             "splits_names": ["train", "dev"],
             "fraction": 0.05,
-            "is_audio_ids_sampling": False,
+            "use_audio_id_sampling": False,
             "balance_configs": None,
         }
 

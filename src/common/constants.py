@@ -124,8 +124,9 @@ class BalanceType(Enum):
 class ExperimentPreprocessConfig:
     splits_names: list[str]
     fraction: float
-    is_audio_ids_sampling: bool
+    use_audio_id_sampling: bool
     balance_splits_strategy: dict[str, list] | None
+    use_standardize: bool
 
     def get_dict(self):
         return asdict(self)

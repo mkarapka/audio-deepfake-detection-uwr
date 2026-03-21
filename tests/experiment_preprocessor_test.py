@@ -83,7 +83,7 @@ class ExperimentPreprocessorTest:
             preprocess_config = {
                 "splits_names": ["train", "dev", "test"],
                 "fraction": 1.0,
-                "is_audio_ids_sampling": enabled_audio_ids_sampling,
+                "use_audio_id_sampling": enabled_audio_ids_sampling,
                 "balance_splits_strategy": splits_config,
             }
 

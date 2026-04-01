@@ -12,6 +12,7 @@ class MapClustersIDsPipeline:
     def __init__(
         self,
         output_file: str,
+        feat_suffix: str,
         umap_config: dict[str, any],
         hdbscan_config: dict[str, any],
     ):
@@ -19,7 +20,7 @@ class MapClustersIDsPipeline:
         self.output_file = output_file
 
         self.feature_loader = FeatureLoader(file_name=consts.feature_extracted)
-        self.collector = Collector(save_file_name=self.output_file)
+        self.collector = Collector(save_file_name=self.output_file, feat_suffix=feat_suffix)
 
         self.umap_model = UMAP(**umap_config)
         self.hdbscan_model = HDBSCAN(**hdbscan_config)

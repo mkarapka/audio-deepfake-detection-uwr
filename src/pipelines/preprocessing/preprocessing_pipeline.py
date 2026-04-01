@@ -39,7 +39,7 @@ class PreprocessingPipeline:
                 record["wav"] = record.pop("audio")
             yield record
 
-    def _preprocess_dataset(self, file_name: str, feature_extractor: BaseFeatureExtractor, batch_size=8):
+    def _preprocess_dataset(self, file_name: str, feat_suffix: str, feature_extractor: BaseFeatureExtractor, batch_size=8):
         if file_name is None or file_name == "":
             logger.error("File name for saving processed data must be provided.")
         if feature_extractor is None:
@@ -48,7 +48,7 @@ class PreprocessingPipeline:
         config_loader = ConfigLoader(source_dataset=self.source_dataset, config=self.config_lst)
         audio_segmentator = AudioSegmentator()
         metadata_modifier = MetadataModifier(audio_type=self.audio_type, speakers_ids=config_loader.load_speakers_ids())
-        collector = Collector(save_file_name=file_name)
+        collector = Collector(save_file_name=file_name, feat_suffix=feat_suffix)
 
         for dataset_split in config_loader.stream_next_config_dataset():
             logger.info(
@@ -77,26 +77,28 @@ class PreprocessingPipeline:
             collector.transform(meta_df=modified_segs_metadata, embeddings=embeddings)
             logger.info(f"✓ Saved to {file_name}\n")
 
-    def preprocess_dataset_wavlm(self, file_name=consts.feature_extracted + consts.wavlm_emb_suffix, batch_size=8):
+    def preprocess_dataset_wavlm(self, file_name=consts.feature_extracted, batch_size=8):
         self._preprocess_dataset(
             file_name=file_name,
+            feat_suffix=consts.wavlm_emb_suffix,
             feature_extractor=WavLmExtractor(batch_size=batch_size),
             batch_size=batch_size,
         )
 
-    def preprocess_dataset_fft(self, file_name=consts.feature_extracted + consts.fft_emb_suffix, batch_size=8):
+    def preprocess_dataset_fft(self, file_name=consts.feature_extracted, batch_size=8):
         self._preprocess_dataset(
             file_name=file_name,
+            feat_suffix=consts.fft_emb_suffix,
             feature_extractor=FFTExtractor(batch_size=batch_size),
             batch_size=batch_size,
         )
 
-    def split_dataset(self, file_name: Path, split_config: dict[str, float], seed=44):
+    def split_dataset(self, file_name: Path, feat_suffix: str, split_config: dict[str, float], seed=44):
         feature_loader = FeatureLoader(file_name=file_name)
         dataset_spliter = DatasetSpliter(
             config=split_config, speakers_ids=feature_loader.load_speakers_ids(), seed=seed
         )
-        collector = Collector(save_file_name=file_name)
+        collector = Collector(save_file_name=file_name, feat_suffix=feat_suffix)
 
         metadata = feature_loader.load_metadata_file(file_path=collector.get_metadata_file_path())
         meta_train, meta_dev, meta_test = dataset_spliter.transform(metadata=metadata)

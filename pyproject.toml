@@ -1,7 +1,7 @@
 [project]
 name = "audio-deepfake-detection-uwr"
 version = "0.1.0"
-description = "Add your description here"
+description = "Deepfake audio detection using machine learning techniques."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -30,11 +30,6 @@ dependencies = [
 
 [dependency-groups]
 dev = ["flake8", "isort>=6.0.1", "pytest>=8.4.1", "autopep8", "black", "autoflake"]
-
-# [project.optional-dependencies]
-# gpu = [
-#    "cupy-cuda12x; sys_platform != 'darwin'",  # darwin = macOS
-# ]
 
 [build-system]
 requires = ["hatchling"]

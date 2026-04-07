@@ -39,7 +39,9 @@ class PreprocessingPipeline:
                 record["wav"] = record.pop("audio")
             yield record
 
-    def _preprocess_dataset(self, file_name: str, feat_suffix: str, feature_extractor: BaseFeatureExtractor, batch_size=8):
+    def _preprocess_dataset(
+        self, file_name: str, feat_suffix: str, feature_extractor: BaseFeatureExtractor, batch_size=8
+    ):
         if file_name is None or file_name == "":
             logger.error("File name for saving processed data must be provided.")
         if feature_extractor is None:

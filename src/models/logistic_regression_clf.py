@@ -1,8 +1,43 @@
 import joblib
+import torch
+import torch.nn as nn
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
 from src.models.base_model import BaseModel
+
+
+class LogisticRegressionClassifier(BaseModel, nn.Module):
+    def __init__(self, in_features: int, device: str):
+        nn.Module.__init__(self)
+        BaseModel.__init__(self, class_name=self.__class__.__name__)
+
+        self.model = self._create_model(in_features=in_features)
+        self.device = device
+
+    def _create_model(self, in_features: int):
+        self.model = nn.Sequential(
+            nn.Linear(in_features=in_features, out_features=1, device=self.device),
+            nn.Sigmoid(),
+        )
+
+    def forward(self, X: torch.Tensor):
+        y_hat = self.model(X)
+        return y_hat
+
+    def save(self, file_path):
+        payload = {
+            "state_dict": self.state_dict(),
+            "in_features": self.model[0].in_features,
+            "device": self.device,
+        }
+        torch.save(payload, file_path)
+
+    def load(self, file_path):
+        payload = torch.load(file_path, map_location=self.device)
+        in_features = payload["in_features"]
+        self.model = self._create_model(in_features=in_features)
+        self.load_state_dict(payload["state_dict"])
 
 
 class LogisticRegressionClf(BaseModel):

@@ -18,7 +18,7 @@ class BaseModelTest:
     def test_iterate_records(self):
         print(y_pred)
         print(y_preds_buckets)
-        for record_preds, mask in self.model.iterate_records(uq_audio_ids=pd.Series(y_preds_buckets), y_preds=y_pred):
+        for record_preds, mask in self.model._iterate_records(uq_audio_ids=pd.Series(y_preds_buckets), y_preds=y_pred):
             mask_np = mask.to_numpy()
             curr_bucket = y_preds_buckets[mask_np][0]
             print(f"Bucket {curr_bucket}: {record_preds}")

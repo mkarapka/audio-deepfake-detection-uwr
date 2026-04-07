@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from src.common.constants import BalanceType
 from src.common.constants import Constants as consts
 from src.preprocessing.experiment_preprocessor import ExperimentPreprocessor
 from src.preprocessing.io.feature_loader import FeatureLoader

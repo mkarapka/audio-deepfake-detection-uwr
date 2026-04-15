@@ -1,46 +1,27 @@
-import time
-
-import numpy as np
 import optuna
 import pandas as pd
 
 from src.common.constants import Constants as consts
 from src.common.logger import setup_logger
 from src.models.base_model import BaseModel
+from src.models.objectives import Objective
 
 
 class ModelTrainer:
-    def __init__(self):
+    def __init__(self, show_progress_bar: bool = True, garbage_collect_after_trial: bool = False):
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
+        self.show_progress_bar = show_progress_bar
+        self.garbage_collect_after_trial = garbage_collect_after_trial
         self.study = None
 
-    def optuna_train(
-        self,
-        *,
-        model: BaseModel,
-        objective,
-        n_trials: int,
-        X_train,
-        y_train,
-        X_dev,
-        y_dev,
-        direct: str = "maximize",
-        **params,
-    ):
+    def optuna_train(self, *, objective: Objective, n_trials: int, **params):
         self.logger.info("Starting Optuna hyperparameter optimization...")
-        self.study = optuna.create_study(direction=direct)
+        self.study = optuna.create_study(direction=objective.direction)
         self.study.optimize(
-            lambda trial: objective(
-                trial=trial,
-                model=model,
-                X_train=X_train,
-                y_train=y_train,
-                X_dev=X_dev,
-                y_dev=y_dev,
-                **params,
-            ),
+            lambda trial: objective(trial=trial, **params),
             n_trials=n_trials,
-            show_progress_bar=True,
+            show_progress_bar=self.show_progress_bar,
+            gc_after_trial=self.garbage_collect_after_trial,
         )
 
         self.logger.info(f"Best trial: {self.study.best_trial.number}")
@@ -75,10 +56,8 @@ class ModelTrainer:
 
         self.logger.info("Results saved successfully with columns: " + ", ".join(save_df.columns))
 
-    def save_model(self, model: BaseModel, save_file_name: str, ext: str):
-        file_path = consts.models_dir / f"{save_file_name}_{time.strftime('%Y-%m-%d_%H-%M-%S')}.{ext}"
-        if not consts.models_dir.exists():
-            consts.models_dir.mkdir(parents=True, exist_ok=True)
+    def save_model(self, model: BaseModel, save_file_name: str, ext: str, sub_dir: str = None):
+        file_path = model._get_model_file_path(model_name=save_file_name, ext=ext, sub_dir=sub_dir)
         self.logger.info(f"Saving model to {file_path}")
-        model.save(file_path)
+        model.save(model_name=save_file_name, ext=ext, sub_dir=sub_dir)
         self.logger.info("Model saved successfully.")

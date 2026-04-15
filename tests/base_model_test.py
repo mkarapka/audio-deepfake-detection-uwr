@@ -4,6 +4,7 @@ import torch
 
 from src.common.constants import Constants as consts
 from src.models.base_model import BaseModel
+from src.common.basic_functions import print_green
 
 np.random.seed(27)
 y_pred = np.random.choice([0, 1], 20)
@@ -13,9 +14,33 @@ y_preds_buckets = np.random.choice(buckets, size=len(y_pred))
 
 class BaseModelTest:
     def __init__(self):
-        self.model = BaseModel(class_name="TestModel")
+        self.model = None
+
+    def _init_model(self):
+        class TestModel(BaseModel):
+            def load(self, model_name: str, ext: str, sub_dir: str = None):
+                return None
+
+            def save(self, model_name: str, ext: str, sub_dir: str = None):
+                return None
+
+        self.model = TestModel(class_name="TestModel")
+
+    def check_not_implemented_methods_in_abstract_class_error(self):
+        try:
+            self.model = BaseModel(class_name="TestModel")
+            assert False, "Expected NotImplementedError for fit method, but none was raised."
+        except NotImplementedError as e:
+            print(f"Expected error caught for fit method: {e}")
+
+        try:
+            self.model.predict(None)
+            assert False, "Expected NotImplementedError for predict method, but none was raised."
+        except NotImplementedError as e:
+            print(f"Expected error caught for predict method: {e}")
 
     def test_iterate_records(self):
+        self._init_model()
         print(y_pred)
         print(y_preds_buckets)
         for record_preds, mask in self.model._iterate_records(uq_audio_ids=pd.Series(y_preds_buckets), y_preds=y_pred):
@@ -27,6 +52,7 @@ class BaseModelTest:
             np.testing.assert_array_equal(record_preds, y_pred[mask_np])
 
     def test_majority_vote(self):
+        self._init_model()
         y_preds = np.array([0, 0, 1, 1, 1])
         vote = self.model._majority_vote(y_preds)
         print(f"Predictions: {y_preds}, Majority Vote: {vote}")
@@ -38,6 +64,7 @@ class BaseModelTest:
         assert vote == 0
 
     def test_majority_voting(self):
+        self._init_model()
         class DummyModel:
             def predict(self, X):
                 return X
@@ -55,6 +82,7 @@ class BaseModelTest:
             assert np.all(majoirity_voted_preds[mask] == majority_vote)
 
     def test_to_numpy(self):
+        self._init_model()
         tensor_data = torch.tensor([1, 2, 3])
         numpy_data = self.model._to_numpy(tensor_data)
         print(f"Tensor data: {tensor_data}, Numpy data: {numpy_data}")
@@ -62,6 +90,7 @@ class BaseModelTest:
         assert np.array_equal(numpy_data, tensor_data.numpy())
 
     def test_get_model_file_path(self):
+        self._init_model()
         MODEL_NAME = "TestDummyModel"
 
         self.model.models_dir = consts.tests_data_dir / "models"
@@ -76,6 +105,7 @@ class BaseModelTest:
         assert actual_path == expected_path
 
     def test_get_model_file_path_not_found(self):
+        self._init_model()
         MODEL_NAME = "NonExistentModel"
         try:
             self.model._get_model_file_path(model_name=MODEL_NAME, ext="joblib")
@@ -84,6 +114,7 @@ class BaseModelTest:
             print(f"Expected error caught: {e}")
 
     def test_get_model_file_path_with_subdir(self):
+        self._init_model()
         MODEL_NAME = "TestDummyModelWithSubdir"
         SUB_DIR = "subdir"
 
@@ -107,4 +138,4 @@ BaseModelTest().test_to_numpy()
 BaseModelTest().test_get_model_file_path()
 BaseModelTest().test_get_model_file_path_not_found()
 BaseModelTest().test_get_model_file_path_with_subdir()
-print("All BaseModel tests passed successfully!")
+print_green("All BaseModel tests passed successfully!")

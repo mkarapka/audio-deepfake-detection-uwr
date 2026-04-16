@@ -11,10 +11,10 @@ from src.common.logger import raise_error_logger, setup_logger
 
 
 class BaseModel(ABC):
-    def __init__(self, class_name: str, models_dir: Path = consts.models_dir, include_mps=False):
+    def __init__(self, class_name: str, models_dir: Path = consts.models_dir, device: str = None, include_mps=False):
         self.model = None
         self.models_dir = models_dir
-        self.device = get_device(include_mps=include_mps)
+        self.device = get_device(include_mps=include_mps) if device is None else device
 
         self.class_name = self.__class__.__name__ if class_name is None else class_name
         self.logger = setup_logger(f"audio_deepfake.{self.class_name}", log_to_console=True)

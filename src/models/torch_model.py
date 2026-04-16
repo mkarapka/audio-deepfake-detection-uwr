@@ -1,11 +1,12 @@
 import torch
 import torch.nn as nn
+
 from src.models.base_model import BaseModel
 
 
 class TorchModel(BaseModel):
-    def __init__(self, model : nn.Module, class_name: str, include_mps=True):
-        BaseModel.__init__(self, class_name=class_name, include_mps=include_mps)
+    def __init__(self, model: nn.Module, class_name: str, device: str = None, include_mps: bool = False):
+        BaseModel.__init__(self, class_name=class_name, device=device, include_mps=include_mps)
         self.model = model
 
     def parameters(self):
@@ -50,3 +51,17 @@ class TorchModel(BaseModel):
             total_samples += x_batch.size(0)
 
         return total_loss / total_samples, total_correct / total_samples
+
+    def save(self, file_path):
+        payload = {
+            "state_dict": self.state_dict(),
+            "in_features": self.model[0].in_features,
+            "device": self.device,
+        }
+        torch.save(payload, file_path)
+
+    def load(self, file_path):
+        payload = torch.load(file_path, map_location=self.device)
+        in_features = payload["in_features"]
+        self.model = self._create_model(in_features=in_features)
+        self.load_state_dict(payload["state_dict"])

@@ -34,7 +34,9 @@ class ModelTrainerTest:
 
         objective = DummyObjective()
 
-        self.trainer.optuna_train(objective=objective, n_trials=10, X_train=X_train, y_train=y_train, X_val=X_dev, y_val=y_dev)
+        self.trainer.optuna_train(
+            objective=objective, n_trials=10, X_train=X_train, y_train=y_train, X_val=X_dev, y_val=y_dev
+        )
         best_params = self.trainer.get_best_params()
         assert "x" in best_params, "Expected 'x' in best parameters."
 
@@ -59,7 +61,9 @@ class ModelTrainerTest:
     def test_save_model(self):
         class DummyModel(BaseModel):
             def __init__(self):
-                super().__init__(class_name="DummyModel", models_dir=consts.tests_data_dir / "models", include_mps=False)
+                super().__init__(
+                    class_name="DummyModel", models_dir=consts.tests_data_dir / "models", include_mps=False
+                )
 
             def load(self, model_name: str, ext: str, sub_dir: str = None):
                 return None

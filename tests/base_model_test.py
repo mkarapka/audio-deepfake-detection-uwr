@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 import torch
 
+from src.common.basic_functions import print_green
 from src.common.constants import Constants as consts
 from src.models.base_model import BaseModel
-from src.common.basic_functions import print_green
 
 np.random.seed(27)
 y_pred = np.random.choice([0, 1], 20)
@@ -65,6 +65,7 @@ class BaseModelTest:
 
     def test_majority_voting(self):
         self._init_model()
+
         class DummyModel:
             def predict(self, X):
                 return X

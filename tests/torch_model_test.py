@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
 from src.common.basic_functions import print_green
+from src.common.constants import Constants as consts
 from src.models.torch_model import TorchModel
 
 
@@ -12,6 +13,24 @@ class TestableTorchModel(TorchModel):
 
     def save(self, model_name: str, ext: str, sub_dir: str = None):
         return None
+
+
+class PersistableTorchModel(TorchModel):
+    def __init__(self, in_features: int, device: str = "cpu"):
+        self.device = torch.device(device)
+        model = self._create_model(in_features=in_features)
+        super().__init__(model=model, class_name="PersistableTorchModel", include_mps=False)
+
+    def _create_model(self, in_features: int):
+        return nn.Sequential(
+            nn.Linear(in_features=in_features, out_features=2),
+        ).to(self.device)
+
+    def state_dict(self):
+        return self.model.state_dict()
+
+    def load_state_dict(self, state_dict):
+        return self.model.load_state_dict(state_dict)
 
 
 class TorchModelTest:
@@ -82,10 +101,57 @@ class TorchModelTest:
         print(f"Eval loss: {eval_loss:.4f}, Eval acc: {eval_acc:.4f}")
         print("TorchModel.evaluate test passed.")
 
+    def test_save(self):
+        print("Testing TorchModel.save...")
+        torch.manual_seed(27)
+
+        model = PersistableTorchModel(in_features=2)
+        save_dir = consts.tests_data_dir / "models"
+        save_dir.mkdir(parents=True, exist_ok=True)
+        file_path = save_dir / "torch_model_save_test.pt"
+
+        model.save(file_path)
+
+        assert file_path.exists(), "Expected saved model file to exist."
+        payload = torch.load(file_path, map_location=model.device)
+        assert "state_dict" in payload, "Expected 'state_dict' key in saved payload."
+        assert "in_features" in payload, "Expected 'in_features' key in saved payload."
+        assert "device" in payload, "Expected 'device' key in saved payload."
+        assert payload["in_features"] == 2, "Expected in_features to match model input size."
+
+        print("TorchModel.save test passed.")
+
+    def test_load(self):
+        print("Testing TorchModel.load...")
+        torch.manual_seed(27)
+
+        save_dir = consts.tests_data_dir / "models"
+        save_dir.mkdir(parents=True, exist_ok=True)
+        file_path = save_dir / "torch_model_load_test.pt"
+
+        source_model = PersistableTorchModel(in_features=2)
+        source_model.save(file_path)
+
+        loaded_model = PersistableTorchModel(in_features=2)
+        with torch.no_grad():
+            for param in loaded_model.model.parameters():
+                param.zero_()
+
+        loaded_model.load(file_path)
+
+        for source_param, loaded_param in zip(source_model.model.parameters(), loaded_model.model.parameters()):
+            assert torch.allclose(
+                source_param.detach(), loaded_param.detach()
+            ), "Expected loaded parameters to match saved parameters."
+
+        print("TorchModel.load test passed.")
+
 
 if __name__ == "__main__":
     test = TorchModelTest()
     test.test_parameters()
     test.test_train_one_epoch()
     test.test_evaluate()
+    test.test_save()
+    test.test_load()
     print_green("All TorchModel tests passed successfully!")

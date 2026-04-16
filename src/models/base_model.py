@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from torch import Tensor
+import torch
 
 from src.common.basic_functions import get_device
 from src.common.constants import Constants as consts
@@ -21,7 +22,7 @@ class BaseModel(ABC):
         self.logger.info(f"Using device: {self.device}")
 
     def _get_model_file_path(self, model_name: str, ext: str, sub_dir: str = None) -> Path:
-        if self.models_dir.exists():
+        if not self.models_dir.exists():
             self.models_dir.mkdir(parents=True, exist_ok=True)
         if sub_dir is not None:
             sub_dir_path = self.models_dir / sub_dir
@@ -35,32 +36,15 @@ class BaseModel(ABC):
             raise_error_logger(self.logger, f"Model file not found: {model_file_path}")
         return model_file_path
 
-    def _majority_vote(self, y_preds: np.ndarray):
-        vote = int((y_preds.mean() >= 0.5))
-        return vote
-
     def _to_numpy(self, data):
         if isinstance(data, Tensor):
             return data.cpu().numpy()
         return data
 
-    def _iterate_records(self, uq_audio_ids: pd.Series, y_preds: np.ndarray):
-        unique_records_ids = uq_audio_ids.unique()
-
-        for unique_audio_id in unique_records_ids:
-            mask = uq_audio_ids == unique_audio_id
-            record_predictions = y_preds[mask]
-
-            yield record_predictions, mask
-
     def majority_voting(self, y_pred: np.ndarray, audio_ids: pd.Series):
-        majority_voted_preds = np.full(y_pred.shape[0], -1)
-        for record_preds, mask in self._iterate_records(audio_ids, y_pred):
-            majority_voted_preds[mask] = self._majority_vote(record_preds)
-
-        if np.any(majority_voted_preds == -1):
-            raise_error_logger(self.logger, "Some predictions were not assigned during majority voting.")
-
+        df = pd.DataFrame({"audio_id": audio_ids, "pred": y_pred})
+        mean_preds = df.groupby("audio_id")["pred"].transform("mean")
+        majority_voted_preds = (mean_preds >= 0.5).astype(int).values
         return majority_voted_preds
 
     def predict(self, X, audio_ids=None):

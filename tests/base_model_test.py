@@ -39,33 +39,8 @@ class BaseModelTest:
         except NotImplementedError as e:
             print(f"Expected error caught for predict method: {e}")
 
-    def test_iterate_records(self):
-        self._init_model()
-        print(y_pred)
-        print(y_preds_buckets)
-        for record_preds, mask in self.model._iterate_records(uq_audio_ids=pd.Series(y_preds_buckets), y_preds=y_pred):
-            mask_np = mask.to_numpy()
-            curr_bucket = y_preds_buckets[mask_np][0]
-            print(f"Bucket {curr_bucket}: {record_preds}")
-
-            assert np.all(y_preds_buckets[mask_np] == curr_bucket)
-            np.testing.assert_array_equal(record_preds, y_pred[mask_np])
-
-    def test_majority_vote(self):
-        self._init_model()
-        y_preds = np.array([0, 0, 1, 1, 1])
-        vote = self.model._majority_vote(y_preds)
-        print(f"Predictions: {y_preds}, Majority Vote: {vote}")
-        assert vote == 1
-
-        y_preds = np.array([0, 0, 0, 1, 1])
-        vote = self.model._majority_vote(y_preds)
-        print(f"Predictions: {y_preds}, Majority Vote: {vote}")
-        assert vote == 0
-
     def test_majority_voting(self):
         self._init_model()
-
         class DummyModel:
             def predict(self, X):
                 return X
@@ -79,7 +54,7 @@ class BaseModelTest:
         for b in buckets:
             mask = y_preds_buckets == b
             bucket_preds = y_pred[mask]
-            majority_vote = self.model._majority_vote(bucket_preds)
+            majority_vote = int(bucket_preds.mean() >= 0.5)
             assert np.all(majoirity_voted_preds[mask] == majority_vote)
 
     def test_to_numpy(self):
@@ -131,9 +106,6 @@ class BaseModelTest:
         print(f"Expected model file path: {expected_path}, Actual model file path: {actual_path}")
         assert actual_path == expected_path
 
-
-BaseModelTest().test_iterate_records()
-BaseModelTest().test_majority_vote()
 BaseModelTest().test_majority_voting()
 BaseModelTest().test_to_numpy()
 BaseModelTest().test_get_model_file_path()

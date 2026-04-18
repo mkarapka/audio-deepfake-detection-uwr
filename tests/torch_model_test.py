@@ -119,7 +119,6 @@ class TorchModelTest:
         payload = torch.load(file_path, map_location=model.device)
         assert "state_dict" in payload, "Expected 'state_dict' key in saved payload."
         assert "in_features" in payload, "Expected 'in_features' key in saved payload."
-        assert "device" in payload, "Expected 'device' key in saved payload."
         assert payload["in_features"] == 2, "Expected in_features to match model input size."
 
         print("TorchModel.save test passed.")

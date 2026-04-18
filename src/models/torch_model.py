@@ -9,7 +9,7 @@ from src.models.base_model import BaseModel
 class TorchModel(BaseModel):
     def __init__(self, model: nn.Module, class_name: str, device: str = None, include_mps: bool = False):
         BaseModel.__init__(self, class_name=class_name, device=device, include_mps=include_mps)
-        self.model = model
+        self.model = model.to(self.device)
 
     def parameters(self):
         return self.model.parameters()
@@ -69,7 +69,6 @@ class TorchModel(BaseModel):
         payload = {
             "state_dict": self.state_dict(),
             "in_features": self.model[0].in_features,
-            "device": self.device,
         }
         torch.save(payload, file_path)
 
@@ -78,6 +77,7 @@ class TorchModel(BaseModel):
         in_features = payload["in_features"]
         self.model = self._create_model(in_features=in_features)
         self.load_state_dict(payload["state_dict"])
+        self.model.to(self.device)
 
     @abstractmethod
     def _create_model(self, in_features):

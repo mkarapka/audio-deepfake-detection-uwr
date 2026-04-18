@@ -38,6 +38,7 @@ class BaseModelTest:
 
     def test_majority_voting(self):
         self._init_model()
+
         class DummyModel:
             def predict(self, X):
                 return X
@@ -102,6 +103,7 @@ class BaseModelTest:
         actual_path = self.model._get_model_file_path(model_name=MODEL_NAME, ext="joblib", sub_dir=SUB_DIR)
         print(f"Expected model file path: {expected_path}, Actual model file path: {actual_path}")
         assert actual_path == expected_path
+
 
 BaseModelTest().test_majority_voting()
 BaseModelTest().test_to_numpy()

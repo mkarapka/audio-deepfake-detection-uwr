@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 import torch
 import torch.nn as nn
 
@@ -76,3 +78,7 @@ class TorchModel(BaseModel):
         in_features = payload["in_features"]
         self.model = self._create_model(in_features=in_features)
         self.load_state_dict(payload["state_dict"])
+
+    @abstractmethod
+    def _create_model(self, in_features):
+        pass

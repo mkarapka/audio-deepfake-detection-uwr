@@ -8,6 +8,9 @@ from src.models.torch_model import TorchModel
 
 
 class TestableTorchModel(TorchModel):
+    def _create_model(self, in_features):
+        return super()._create_model(in_features)
+
     def load(self, model_name: str, ext: str, sub_dir: str = None):
         return None
 

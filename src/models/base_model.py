@@ -4,7 +4,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from torch import Tensor
-import torch
 
 from src.common.basic_functions import get_device
 from src.common.constants import Constants as consts
@@ -47,16 +46,9 @@ class BaseModel(ABC):
         majority_voted_preds = (mean_preds >= 0.5).astype(int).values
         return majority_voted_preds
 
+    @abstractmethod
     def predict(self, X, audio_ids=None):
-        if self.model is None:
-            raise_error_logger(self.logger, "Model is not trained yet. Cannot perform majority voting.")
-
-        y_pred = self.model.predict(X)
-        y_pred = self._to_numpy(y_pred)
-
-        if audio_ids is not None:
-            return self.majority_voting(y_pred=y_pred, audio_ids=audio_ids)
-        return y_pred
+        pass
 
     @abstractmethod
     def load(self, model_name: str, ext: str, sub_dir: str = None):

@@ -18,6 +18,9 @@ class BaseModelTest:
 
     def _init_model(self):
         class TestModel(BaseModel):
+            def predict(self, X, audio_ids=None):
+                return X
+
             def load(self, model_name: str, ext: str, sub_dir: str = None):
                 return None
 
@@ -29,15 +32,9 @@ class BaseModelTest:
     def check_not_implemented_methods_in_abstract_class_error(self):
         try:
             self.model = BaseModel(class_name="TestModel")
-            assert False, "Expected NotImplementedError for fit method, but none was raised."
-        except NotImplementedError as e:
-            print(f"Expected error caught for fit method: {e}")
-
-        try:
-            self.model.predict(None)
-            assert False, "Expected NotImplementedError for predict method, but none was raised."
-        except NotImplementedError as e:
-            print(f"Expected error caught for predict method: {e}")
+            assert False, "Expected TypeError for instantiating abstract class, but none was raised."
+        except TypeError as e:
+            print(f"Expected error caught for instantiation: {e}")
 
     def test_majority_voting(self):
         self._init_model()

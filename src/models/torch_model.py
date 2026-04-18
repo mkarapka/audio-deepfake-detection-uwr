@@ -52,6 +52,17 @@ class TorchModel(BaseModel):
 
         return total_loss / total_samples, total_correct / total_samples
 
+    def predict(self, X, audio_ids=None):
+        self.model.eval()
+        with torch.no_grad():
+            X = X.to(self.device)
+            logits = self.model(X)
+            y_pred = torch.sigmoid(logits).squeeze()
+
+        if audio_ids is not None:
+            return self.majority_voting(y_pred=y_pred.cpu().numpy(), audio_ids=audio_ids)
+        return y_pred.cpu().numpy()
+
     def save(self, file_path):
         payload = {
             "state_dict": self.state_dict(),

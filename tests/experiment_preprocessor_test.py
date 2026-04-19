@@ -72,12 +72,12 @@ class ExperimentPreprocessorTest:
 
     def test_prepare_data_for_experiment(self):
         for enabled_audio_ids_sampling in [False, True]:
-            undersample_ratio = 1.0
-            args_ratio = [undersample_ratio] * 3
+            undersample_ratio, oversample_ratio, mix_ratio = 1.0, 1.0, [0.5, 1.0]
+            args_ratio = [undersample_ratio, oversample_ratio, mix_ratio[-1]]
 
             self.pipeline.feature_loader = FeatureLoaderMock()
 
-            splits_config = ("undersample", undersample_ratio)
+            splits_config = [("undersample", undersample_ratio), ("oversample", oversample_ratio), ("mix", mix_ratio)]
 
             preprocess_config = {
                 "splits_names": ["train", "dev", "test"],

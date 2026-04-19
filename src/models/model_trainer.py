@@ -56,8 +56,8 @@ class ModelTrainer:
 
         self.logger.info("Results saved successfully with columns: " + ", ".join(save_df.columns))
 
-    def save_model(self, model: BaseModel, save_file_name: str, ext: str, sub_dir: str = None):
+    def save_params(self, model: BaseModel, save_file_name: str, ext: str, sub_dir: str = None):
         file_path = model._get_model_file_path(model_name=save_file_name, ext=ext, sub_dir=sub_dir)
         self.logger.info(f"Saving model to {file_path}")
-        model.save(model_name=save_file_name, ext=ext, sub_dir=sub_dir)
+        model.save(file_path=file_path)
         self.logger.info("Model saved successfully.")

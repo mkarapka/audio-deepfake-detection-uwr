@@ -4,14 +4,12 @@ from optuna import Trial
 from sklearn.metrics import accuracy_score
 from torch.types import Tensor
 
-from src.models.logistic_regression_clf import LogisticRegressionClassifier
 from src.models.base_model import BaseModel
-import torch
-import torch.nn as nn
+from src.models.logistic_regression_classifier import LogisticRegressionClassifier
 
 
 class Objective(ABC):
-    def __init__(self, model : BaseModel, direction: str = "maximize"):
+    def __init__(self, model: BaseModel, direction: str = "maximize"):
         self.model = model
         self.direction = direction
 
@@ -30,9 +28,6 @@ class LogisticRegressionObjective(Objective):
 
     def __call__(self, *, trial: Trial, max_iter: int, metrics=accuracy_score):
         pass
-
-
-
 
 
 class MlpObjective(Objective):

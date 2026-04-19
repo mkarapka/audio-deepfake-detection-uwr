@@ -3,6 +3,7 @@ import pandas as pd
 
 from src.common.logger import raise_error_logger, setup_logger
 from src.models.model_trainer import ModelTrainer
+from src.models.torch_data_loader import TorchDataLoader
 from src.preprocessing.data_balancers.base_balancer import BaseBalancer
 from src.preprocessing.data_balancers.mix_balancer import MixBalancer
 from src.preprocessing.data_balancers.oversample_real_balancer import (
@@ -13,7 +14,7 @@ from src.preprocessing.data_balancers.undersample_spoof_balancer import (
 )
 from src.preprocessing.io.collector import Collector
 from src.preprocessing.io.feature_loader import FeatureLoader
-from sklearn.preprocessing import StandardScaler
+
 
 class ExperimentPreprocessor:
     def __init__(self, load_file_name: str, save_file_name: str, feat_suffix: str):
@@ -36,57 +37,58 @@ class ExperimentPreprocessor:
         else:
             raise_error_logger(self.logger, f"Unknown balancer type: {balancer_type}")
 
-    def _sample_data(
-        self,
-        metadata: pd.DataFrame,
-        features: np.ndarray,
-        fraction: float,
-        use_audio_id_sampling: bool,
-    ) -> tuple[pd.DataFrame, np.ndarray]:
-        if use_audio_id_sampling:
-            return self.feature_loader.sample_data(metadata=metadata, features=features, fraction=fraction)
-        return self.feature_loader.sample_by_audio_ids(metadata=metadata, features=features, fraction=fraction)
-
-    def _convert_labels_to_ints(self, y: pd.Series, pos_label: str) -> np.ndarray:
-        return (y == pos_label).astype(int)
-
     def preprocess_data(
         self,
         splits_names: list[str],
         fraction: float,
         use_audio_id_sampling: bool = False,
-        balance_splits_strategy: tuple[str, float | list[float]] = None,
+        balance_splits_strategy: list[tuple[str, float | list[float]]] = None,
         use_standardize: bool = False,
-    ) -> dict[str, tuple[pd.DataFrame, np.ndarray]]:
-
+        device: str = None,
+    ) -> dict[str, TorchDataLoader]:
         data_for_exp = {}
-        for split_name in splits_names:
+        train_mean = None
+        train_std = None
+
+        for i, split_name in enumerate(splits_names):
             meta, feat = self.feature_loader.load_data_split(split_name=split_name)
 
             if fraction < 1.0:
-                meta, feat = self._sample_data(
+                meta, feat = self.feature_loader.sample_data(
                     metadata=meta,
                     features=feat,
                     fraction=fraction,
-                    use_audio_id_sampling=use_audio_id_sampling,
+                    audio_id_sampling=use_audio_id_sampling,
                 )
 
-            if balance_splits_strategy is not None:
-                balance_type, ratio_args = balance_splits_strategy
+            if balance_splits_strategy[i] is not None:
+                balance_type, ratio_args = balance_splits_strategy[i]
                 balancer = self._get_balancer_instance(balancer_type=balance_type, ratio_args=ratio_args)
                 if balancer is not None:
                     meta, feat = balancer.transform(metadata=meta, features=feat)
 
             if use_standardize:
-                scaler = StandardScaler()
-                feat = scaler.fit_transform(feat)
+                if split_name == "train":
+                    train_mean = np.mean(feat, axis=0)
+                    train_std = np.std(feat, axis=0)
+                    train_std[train_std == 0] = 1e-8
 
-            data_for_exp[split_name] = (meta, feat)
+                if train_mean is not None and train_std is not None:
+                    raise_error_logger(self.logger, "Standardization is enabled but train split is not processed yet.")
+
+                def standardize_func(x):
+                    return (x - train_mean) / train_std
+
+                loader = TorchDataLoader(metadata=meta, features=feat, transform=standardize_func, device=device)
+            else:
+                loader = TorchDataLoader(metadata=meta, features=feat, device=device)
+
+            data_for_exp[split_name] = loader
 
         return data_for_exp
 
     def get_target(self, metadata: pd.DataFrame, pos_label="bonafide") -> np.ndarray:
-        y = self._convert_labels_to_ints(metadata["target"], pos_label=pos_label)
+        y = (metadata["target"] == pos_label).astype(int)
         return y
 
     def get_X_y(self, metadata: pd.DataFrame, features: np.ndarray) -> tuple[np.ndarray, np.ndarray]:

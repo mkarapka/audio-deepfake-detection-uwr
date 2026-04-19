@@ -5,7 +5,7 @@ import pandas as pd
 import torch
 
 from src.common.basic_functions import print_green
-from src.models.data_loader import TorchDataLoader
+from src.models.torch_data_loader import TorchDataLoader
 
 
 class DataLoaderTest:

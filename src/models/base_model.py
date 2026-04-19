@@ -51,9 +51,9 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def load(self, model_name: str, ext: str, sub_dir: str = None):
+    def load(self, file_path: str):
         pass
 
     @abstractmethod
-    def save(self, model_name: str, ext: str, sub_dir: str = None):
+    def save(self, file_path: str):
         pass

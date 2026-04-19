@@ -191,12 +191,23 @@ class TestFeatureLoader:
         }
         simple_df = pd.DataFrame(simple_metadata)
         sampled_df = self.loader.sample_by_audio_ids(metadata=simple_df, fraction=0.4)
-        print(type(sampled_df))
-        print(sampled_df)
-        print(sampled_df["unique_audio_id"].unique())
         assert len(sampled_df["unique_audio_id"].unique()) == 4
-        print("Sampled_df shape:")
-        print(sampled_df.shape)
+
+    def test_sample_data_with_audio_id_sampling(self):
+        simple_metadata = {
+            "unique_audio_id": np.random.choice(np.arange(0, 10, 1), size=100),
+            "value": np.random.rand(100),
+        }
+        simple_df = pd.DataFrame(simple_metadata)
+        simple_embeddings = np.random.rand(100, 5)
+
+        sampled_df, sampled_embeddings = self.loader.sample_data(
+            metadata=simple_df, features=simple_embeddings, fraction=0.4, audio_id_sampling=True
+        )
+
+        assert len(sampled_df["unique_audio_id"].unique()) == 4
+        assert sampled_embeddings.shape == (len(sampled_df), 5)
+        assert len(sampled_df) == len(sampled_embeddings)
 
     def test_sample_data_by_audio_id_with_embeddings(self):
         simple_metadata = {
@@ -221,3 +232,4 @@ TestFeatureLoader().test_sample_data()
 TestFeatureLoader().test_sample_data_with_embeddings()
 TestFeatureLoader().test_sample_data_by_audio_id()
 TestFeatureLoader().test_sample_data_by_audio_id_with_embeddings()
+TestFeatureLoader().test_sample_data_with_audio_id_sampling()

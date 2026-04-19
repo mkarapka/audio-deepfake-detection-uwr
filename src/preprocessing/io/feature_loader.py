@@ -42,15 +42,17 @@ class FeatureLoader(BaseIO):
         return audio_ids[:sample_size]
 
     def sample_data(
-        self, metadata: pd.DataFrame, features: np.ndarray | None = None, fraction=0.4
+        self, metadata: pd.DataFrame, features: np.ndarray | None = None, fraction=0.4, audio_id_sampling=False
     ) -> tuple[pd.DataFrame, np.ndarray] | pd.DataFrame:
-        sampled_metadata = self._sample_meta(metadata, fraction=fraction)
         if features is None:
-            return sampled_metadata
+            return self._sample_meta(metadata=metadata, fraction=fraction)
 
+        if audio_id_sampling:
+            return self.sample_by_audio_ids(metadata=metadata, features=features, fraction=fraction)
+
+        sampled_metadata = self._sample_meta(metadata, fraction=fraction)
         sampled_features = features[sampled_metadata.index]
         sampled_metadata = sampled_metadata.reset_index(drop=True)
-
         return sampled_metadata, sampled_features
 
     def sample_by_audio_ids(

@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from src.models.logistic_regression_classifier import LogisticRegressionClassifier
 from src.common.basic_functions import print_green
+from src.models.logistic_regression_classifier import LogisticRegressionClassifier
 
 
 class LogisticRegressionClassifierTest:
@@ -16,7 +16,9 @@ class LogisticRegressionClassifierTest:
         # Sprawdzamy czy nn.Sequential posiada właściwą pierwszą warstwę
         assert isinstance(model.model[0], nn.Linear), "Warstwa modelu to nie nn.Linear!"
         assert model.model[0].in_features == in_features, "Błyskawiczny problem z zainicjalizowanymi features"
-        assert model.model[0].out_features == 1, "LogisticRegression powinien zwracać tylko jedno wyjście out_features=1"
+        assert (
+            model.model[0].out_features == 1
+        ), "LogisticRegression powinien zwracać tylko jedno wyjście out_features=1"
 
     def test_forward_pass(self):
         in_features = 128
@@ -32,6 +34,7 @@ class LogisticRegressionClassifierTest:
         # Walidacja outputu
         assert y_hat.shape == (batch_size, 1), f"Nieoczekiwany shape od modelu: {y_hat.shape}"
         assert y_hat.requires_grad, "Tensor nie żąda dołączenia do gradient trackera. Złe rzutowanie."
+
 
 if __name__ == "__main__":
     tester = LogisticRegressionClassifierTest()

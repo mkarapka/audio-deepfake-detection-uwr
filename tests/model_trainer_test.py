@@ -22,7 +22,7 @@ class ModelTrainerTest:
 
         class DummyObjective(Objective):
             def __init__(self):
-                super().__init__(model=DummyModel, direction="maximize")
+                super().__init__(classifier=DummyModel, direction="maximize")
 
             def __call__(self, *, trial, **params):
                 return trial.suggest_float("x", 0, 1)
@@ -65,11 +65,13 @@ class ModelTrainerTest:
                     class_name="DummyModel", models_dir=consts.tests_data_dir / "models", include_mps=False
                 )
 
-            def load(self, model_name: str, ext: str, sub_dir: str = None):
+            def predict(self, X, audio_ids=None):
+                return np.zeros(len(X))
+
+            def load(self, file_path: str):
                 return None
 
-            def save(self, model_name: str, ext: str, sub_dir: str = None):
-                file_path = self.models_dir / f"{model_name}.{ext}"
+            def save(self, file_path: str):
                 file_path.write_text("saved")
 
         dummy_model = DummyModel()
@@ -80,7 +82,7 @@ class ModelTrainerTest:
         expected_path = dummy_model.models_dir / f"{file_name}.txt"
         expected_path.touch()
 
-        self.trainer.save_model(dummy_model, file_name, ext="txt")
+        self.trainer.save_params(dummy_model, file_name, ext="txt")
         assert expected_path.exists(), "Expected model file to exist after save."
         assert expected_path.read_text() == "saved", "Expected model file content to be updated by save()."
 

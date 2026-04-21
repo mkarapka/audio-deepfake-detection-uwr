@@ -7,8 +7,8 @@ from src.models.base_model import BaseModel
 
 
 class TorchModel(BaseModel):
-    def __init__(self, model: nn.Module, class_name: str, device: str = None, include_mps: bool = False):
-        BaseModel.__init__(self, class_name=class_name, device=device, include_mps=include_mps)
+    def __init__(self, model: nn.Module, class_name: str, device: str = None, include_mps: bool = True):
+        super().__init__(class_name=class_name, device=device, include_mps=include_mps)
         self.model = model.to(self.device)
 
     def parameters(self):
@@ -75,8 +75,8 @@ class TorchModel(BaseModel):
             y_pred = torch.sigmoid(logits).squeeze()
 
         if audio_ids is not None:
-            return self.majority_voting(y_pred=y_pred.cpu().numpy(), audio_ids=audio_ids)
-        return y_pred.cpu().numpy()
+            return self.majority_voting(y_pred=y_pred.detach().cpu().numpy(), audio_ids=audio_ids)
+        return y_pred.detach().cpu().numpy()
 
     def save(self, file_path):
         payload = {

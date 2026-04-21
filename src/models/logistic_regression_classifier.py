@@ -3,6 +3,7 @@ import torch.nn as nn
 
 from src.models.torch_model import TorchModel
 
+
 class LogisticRegressionClassifier(TorchModel):
     def __init__(self, in_features: int, device: str = None):
         model = self._create_model(in_features=in_features)

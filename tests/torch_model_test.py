@@ -11,10 +11,10 @@ class TestableTorchModel(TorchModel):
     def _create_model(self, in_features):
         return super()._create_model(in_features)
 
-    def load(self, model_name: str, ext: str, sub_dir: str = None):
+    def load(self, file_path: str):
         return None
 
-    def save(self, model_name: str, ext: str, sub_dir: str = None):
+    def save(self, file_path: str):
         return None
 
 
@@ -26,7 +26,7 @@ class PersistableTorchModel(TorchModel):
 
     def _create_model(self, in_features: int):
         return nn.Sequential(
-            nn.Linear(in_features=in_features, out_features=2),
+            nn.Linear(in_features=in_features, out_features=1),
         ).to(self.device)
 
     def state_dict(self):
@@ -40,16 +40,20 @@ class TorchModelTest:
     def _init_test_objects(self):
         torch.manual_seed(27)
 
-        network = nn.Sequential(nn.Linear(2, 2))
+        network = nn.Sequential(nn.Linear(2, 1))
         model = TestableTorchModel(model=network, class_name="TorchModelTest", include_mps=False)
 
         X = torch.tensor([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [-1.0, -1.0]], dtype=torch.float32)
-        y = torch.tensor([0, 1, 1, 0], dtype=torch.long)
+        y = torch.tensor([0, 1, 1, 0], dtype=torch.float32)
 
         dataset = TensorDataset(X, y)
         loader = DataLoader(dataset, batch_size=2, shuffle=False)
 
-        criterion = nn.CrossEntropyLoss()
+        bce = nn.BCEWithLogitsLoss()
+
+        def criterion(logits, targets):
+            return bce(logits.squeeze(1), targets)
+
         optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
         device = torch.device("cpu")
 
@@ -150,6 +154,21 @@ class TorchModelTest:
 
         print("TorchModel.load test passed.")
 
+    def test_predict(self):
+        print("Testing TorchModel.predict...")
+        model, loader, criterion, optimizer, device = self._init_test_objects()
+
+        model.train_one_epoch(loader, criterion, optimizer, device)
+
+        X_test = torch.tensor([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [-1.0, -1.0]], dtype=torch.float32)
+        y_pred = model.predict(X_test)
+
+        assert isinstance(y_pred, torch.Tensor), "Expected predict output to be a torch.Tensor."
+        assert y_pred.shape == (4,), f"Expected predict output shape to be (4,), got {y_pred.shape}."
+        assert ((y_pred >= 0) & (y_pred <= 1)).all(), "Expected predict output to be in range [0, 1]."
+
+        print("TorchModel.predict test passed.")
+
 
 if __name__ == "__main__":
     test = TorchModelTest()
@@ -158,4 +177,5 @@ if __name__ == "__main__":
     test.test_evaluate()
     test.test_save()
     test.test_load()
+    test.test_predict()
     print_green("All TorchModel tests passed successfully!")

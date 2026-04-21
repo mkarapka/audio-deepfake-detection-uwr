@@ -73,10 +73,11 @@ class TorchModel(BaseModel):
             X = X.to(self.device)
             logits = self.model(X)
             y_pred = torch.sigmoid(logits).squeeze()
+            y_pred = y_pred.detach().cpu()
 
-        if audio_ids is not None:
-            return self.majority_voting(y_pred=y_pred.detach().cpu().numpy(), audio_ids=audio_ids)
-        return y_pred.detach().cpu().numpy()
+        if audio_ids:
+            return self.majority_voting(y_pred=y_pred, audio_ids=audio_ids)
+        return y_pred
 
     def save(self, file_path):
         payload = {

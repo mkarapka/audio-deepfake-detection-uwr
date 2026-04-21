@@ -93,10 +93,12 @@ class TorchModelTest:
         model, loader, criterion, optimizer, device = self._init_test_objects()
 
         model.train_one_epoch(loader, criterion, optimizer, device)
-        eval_loss, eval_acc = model.evaluate(loader, criterion, device)
+        eval_loss, eval_acc, y_true, y_pred = model.evaluate(loader, criterion, device)
 
         assert isinstance(eval_loss, float), "Eval loss should be float."
         assert isinstance(eval_acc, float), "Eval accuracy should be float."
+        assert isinstance(y_true, torch.Tensor), "Expected y_true to be a torch.Tensor."
+        assert isinstance(y_pred, torch.Tensor), "Expected y_pred to be a torch.Tensor."
         assert eval_loss >= 0.0, "Eval loss should be non-negative."
         assert 0.0 <= eval_acc <= 1.0, "Eval accuracy should be between 0 and 1."
         assert model.model.training is False, "Model should be in eval mode after evaluate()."

@@ -37,22 +37,35 @@ class TorchModel(BaseModel):
 
     @torch.no_grad()
     def evaluate(self, val_loader, criterion, device):
-        self.model.eval()
+        all_preds = []
+        all_labels = []
+
         total_loss = 0.0
         total_correct = 0
         total_samples = 0
 
+        self.model.eval()
         for x_batch, y_batch in val_loader:
             x_batch, y_batch = x_batch.to(device), y_batch.to(device)
 
             logits = self.model(x_batch)
             loss = criterion(logits, y_batch)
+            y_pred = logits.argmax(dim=1)
 
             total_loss += loss.item() * x_batch.size(0)
-            total_correct += (logits.argmax(dim=1) == y_batch).sum().item()
+            total_correct += (y_pred == y_batch).sum().item()
             total_samples += x_batch.size(0)
 
-        return total_loss / total_samples, total_correct / total_samples
+            all_preds.append(y_pred.detach().cpu())
+            all_labels.append(y_batch.detach().cpu())
+
+        val_loss = total_loss / total_samples
+        val_acc = total_correct / total_samples
+
+        y_true = torch.cat(all_labels)
+        y_pred = torch.cat(all_preds)
+
+        return val_loss, val_acc, y_true, y_pred
 
     def predict(self, X, audio_ids=None):
         self.model.eval()

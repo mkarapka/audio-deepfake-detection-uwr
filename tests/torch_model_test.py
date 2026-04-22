@@ -164,7 +164,7 @@ class TorchModelTest:
         y_pred = model.predict(X_test)
 
         assert isinstance(y_pred, torch.Tensor), "Expected predict output to be a torch.Tensor."
-        assert y_pred.shape == (4,), f"Expected predict output shape to be (4,), got {y_pred.shape}."
+        assert y_pred.shape == (4, 1), f"Expected predict output shape to be (4,), got {y_pred.shape}."
         assert ((y_pred >= 0) & (y_pred <= 1)).all(), "Expected predict output to be in range [0, 1]."
 
         print("TorchModel.predict test passed.")

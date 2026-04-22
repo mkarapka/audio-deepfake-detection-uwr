@@ -40,10 +40,10 @@ class BaseModel(ABC):
             return data.cpu().numpy()
         return data
 
-    def majority_voting(self, y_pred: np.ndarray, audio_ids: pd.Series):
-        df = pd.DataFrame({"audio_id": audio_ids, "pred": y_pred})
+    def majority_voting(self, y_probs: np.ndarray, audio_ids: pd.Series, threshold: float = 0.5) -> np.ndarray:
+        df = pd.DataFrame({"audio_id": audio_ids, "pred": y_probs})
         mean_preds = df.groupby("audio_id")["pred"].transform("mean")
-        majority_voted_preds = (mean_preds >= 0.5).astype(int).values
+        majority_voted_preds = (mean_preds >= threshold).astype(int).values
         return majority_voted_preds
 
     @abstractmethod

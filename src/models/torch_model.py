@@ -1,5 +1,6 @@
 from abc import abstractmethod
 
+import pandas as pd
 import torch
 import torch.nn as nn
 
@@ -36,7 +37,7 @@ class TorchModel(BaseModel):
         return total_loss / total_samples, total_correct / total_samples
 
     @torch.no_grad()
-    def evaluate(self, val_loader, criterion, device):
+    def evaluate(self, val_loader, criterion, device, threshold=0.5):
         all_preds = []
         all_labels = []
 
@@ -50,14 +51,16 @@ class TorchModel(BaseModel):
 
             logits = self.model(x_batch)
             loss = criterion(logits, y_batch)
-            y_pred = logits.argmax(dim=1)
+
+            probs = torch.sigmoid(logits)
+            y_pred = (probs >= threshold).float()
 
             total_loss += loss.item() * x_batch.size(0)
             total_correct += (y_pred == y_batch).sum().item()
             total_samples += x_batch.size(0)
 
-            all_preds.append(y_pred.detach().cpu())
-            all_labels.append(y_batch.detach().cpu())
+            all_preds.append(y_pred.cpu())
+            all_labels.append(y_batch.cpu())
 
         val_loss = total_loss / total_samples
         val_acc = total_correct / total_samples
@@ -67,26 +70,34 @@ class TorchModel(BaseModel):
 
         return val_loss, val_acc, y_true, y_pred
 
-    def predict(self, X, audio_ids=None):
+    def majority_voting(self, y_probs: torch.Tensor, audio_ids: pd.Series, threshold: float = 0.5) -> torch.Tensor:
+        return torch.tensor(
+            super().majority_voting(y_probs=y_probs.cpu().numpy(), audio_ids=audio_ids, threshold=threshold),
+            device=self.device,
+        )
+
+    def predict(self, X: torch.Tensor, audio_ids: pd.Series = None, threshold: float = 0.5) -> torch.Tensor:
         self.model.eval()
         with torch.no_grad():
             X = X.to(self.device)
             logits = self.model(X)
-            y_pred = torch.sigmoid(logits).squeeze()
-            y_pred = y_pred.detach().cpu()
+            y_probs = torch.sigmoid(logits)
 
-        if audio_ids:
-            return self.majority_voting(y_pred=y_pred, audio_ids=audio_ids)
-        return y_pred
+            if audio_ids:
+                y_pred = self.majority_voting(y_probs=y_probs, audio_ids=audio_ids, threshold=threshold)
+            else:
+                y_pred = (y_probs >= threshold).int()
 
-    def save(self, file_path):
+            return y_pred
+
+    def save(self, file_path: str):
         payload = {
             "state_dict": self.state_dict(),
             "in_features": self.model[0].in_features,
         }
         torch.save(payload, file_path)
 
-    def load(self, file_path):
+    def load(self, file_path: str):
         payload = torch.load(file_path, map_location=self.device)
         in_features = payload["in_features"]
         self.model = self._create_model(in_features=in_features)

@@ -12,7 +12,7 @@ class XGBoostClassifierTest:
     @staticmethod
     def _make_mock_model():
         model = MagicMock()
-        model.predict_proba = MagicMock()
+        model.predict = MagicMock()
         model.save_model = MagicMock()
         model.load_model = MagicMock()
         return model
@@ -25,13 +25,7 @@ class XGBoostClassifierTest:
 
     def test_predict_without_audio_ids_returns_thresholded_labels(self):
         model = self._make_mock_model()
-        model.predict_proba.return_value = np.array(
-            [
-                [0.9, 0.1],
-                [0.3, 0.7],
-                [0.6, 0.4],
-            ]
-        )
+        model.predict.return_value = np.array([0.1, 0.7, 0.4])
         classifier = XGBoostClassifier(model=model, device="cpu")
 
         X = np.array([[1.0], [2.0], [3.0]])
@@ -41,13 +35,7 @@ class XGBoostClassifierTest:
 
     def test_predict_with_audio_ids_applies_majority_voting(self):
         model = self._make_mock_model()
-        model.predict_proba.return_value = np.array(
-            [
-                [0.4, 0.6],
-                [0.8, 0.2],
-                [0.2, 0.8],
-            ]
-        )
+        model.predict.return_value = np.array([0.6, 0.2, 0.8])
         classifier = XGBoostClassifier(model=model, device="cpu")
 
         X = np.array([[1.0], [2.0], [3.0]])
@@ -85,7 +73,7 @@ class XGBoostClassifierTest:
         classifier = XGBoostClassifier(model=initial_model, device="cpu")
         model_path = self._test_model_path()
 
-        with patch("src.models.xgboost_classifier.xgb.XGBClassifier", return_value=loaded_model) as patched_ctor:
+        with patch("src.models.xgboost_classifier.xgb.Booster", return_value=loaded_model) as patched_ctor:
             classifier.load(model_path)
 
         patched_ctor.assert_called_once_with()

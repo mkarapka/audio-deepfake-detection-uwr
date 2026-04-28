@@ -37,13 +37,37 @@ class ExperimentPreprocessor:
         else:
             raise_error_logger(self.logger, f"Unknown balancer type: {balancer_type}")
 
+    def _remove_subclass_from_split(
+        self, metadata: pd.DataFrame, features: np.ndarray, subclass_label: int
+    ) -> tuple[pd.DataFrame, np.ndarray]:
+        if "subclass" not in metadata.columns:
+            raise_error_logger(self.logger, "Metadata does not contain 'subclass' column.")
+        mask = metadata["subclass"] != subclass_label
+        return metadata[mask].reset_index(drop=True), features[mask]
+
+    def _remove_records_by_query(
+        self, metadata: pd.DataFrame, features: np.ndarray, query: str
+    ) -> tuple[pd.DataFrame, np.ndarray]:
+        mask = ~metadata.eval(query)
+        return metadata[mask].reset_index(drop=True), features[mask]
+
+    def _standardize_func(self, x, train_mean, train_std):
+        if train_mean is None or train_std is None:
+            raise_error_logger(
+                self.logger,
+                "Standardization is enabled but train split is not processed yet.",
+            )
+        return (x - train_mean) / train_std
+
     def preprocess_data(
         self,
         splits_names: list[str],
         fraction: float,
         use_audio_id_sampling: bool = False,
-        balance_splits_strategy: list[tuple[str, float | list[float]]] = None,
         use_standardize: bool = False,
+        balance_splits_strategy: list[tuple[str, float | list[float]]] = None,
+        remove_subclass_label: int = None,
+        remove_by_query: str = None,
         device: str = None,
     ) -> dict[str, TorchDataLoader]:
         data_for_exp = {}
@@ -52,6 +76,14 @@ class ExperimentPreprocessor:
 
         for i, split_name in enumerate(splits_names):
             meta, feat = self.feature_loader.load_data_split(split_name=split_name)
+
+            if remove_subclass_label is not None:
+                meta, feat = self._remove_subclass_from_split(
+                    metadata=meta, features=feat, subclass_label=remove_subclass_label
+                )
+
+            if remove_by_query is not None:
+                meta, feat = self._remove_records_by_query(metadata=meta, features=feat, query=remove_by_query)
 
             if fraction < 1.0:
                 meta, feat = self.feature_loader.sample_data(
@@ -73,13 +105,12 @@ class ExperimentPreprocessor:
                     train_std = np.std(feat, axis=0)
                     train_std[train_std == 0] = 1e-8
 
-                if train_mean is not None and train_std is not None:
-                    raise_error_logger(self.logger, "Standardization is enabled but train split is not processed yet.")
-
-                def standardize_func(x):
-                    return (x - train_mean) / train_std
-
-                loader = TorchDataLoader(metadata=meta, features=feat, transform=standardize_func, device=device)
+                loader = TorchDataLoader(
+                    metadata=meta,
+                    features=feat,
+                    transform=lambda x: self._standardize_func(x, train_mean, train_std),
+                    device=device,
+                )
             else:
                 loader = TorchDataLoader(metadata=meta, features=feat, device=device)
 
@@ -88,14 +119,8 @@ class ExperimentPreprocessor:
         return data_for_exp
 
     def get_target(self, metadata: pd.DataFrame, pos_label="bonafide") -> np.ndarray:
-        y = (metadata["target"] == pos_label).astype(int)
-        return y
+        return (metadata["target"] == pos_label).astype(int)
 
     def get_X_y(self, metadata: pd.DataFrame, features: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         y = self.get_target(metadata=metadata)
         return features, y
-
-    def remove_subclass_from_split(
-        self, metadata: pd.DataFrame, features: np.ndarray, subclass_label: int
-    ) -> tuple[pd.DataFrame, np.ndarray]:
-        pass

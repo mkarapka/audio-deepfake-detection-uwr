@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from src.common.basic_functions import print_green
+from src.common.utils import print_green
 from src.models.logistic_regression_classifier import LogisticRegressionClassifier
 
 

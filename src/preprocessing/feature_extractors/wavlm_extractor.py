@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from transformers import Wav2Vec2FeatureExtractor, WavLMModel
 
-from src.common.basic_functions import get_device
+from src.common.utils import get_device
 from src.common.constants import Constants as consts
 from src.preprocessing.feature_extractors.base_feature_extractor import (
     BaseFeatureExtractor,

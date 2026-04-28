@@ -1,4 +1,4 @@
-from src.common.basic_functions import get_batch_size
+from src.common.utils import get_batch_size
 from src.common.constants import Constants as consts
 from src.pipelines.preprocessing.preprocessing_pipeline import PreprocessingPipeline
 

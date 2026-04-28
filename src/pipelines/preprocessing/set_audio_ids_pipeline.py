@@ -1,4 +1,4 @@
-from src.common.basic_functions import setup_logger
+from src.common.utils import setup_logger
 from src.common.constants import Constants as consts
 from src.preprocessing.io.collector import Collector
 from src.preprocessing.io.feature_loader import FeatureLoader

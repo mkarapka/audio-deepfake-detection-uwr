@@ -1,4 +1,4 @@
-from src.common.basic_functions import load_audio_dataset_by_streaming
+from src.common.utils import load_audio_dataset_by_streaming
 from src.common.constants import Constants as consts
 from src.common.logger import get_logger
 

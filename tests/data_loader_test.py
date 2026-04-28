@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from src.common.basic_functions import print_green
+from src.common.utils import print_green
 from src.models.torch_data_loader import TorchDataLoader
 
 

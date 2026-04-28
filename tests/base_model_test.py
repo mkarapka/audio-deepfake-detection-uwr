@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from src.common.basic_functions import print_green
+from src.common.utils import print_green
 from src.common.constants import Constants as consts
 from src.models.base_model import BaseModel
 

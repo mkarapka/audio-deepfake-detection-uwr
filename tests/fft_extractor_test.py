@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.common.basic_functions import measure_time
+from src.common.utils import measure_time
 from src.preprocessing.audio_segmentator import AudioSegmentator
 from src.preprocessing.feature_extractors.fft_extractor import FFTExtractor
 from tests.base_test import BaseTest

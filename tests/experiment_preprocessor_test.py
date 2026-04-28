@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from src.common.basic_functions import print_green
+from src.common.utils import print_green
 from src.common.constants import Constants as consts
 from src.preprocessing.experiment_preprocessor import ExperimentPreprocessor
 from src.preprocessing.io.feature_loader import FeatureLoader

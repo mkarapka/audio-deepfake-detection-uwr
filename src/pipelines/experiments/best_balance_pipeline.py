@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.common.basic_functions import setup_logger
+from src.common.utils import setup_logger
 from src.common.constants import Constants as consts
 from src.common.record_iterator import RecordIterator
 from src.preprocessing.data_balancers.mix_balancer import MixBalancer

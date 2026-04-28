@@ -3,7 +3,7 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
-from src.common.basic_functions import get_device
+from src.common.utils import get_device
 
 
 class TorchDataLoader(Dataset):

@@ -1,6 +1,6 @@
 import optuna
 
-from src.common.basic_functions import print_green
+from src.common.utils import print_green
 from src.common.constants import Constants as consts
 from src.models.logistic_regression_clf import LogisticRegressionClf, objective_acc
 

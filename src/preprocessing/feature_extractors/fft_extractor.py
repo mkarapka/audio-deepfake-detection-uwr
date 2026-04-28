@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from src.common.basic_functions import get_device
+from src.common.utils import get_device
 from src.preprocessing.feature_extractors.base_feature_extractor import (
     BaseFeatureExtractor,
 )

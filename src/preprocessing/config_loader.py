@@ -1,8 +1,8 @@
 import pandas as pd
 
-from src.common.utils import load_audio_dataset_by_streaming
 from src.common.constants import Constants as consts
 from src.common.logger import get_logger, setup_logger
+from src.common.utils import load_audio_dataset_by_streaming
 
 logger = get_logger("ConfigLoader")
 setup_logger("ConfigLoader", log_to_console=False)

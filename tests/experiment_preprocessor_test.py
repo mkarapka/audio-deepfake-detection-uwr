@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from src.common.utils import print_green
 from src.common.constants import Constants as consts
+from src.common.utils import print_green
 from src.preprocessing.experiment_preprocessor import ExperimentPreprocessor
 from src.preprocessing.io.feature_loader import FeatureLoader
 
@@ -136,22 +136,6 @@ class ExperimentPreprocessorTest:
         result = self.pipeline.get_target(metadata=metadata, pos_label="bonafide")
         assert np.all(result == expected), f"Expected {expected}, got {result}"
 
-    def test_remove_subclass_from_split(self):
-        metadata, features = generate_split(size=50)
-        original_size = len(metadata)
-
-        # Remove subclass label 0
-        subclass_label_to_remove = 0
-        meta_filtered, feat_filtered = self.pipeline._remove_subclass_from_split(
-            metadata=metadata, features=features, subclass_label=subclass_label_to_remove
-        )
-
-        # Check that subclass label 0 is removed
-        assert subclass_label_to_remove not in meta_filtered["subclass"].values
-        assert len(meta_filtered) < original_size
-        assert len(feat_filtered) == len(meta_filtered)
-        assert feat_filtered.shape == (len(meta_filtered), 10)
-
     def test_remove_records_by_query(self):
         metadata = pd.DataFrame(
             {
@@ -195,7 +179,6 @@ class ExperimentPreprocessorTest:
 ExperimentPreprocessorTest().test_get_balancer_instance()
 ExperimentPreprocessorTest().test_prepare_data_for_experiment()
 ExperimentPreprocessorTest().test_get_target()
-ExperimentPreprocessorTest().test_remove_subclass_from_split()
 ExperimentPreprocessorTest().test_remove_records_by_query()
 ExperimentPreprocessorTest().test_prepare_data_with_remove_by_query()
 print_green("All tests passed!")

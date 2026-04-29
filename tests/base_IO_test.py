@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from src.common.utils import print_green
 from src.common.constants import Constants as consts
+from src.common.utils import print_green
 from src.preprocessing.io.base_io import BaseIO
 
 TEST_SPLIT_DIR = consts.tests_data_dir / "splited_data"

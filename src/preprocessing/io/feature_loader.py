@@ -11,8 +11,8 @@ from src.preprocessing.io.base_io import BaseIO
 class FeatureLoader(BaseIO):
     def __init__(
         self,
+        feat_suffix: str,
         file_name=consts.feature_extracted,
-        feat_suffix: str = "",
         data_dir: Path = consts.collected_data_dir,
         split_dir: Path = consts.split_dir,
     ):

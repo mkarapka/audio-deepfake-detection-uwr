@@ -1,5 +1,5 @@
-from src.common.utils import get_batch_size
 from src.common.constants import Constants as consts
+from src.common.utils import get_batch_size
 from src.pipelines.preprocessing.preprocessing_pipeline import PreprocessingPipeline
 
 if __name__ == "__main__":

@@ -2,8 +2,8 @@ import numpy as np
 from hdbscan import HDBSCAN, approximate_predict
 from umap import UMAP
 
-from src.common.utils import setup_logger
 from src.common.constants import Constants as consts
+from src.common.utils import setup_logger
 from src.preprocessing.io.collector import Collector
 from src.preprocessing.io.feature_loader import FeatureLoader
 

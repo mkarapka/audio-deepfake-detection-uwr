@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-from src.common.utils import print_green
 from src.common.constants import Constants as consts
+from src.common.utils import print_green
 from src.models.xgboost_classifier import XGBoostClassifier
 
 

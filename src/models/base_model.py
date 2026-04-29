@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 from torch import Tensor
 
-from src.common.utils import get_device
 from src.common.constants import Constants as consts
 from src.common.logger import raise_error_logger, setup_logger
+from src.common.utils import get_device
 
 
 class BaseModel(ABC):

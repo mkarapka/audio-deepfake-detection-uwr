@@ -1,7 +1,7 @@
 import optuna
 
-from src.common.utils import print_green
 from src.common.constants import Constants as consts
+from src.common.utils import print_green
 from src.models.logistic_regression_clf import LogisticRegressionClf, objective_acc
 
 TEST_DIR = consts.tests_data_dir / "logistic_regression_clf_test"

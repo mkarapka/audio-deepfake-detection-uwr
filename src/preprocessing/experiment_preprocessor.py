@@ -48,7 +48,7 @@ class ExperimentPreprocessor:
     def _remove_records_by_query(
         self, metadata: pd.DataFrame, features: np.ndarray, query: str
     ) -> tuple[pd.DataFrame, np.ndarray]:
-        mask = ~metadata.eval(query)
+        mask = np.logical_not(metadata.eval(query))
         return metadata[mask].reset_index(drop=True), features[mask]
 
     def _standardize_func(self, x, train_mean, train_std):

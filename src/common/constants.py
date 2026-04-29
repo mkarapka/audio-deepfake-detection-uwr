@@ -127,12 +127,13 @@ class ExperimentPreprocessConfig:
     use_audio_id_sampling: bool
     balance_splits_strategy: dict[str, list] | None
     use_standardize: bool
+    remove_by_query: str | None
+    device: str | None = None
 
     def get_dict(self):
         return asdict(self)
 
 
-@dataclass
 class ExperimentParamsInfo:
     model: str
     majority_vote: bool

@@ -92,7 +92,6 @@ class FeatureLoader(BaseIO):
 
     def load_data_split(self, split_name: str, index_col: int | None = 0) -> tuple[pd.DataFrame, np.ndarray]:
         file_path = self.create_read_file_path(file_ext=consts.csv_ext, split_name=split_name)
-        self.logger.info(f"Loading features from {file_path}")
 
         loaded_meta = self.load_metadata_file(file_path, index_col=index_col)
         loaded_embeddings = self.load_embeddings_from_metadata(loaded_meta)

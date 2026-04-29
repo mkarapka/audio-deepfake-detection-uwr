@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from src.common.constants import Constants as consts
 from src.common.utils import print_green
 from src.preprocessing.experiment_preprocessor import ExperimentPreprocessor
 from src.preprocessing.io.feature_loader import FeatureLoader
@@ -66,18 +65,10 @@ class DeterministicFeatureLoaderMock:
 
 class ExperimentPreprocessorTest:
     def __init__(self):
-        self.pipeline = ExperimentPreprocessor(
-            load_file_name=consts.feature_extracted,
-            save_file_name=consts.feature_extracted,
-            feat_suffix="",
-        )
+        self.pipeline = ExperimentPreprocessor(feat_suffix="")
 
     def test_get_balancer_instance(self):
-        pipeline = ExperimentPreprocessor(
-            load_file_name=consts.feature_extracted,
-            save_file_name=consts.feature_extracted,
-            feat_suffix="",
-        )
+        pipeline = ExperimentPreprocessor(feat_suffix="")
         balancer = pipeline._get_balancer_instance("undersample", 0.5)
         assert balancer is not None
         assert balancer.real_to_spoof_ratio == 0.5

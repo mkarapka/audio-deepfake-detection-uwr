@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 from src.common.utils import get_device
 
 
-class TorchDataLoader(Dataset):
+class AudioDataset(Dataset):
     def __init__(self, metadata: pd.DataFrame, features: np.ndarray, transform=None, device: str = None):
         self.device = get_device() if device is None else device
         self.metadata = metadata.reset_index(drop=True)

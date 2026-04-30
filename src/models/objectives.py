@@ -15,7 +15,7 @@ from src.models.torch_model import TorchModel
 
 
 class Objective(ABC):
-    def __init__(self, classifier: TorchModel | xgb.Booster, direction: str = "maximize"):
+    def __init__(self, classifier: TorchModel | xgb.Booster, direction: str = "minimize"):
         self.classifier = classifier
         self.direction = direction
 
@@ -25,9 +25,12 @@ class Objective(ABC):
 
 
 class LogisticRegressionObjective(Objective):
-    def __init__(self, *, in_features: int, train_loader: DataLoader, val_loader: DataLoader):
+    def __init__(self, *, train_loader: DataLoader, val_loader: DataLoader):
         self.train_loader = train_loader
         self.val_loader = val_loader
+
+        features, _ = next(iter(train_loader))
+        in_features = features.shape[-1]
         super().__init__(classifier=LogisticRegressionClassifier(in_features=in_features))
 
     def __call__(self, *, trial: Trial, epochs: int, use_pos_weight: bool):

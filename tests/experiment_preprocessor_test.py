@@ -117,16 +117,6 @@ class ExperimentPreprocessorTest:
                     ), f"Expected ratio: {args_ratio[i]}, got: {bonafide_count / (meta.shape[0] - bonafide_count)}"
                     assert (meta.shape[0] - bonafide_count) > 0  # Ensure there are spoof samples
 
-    def test_get_target(self):
-        metadata = pd.DataFrame(
-            {
-                "target": ["bonafide", "spoof", "bonafide", "spoof"],
-            }
-        )
-        expected = np.array([1, 0, 1, 0])
-        result = self.pipeline.get_target(metadata=metadata, pos_label="bonafide")
-        assert np.all(result == expected), f"Expected {expected}, got {result}"
-
     def test_remove_records_by_query(self):
         metadata = pd.DataFrame(
             {
@@ -169,7 +159,6 @@ class ExperimentPreprocessorTest:
 
 ExperimentPreprocessorTest().test_get_balancer_instance()
 ExperimentPreprocessorTest().test_prepare_data_for_experiment()
-ExperimentPreprocessorTest().test_get_target()
 ExperimentPreprocessorTest().test_remove_records_by_query()
 ExperimentPreprocessorTest().test_prepare_data_with_remove_by_query()
 print_green("All tests passed!")

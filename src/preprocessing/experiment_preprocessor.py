@@ -13,12 +13,14 @@ from src.preprocessing.data_balancers.undersample_spoof_balancer import (
     UndersampleSpoofBalancer,
 )
 from src.preprocessing.io.feature_loader import FeatureLoader
-
-
+from torch.utils.data import DataLoader
+from src.common.utils import get_device
 class ExperimentPreprocessor:
-    def __init__(self, feat_suffix: str, load_file_name: str = consts.feature_extracted):
+    def __init__(self, feat_suffix: str, load_file_name: str = consts.feature_extracted, device: str = None):
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.feature_loader = FeatureLoader(file_name=load_file_name, feat_suffix=feat_suffix)
+        self.device = get_device(include_mps=True) if device is None else device
+        self.logger.info(f"ExperimentPreprocessor initialized with device: {self.device} and feature suffix: '{feat_suffix}'")
 
     def _get_balancer_instance(self, balancer_type: str, ratio_args: float | list[float]) -> BaseBalancer:
         if balancer_type == "undersample":
@@ -55,7 +57,6 @@ class ExperimentPreprocessor:
         use_standardize: bool = False,
         balance_splits_strategy: list[tuple[str, float | list[float] | None]] = None,
         remove_by_query: str = None,
-        device: str = None,
     ) -> dict[str, AudioDataset]:
         split_dataset_dict = {}
         train_mean = None
@@ -65,9 +66,11 @@ class ExperimentPreprocessor:
             meta, feat = self.feature_loader.load_data_split(split_name=split_name)
 
             if remove_by_query is not None:
+                self.logger.info(f"Removing records from split '{split_name}' using query: {remove_by_query}")
                 meta, feat = self._remove_records_by_query(metadata=meta, features=feat, query=remove_by_query)
 
             if fraction < 1.0:
+                self.logger.info(f"Sampling {fraction*100:.1f}% of data for split '{split_name}'...")
                 meta, feat = self.feature_loader.sample_data(
                     metadata=meta,
                     features=feat,
@@ -76,12 +79,14 @@ class ExperimentPreprocessor:
                 )
 
             if balance_splits_strategy is not None and balance_splits_strategy[i] is not None:
+                self.logger.info(f"Applying balancing strategy '{balance_splits_strategy[i][0]}' to split '{split_name}'")
                 balance_type, ratio_args = balance_splits_strategy[i]
                 balancer = self._get_balancer_instance(balancer_type=balance_type, ratio_args=ratio_args)
                 if balancer is not None:
                     meta, feat = balancer.transform(metadata=meta, features=feat)
 
             if use_standardize:
+                self.logger.info(f"Standardizing features for split '{split_name}'...")
                 if split_name == "train":
                     train_mean = np.mean(feat, axis=0)
                     train_std = np.std(feat, axis=0)
@@ -91,18 +96,24 @@ class ExperimentPreprocessor:
                     metadata=meta,
                     features=feat,
                     transform=lambda x: self._standardize_func(x, train_mean, train_std),
-                    device=device,
+                    device=self.device,
                 )
             else:
-                torch_dataset = AudioDataset(metadata=meta, features=feat, device=device)
+                torch_dataset = AudioDataset(metadata=meta, features=feat, device=self.device)
 
             split_dataset_dict[split_name] = torch_dataset
 
         return split_dataset_dict
 
-    def get_target(self, metadata: pd.DataFrame, pos_label="bonafide") -> np.ndarray:
-        return (metadata["target"] == pos_label).astype(int)
+    def get_dataloaders(self, dataset_dict: dict[str, AudioDataset], batch_size: int, shuffle_train: bool = True) -> dict[str, DataLoader]:
+        dataloader_dict = {}
+        for split_name, dataset in dataset_dict.items():
+            shuffle = shuffle_train if split_name == "train" else False
+            if self.device == "cuda":
+                dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, pin_memory=True)
+            else:
+                dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
 
-    def get_X_y(self, metadata: pd.DataFrame, features: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        y = self.get_target(metadata=metadata)
-        return features, y
+            dataloader_dict[split_name] = dataloader
+
+        return dataloader_dict

@@ -18,7 +18,7 @@ class AudioDataset(Dataset):
 
     def __getitem__(self, idx: int):
         x = self.features[idx]
-        y = int(self.metadata["label"].iloc[idx] == "bonafide")
+        y = int(self.metadata["target"].iloc[idx] == "bonafide")
 
         if self.transform is not None:
             x = self.transform(x)

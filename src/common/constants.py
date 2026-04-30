@@ -128,7 +128,6 @@ class ExperimentPreprocessConfig:
     balance_splits_strategy: dict[str, list] | None
     use_standardize: bool
     remove_by_query: str | None
-    device: str | None = None
 
     def get_dict(self):
         return asdict(self)

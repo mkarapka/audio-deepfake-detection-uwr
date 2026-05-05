@@ -10,12 +10,14 @@ from optuna import Trial
 from torch.utils.data import DataLoader
 from torchmetrics.functional.classification import binary_eer
 
+from src.common.logger import setup_logger
 from src.models.logistic_regression_classifier import LogisticRegressionClassifier
 from src.models.torch_model import TorchModel
 
 
 class Objective(ABC):
     def __init__(self, classifier: TorchModel | xgb.Booster, direction: str = "minimize"):
+        self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.classifier = classifier
         self.direction = direction
 
@@ -33,7 +35,7 @@ class LogisticRegressionObjective(Objective):
         in_features = features.shape[-1]
         super().__init__(classifier=LogisticRegressionClassifier(in_features=in_features))
 
-    def __call__(self, *, trial: Trial, epochs: int, use_pos_weight: bool):
+    def __call__(self, *, trial: Trial, epochs: int, use_pos_weight: bool, logging_percent_threshold: float = 0.1):
         lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
         weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True)
         if use_pos_weight:
@@ -47,13 +49,13 @@ class LogisticRegressionObjective(Objective):
         best_score = float("inf")
 
         for epoch in range(epochs):
-            _, _ = self.classifier.train_one_epoch(
+            train_loss, train_acc = self.classifier.train_one_epoch(
                 train_loader=self.train_loader,
                 criterion=criterion,
                 optimizer=optimizer,
                 device=self.classifier.device,
             )
-            _, _, y_true, y_pred = self.classifier.evaluate(
+            val_loss, val_acc, y_true, y_pred = self.classifier.evaluate(
                 val_loader=self.val_loader,
                 criterion=criterion,
                 device=self.classifier.device,
@@ -62,6 +64,12 @@ class LogisticRegressionObjective(Objective):
             score = binary_eer(preds=y_pred, target=y_true).item()
             trial.report(score, step=epoch)
 
+            if epoch % max(1, epochs // int(1 / logging_percent_threshold)) == 0:
+                self.logger.info(
+                    f"Epoch {epoch + 1}/{epochs} - Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, "
+                    f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}, EER: {score:.4f}"
+                )
+                
             if score < best_score:
                 best_score = score
 

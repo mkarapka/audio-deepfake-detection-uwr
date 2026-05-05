@@ -38,7 +38,7 @@ class TorchModel(BaseModel):
 
     @torch.no_grad()
     def evaluate(self, val_loader, criterion, device, threshold=0.5):
-        all_preds = []
+        all_probs = []
         all_labels = []
 
         total_loss = 0.0
@@ -59,16 +59,16 @@ class TorchModel(BaseModel):
             total_correct += (y_pred == y_batch).sum().item()
             total_samples += x_batch.size(0)
 
-            all_preds.append(y_pred.cpu())
+            all_probs.append(probs.cpu())
             all_labels.append(y_batch.cpu())
 
         val_loss = total_loss / total_samples
         val_acc = total_correct / total_samples
 
-        y_true = torch.cat(all_labels)
-        y_pred = torch.cat(all_preds)
+        y_true = torch.cat(all_labels).int()
+        y_probs = torch.cat(all_probs)
 
-        return val_loss, val_acc, y_true, y_pred
+        return val_loss, val_acc, y_true, y_probs
 
     def majority_voting(self, y_probs: torch.Tensor, audio_ids: pd.Series, threshold: float = 0.5) -> torch.Tensor:
         return torch.tensor(

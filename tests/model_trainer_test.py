@@ -13,7 +13,7 @@ class ModelTrainerTest:
         self.trainer = ModelTrainer(show_progress_bar=False)
 
     def test_get_best_params_without_training(self):
-        best_params = self.trainer.get_best_params()
+        best_params = self.trainer._get_best_params()
         assert best_params is None, "Expected None when no training has been done."
 
     def test_optuna_train(self):
@@ -37,10 +37,10 @@ class ModelTrainerTest:
         self.trainer.optuna_train(
             objective=objective, n_trials=10, X_train=X_train, y_train=y_train, X_val=X_dev, y_val=y_dev
         )
-        best_params = self.trainer.get_best_params()
+        best_params = self.trainer._get_best_params()
         assert "x" in best_params, "Expected 'x' in best parameters."
 
-        best_value = self.trainer.get_best_value()
+        best_value = self.trainer._get_best_value()
         assert best_value is not None, "Expected best value to be set after training."
 
     def test_save_results(self):

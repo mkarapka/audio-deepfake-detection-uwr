@@ -24,6 +24,6 @@ class AudioDataset(Dataset):
             x = self.transform(x)
 
         x_tensor = torch.tensor(x, dtype=torch.float32).to(self.device)
-        y_tensor = torch.tensor(y, dtype=torch.float32).to(self.device)
+        y_tensor = torch.tensor([y], dtype=torch.float32).to(self.device)
 
         return x_tensor, y_tensor

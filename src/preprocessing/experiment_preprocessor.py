@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
+from torch.utils.data import DataLoader
 
 from src.common.constants import Constants as consts
 from src.common.logger import raise_error_logger, setup_logger
+from src.common.utils import get_device
 from src.models.torch_data_loader import AudioDataset
 from src.preprocessing.data_balancers.base_balancer import BaseBalancer
 from src.preprocessing.data_balancers.mix_balancer import MixBalancer
@@ -13,14 +15,17 @@ from src.preprocessing.data_balancers.undersample_spoof_balancer import (
     UndersampleSpoofBalancer,
 )
 from src.preprocessing.io.feature_loader import FeatureLoader
-from torch.utils.data import DataLoader
-from src.common.utils import get_device
+
+
 class ExperimentPreprocessor:
     def __init__(self, feat_suffix: str, load_file_name: str = consts.feature_extracted, device: str = None):
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.feature_loader = FeatureLoader(file_name=load_file_name, feat_suffix=feat_suffix)
         self.device = get_device(include_mps=True) if device is None else device
-        self.logger.info(f"ExperimentPreprocessor initialized with device: {self.device} and feature suffix: '{feat_suffix}'")
+        self.logger.info(
+            f"ExperimentPreprocessor initialized with device: {
+                self.device} and feature suffix: '{feat_suffix}'"
+        )
 
     def _get_balancer_instance(self, balancer_type: str, ratio_args: float | list[float]) -> BaseBalancer:
         if balancer_type == "undersample":
@@ -70,7 +75,7 @@ class ExperimentPreprocessor:
                 meta, feat = self._remove_records_by_query(metadata=meta, features=feat, query=remove_by_query)
 
             if fraction < 1.0:
-                self.logger.info(f"Sampling {fraction*100:.1f}% of data for split '{split_name}'...")
+                self.logger.info(f"Sampling {fraction * 100:.1f}% of data for split '{split_name}'...")
                 meta, feat = self.feature_loader.sample_data(
                     metadata=meta,
                     features=feat,
@@ -79,7 +84,10 @@ class ExperimentPreprocessor:
                 )
 
             if balance_splits_strategy is not None and balance_splits_strategy[i] is not None:
-                self.logger.info(f"Applying balancing strategy '{balance_splits_strategy[i][0]}' to split '{split_name}'")
+                self.logger.info(
+                    f"Applying balancing strategy '{
+                        balance_splits_strategy[i][0]}' to split '{split_name}'"
+                )
                 balance_type, ratio_args = balance_splits_strategy[i]
                 balancer = self._get_balancer_instance(balancer_type=balance_type, ratio_args=ratio_args)
                 if balancer is not None:
@@ -105,7 +113,9 @@ class ExperimentPreprocessor:
 
         return split_dataset_dict
 
-    def get_dataloaders(self, dataset_dict: dict[str, AudioDataset], batch_size: int, shuffle_train: bool = True) -> dict[str, DataLoader]:
+    def get_dataloaders(
+        self, dataset_dict: dict[str, AudioDataset], batch_size: int, shuffle_train: bool = True
+    ) -> dict[str, DataLoader]:
         dataloader_dict = {}
         for split_name, dataset in dataset_dict.items():
             shuffle = shuffle_train if split_name == "train" else False

@@ -3,10 +3,10 @@ import pandas as pd
 import torch
 
 from src.common.utils import print_green
-from src.models.torch_data_loader import AudioDataset
+from src.models.audio_dataset import AudioDataset
 
 
-class DataLoaderTest:
+class AudioDatasetTest:
     def test_load_all_splits(self):
         metadata = pd.DataFrame(
             {
@@ -77,7 +77,7 @@ class DataLoaderTest:
 
 
 if __name__ == "__main__":
-    tester = DataLoaderTest()
+    tester = AudioDatasetTest()
     tester.test_load_all_splits()
     tester.test_with_dataloader()
-    print_green("\n>>> DataLoaderTest: All assertions passed successfully!")
+    print_green("\n>>> AudioDatasetTest: All assertions passed successfully!")

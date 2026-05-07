@@ -211,3 +211,5 @@ __marimo__/
 
 data/
 wandb/
+legacy/
+not_in_repo

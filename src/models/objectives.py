@@ -69,7 +69,7 @@ class LogisticRegressionObjective(Objective):
                     f"Epoch {epoch + 1}/{epochs} - Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, "
                     f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}, EER: {score:.4f}"
                 )
-                
+
             if score < best_score:
                 best_score = score
 

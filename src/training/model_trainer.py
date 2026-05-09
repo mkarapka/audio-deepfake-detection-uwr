@@ -1,7 +1,7 @@
 import optuna
 
 from src.common.logger import raise_error_logger, setup_logger
-from src.models.objectives import Objective
+from src.training.objectives import Objective
 
 
 class ModelTrainer:

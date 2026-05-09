@@ -1,8 +1,8 @@
 import numpy as np
 
 from src.common.utils import print_green
-from src.models.model_trainer import ModelTrainer
-from src.models.objectives import Objective
+from src.training.model_trainer import ModelTrainer
+from src.training.objectives import Objective
 
 
 class ModelTrainerTest:

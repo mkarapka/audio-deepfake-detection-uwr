@@ -3,7 +3,7 @@ import pandas as pd
 import torch
 
 from src.common.utils import print_green
-from src.models.audio_dataset import AudioDataset
+from src.datasets.audio_dataset import AudioDataset
 
 
 class AudioDatasetTest:

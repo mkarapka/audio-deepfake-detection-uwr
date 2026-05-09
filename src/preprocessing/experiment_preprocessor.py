@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from src.common.constants import Constants as consts
 from src.common.logger import raise_error_logger, setup_logger
 from src.common.utils import get_device
-from src.models.audio_dataset import AudioDataset
+from src.datasets.audio_dataset import AudioDataset
 from src.preprocessing.data_balancers.base_balancer import BaseBalancer
 from src.preprocessing.data_balancers.mix_balancer import MixBalancer
 from src.preprocessing.data_balancers.oversample_real_balancer import (

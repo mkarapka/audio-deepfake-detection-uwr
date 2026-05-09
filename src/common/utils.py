@@ -144,7 +144,10 @@ def plot_embeddings_subplots(
 
 
 def print_green(message: str, *, end: str = "\n"):
-    """Wypisuje tekst na zielono bezpośrednio do konsoli."""
     GREEN = "\033[32m"
     RESET = "\033[0m"
     print(f"{GREEN}{message}{RESET}", end=end)
+
+def print_timestamp(message: str, *, end: str = "\n"):
+    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{timestamp}] {message}", end=end)

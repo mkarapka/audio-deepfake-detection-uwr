@@ -15,7 +15,7 @@ class TorchModel(BaseModel):
     def parameters(self):
         return self.model.parameters()
 
-    def train_one_epoch(self, train_loader, criterion, optimizer, device):
+    def train_one_epoch(self, train_loader, criterion, optimizer, device, threshold=0.5):
         self.model.train()
         total_loss = 0.0
         total_correct = 0
@@ -31,7 +31,10 @@ class TorchModel(BaseModel):
             optimizer.step()
 
             total_loss += loss.item() * x_batch.size(0)
-            total_correct += (logits.argmax(dim=1) == y_batch).sum().item()
+            probs = torch.sigmoid(logits)
+            y_pred = (probs >= threshold).float()
+
+            total_correct += (y_pred == y_batch).sum().item()
             total_samples += x_batch.size(0)
 
         return total_loss / total_samples, total_correct / total_samples
@@ -92,7 +95,7 @@ class TorchModel(BaseModel):
 
     def save(self, file_path: str):
         payload = {
-            "state_dict": self.state_dict(),
+            "state_dict": self.model.state_dict(),
             "in_features": self.model[0].in_features,
         }
         torch.save(payload, file_path)

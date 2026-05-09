@@ -4,8 +4,8 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from datasets import load_dataset
 
+from datasets import load_dataset
 from src.common.constants import Constants as consts
 from src.common.logger import get_logger, setup_logger
 
@@ -147,6 +147,7 @@ def print_green(message: str, *, end: str = "\n"):
     GREEN = "\033[32m"
     RESET = "\033[0m"
     print(f"{GREEN}{message}{RESET}", end=end)
+
 
 def print_timestamp(message: str, *, end: str = "\n"):
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")

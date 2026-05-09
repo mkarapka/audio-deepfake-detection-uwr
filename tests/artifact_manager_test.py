@@ -1,6 +1,7 @@
-import pytest
 from unittest.mock import Mock, patch
+
 import joblib
+import pytest
 
 from src.models.artifact_manager import ArtifactManager
 from src.models.base_model import BaseModel
@@ -93,21 +94,13 @@ class TestGenerateFilePath:
 
     def test_generate_file_path_creates_experiment_dir(self, artifact_manager, tmp_path):
         """Test if it creates directory with experiment_name."""
-        with patch('src.common.constants.Constants.models_dir', tmp_path):
-            path = artifact_manager._generate_file_path(
-                file_name="test_model",
-                ext="pkl",
-                main_dir=tmp_path
-            )
+        with patch("src.common.constants.Constants.models_dir", tmp_path):
+            path = artifact_manager._generate_file_path(file_name="test_model", ext="pkl", main_dir=tmp_path)
             assert "test_experiment" in str(path)
 
     def test_generate_file_path_correct_filename(self, artifact_manager, tmp_path):
         """Test if it generates correct filename."""
-        path = artifact_manager._generate_file_path(
-            file_name="my_model",
-            ext="pkl",
-            main_dir=tmp_path
-        )
+        path = artifact_manager._generate_file_path(file_name="my_model", ext="pkl", main_dir=tmp_path)
         assert path.name == "my_model.pkl"
 
     def test_generate_file_path_creates_directory_if_not_exists(self, artifact_manager, tmp_path):
@@ -115,11 +108,7 @@ class TestGenerateFilePath:
         main_dir = tmp_path / "new_dir"
         assert not main_dir.exists()
 
-        _ = artifact_manager._generate_file_path(
-            file_name="test_model",
-            ext="pkl",
-            main_dir=main_dir
-        )
+        _ = artifact_manager._generate_file_path(file_name="test_model", ext="pkl", main_dir=main_dir)
         assert main_dir.exists()
 
     def test_generate_file_path_increments_existing_file(self, artifact_manager, tmp_path):
@@ -130,11 +119,7 @@ class TestGenerateFilePath:
         existing_file = exp_dir / "model.pkl"
         existing_file.touch()
 
-        path = artifact_manager._generate_file_path(
-            file_name="model",
-            ext="pkl",
-            main_dir=tmp_path
-        )
+        path = artifact_manager._generate_file_path(file_name="model", ext="pkl", main_dir=tmp_path)
         assert path.name == "model_0.pkl"
 
 
@@ -148,21 +133,13 @@ class TestGetFilePath:
         test_file = exp_dir / "model.pkl"
         test_file.touch()
 
-        path = artifact_manager._get_file_path(
-            file_name="model",
-            ext="pkl",
-            main_dir=tmp_path
-        )
+        path = artifact_manager._get_file_path(file_name="model", ext="pkl", main_dir=tmp_path)
         assert path == test_file
 
     def test_get_file_path_nonexistent_file_raises_error(self, artifact_manager, tmp_path):
         """Test if it raises error for nonexistent file."""
         with pytest.raises(Exception):
-            artifact_manager._get_file_path(
-                file_name="nonexistent",
-                ext="pkl",
-                main_dir=tmp_path
-            )
+            artifact_manager._get_file_path(file_name="nonexistent", ext="pkl", main_dir=tmp_path)
 
 
 class TestGetModelFilePath:
@@ -175,7 +152,7 @@ class TestGetModelFilePath:
         model_file = exp_dir / "my_model.pt"
         model_file.touch()
 
-        with patch.object(artifact_manager, '_get_file_path', return_value=model_file) as mock_get:
+        with patch.object(artifact_manager, "_get_file_path", return_value=model_file) as mock_get:
             result = artifact_manager.get_model_file_path(file_name="my_model", ext="pt")
             mock_get.assert_called_once()
             assert result == model_file
@@ -191,19 +168,16 @@ class TestGetParamsFilePath:
         params_file = exp_dir / "params.pkl"
         params_file.touch()
 
-        with patch.object(artifact_manager, '_get_file_path', return_value=params_file) as mock_get:
+        with patch.object(artifact_manager, "_get_file_path", return_value=params_file) as mock_get:
             _ = artifact_manager.get_params_file_path(file_name="params", ext="pkl")
             mock_get.assert_called_once()
+
     def test_save_model_passes_correct_file_path(self, artifact_manager, mock_base_model, tmp_path):
         """Test if save_model passes correct file path to model."""
         expected_path = tmp_path / "model.pkl"
 
-        with patch.object(artifact_manager, 'get_model_file_path', return_value=expected_path):
-            artifact_manager.save_model(
-                model=mock_base_model,
-                file_name="test_model",
-                ext="pkl"
-            )
+        with patch.object(artifact_manager, "get_model_file_path", return_value=expected_path):
+            artifact_manager.save_model(model=mock_base_model, file_name="test_model", ext="pkl")
             mock_base_model.save.assert_called_once_with(file_path=expected_path)
 
 
@@ -217,24 +191,16 @@ class TestLoadModel:
         model_file = exp_dir / "model.pkl"
         model_file.touch()
 
-        with patch.object(artifact_manager, 'get_model_file_path', return_value=model_file):
-            artifact_manager.load_model(
-                model=mock_base_model,
-                model_name="test_model",
-                ext="pkl"
-            )
+        with patch.object(artifact_manager, "get_model_file_path", return_value=model_file):
+            artifact_manager.load_model(model=mock_base_model, model_name="test_model", ext="pkl")
             mock_base_model.load.assert_called_once()
 
     def test_load_model_passes_correct_file_path(self, artifact_manager, mock_base_model, tmp_path):
         """Test if load_model passes correct file path to model."""
         expected_path = tmp_path / "model.pkl"
 
-        with patch.object(artifact_manager, 'get_model_file_path', return_value=expected_path):
-            artifact_manager.load_model(
-                model=mock_base_model,
-                model_name="test_model",
-                ext="pkl"
-            )
+        with patch.object(artifact_manager, "get_model_file_path", return_value=expected_path):
+            artifact_manager.load_model(model=mock_base_model, model_name="test_model", ext="pkl")
             mock_base_model.load.assert_called_once_with(file_path=expected_path)
 
 
@@ -249,7 +215,7 @@ class TestSaveParams:
 
         test_params = {"learning_rate": 0.01, "batch_size": 32}
 
-        with patch.object(artifact_manager, 'get_params_file_path', return_value=params_file):
+        with patch.object(artifact_manager, "get_params_file_path", return_value=params_file):
             artifact_manager.save_params(params=test_params, file_name="test_params")
             assert params_file.exists()
 
@@ -261,7 +227,7 @@ class TestSaveParams:
 
         test_params = {"learning_rate": 0.01, "batch_size": 32}
 
-        with patch.object(artifact_manager, 'get_params_file_path', return_value=params_file):
+        with patch.object(artifact_manager, "get_params_file_path", return_value=params_file):
             artifact_manager.save_params(params=test_params, file_name="test_params")
 
             loaded_params = joblib.load(params_file)
@@ -280,7 +246,7 @@ class TestLoadParams:
         test_params = {"learning_rate": 0.01, "batch_size": 32}
         joblib.dump(test_params, params_file)
 
-        with patch.object(artifact_manager, 'get_params_file_path', return_value=params_file):
+        with patch.object(artifact_manager, "get_params_file_path", return_value=params_file):
             loaded_params = artifact_manager.load_params(file_name="test_params")
             assert loaded_params == test_params
 
@@ -290,14 +256,10 @@ class TestLoadParams:
         exp_dir.mkdir()
         params_file = exp_dir / "params.pkl"
 
-        test_params = {
-            "optimizer": "adam",
-            "lr": 0.001,
-            "nested": {"dropout": 0.5, "layers": [128, 64, 32]}
-        }
+        test_params = {"optimizer": "adam", "lr": 0.001, "nested": {"dropout": 0.5, "layers": [128, 64, 32]}}
         joblib.dump(test_params, params_file)
 
-        with patch.object(artifact_manager, 'get_params_file_path', return_value=params_file):
+        with patch.object(artifact_manager, "get_params_file_path", return_value=params_file):
             loaded_params = artifact_manager.load_params(file_name="test_params")
             assert loaded_params == test_params
             assert loaded_params["nested"]["layers"] == [128, 64, 32]
@@ -314,9 +276,7 @@ class TestArtifactManagerIntegration:
 
         test_params = {"lr": 0.001, "epochs": 100}
 
-        with patch.object(artifact_manager, 'get_params_file_path', return_value=params_file):
+        with patch.object(artifact_manager, "get_params_file_path", return_value=params_file):
             artifact_manager.save_params(params=test_params, file_name="my_params")
             loaded_params = artifact_manager.load_params(file_name="my_params")
             assert loaded_params == test_params
-
-

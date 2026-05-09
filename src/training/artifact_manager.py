@@ -30,15 +30,23 @@ class ArtifactManager:
         if not main_dir.exists():
             main_dir.mkdir(parents=True, exist_ok=True)
 
-        final_path = main_dir / self.experiment_name / f"{file_name}.{ext}"
-        if final_path.exists():
-            final_path = self._increase_file_number(final_path)
-            self.logger.warning(f"File {final_path} already exists. Saving to {final_path} instead.")
+        experiment_path_dir = main_dir / self.experiment_name
+        if not experiment_path_dir.exists():
+            experiment_path_dir.mkdir(parents=True, exist_ok=True)
+            self.logger.info(f"Created directory for experiment: {experiment_path_dir}")
 
+        final_path = experiment_path_dir / f"{file_name}.{ext}"
+        if final_path.exists():
+            old_path = final_path
+            final_path = self._increase_file_number(final_path)
+            self.logger.warning(f"File {old_path} already exists. Adding number suffix to create new file.")
+
+        final_path.touch()
         return final_path
 
     def _get_file_path(self, file_name: str, ext: str, main_dir: Path) -> Path:
-        file_path = main_dir / self.experiment_name / f"{file_name}.{ext}"
+        experiment_path_dir = main_dir / self.experiment_name
+        file_path = experiment_path_dir / f"{file_name}.{ext}"
         if not file_path.exists():
             raise_error_logger(self.logger, f"File not found: {file_path}")
         return file_path
@@ -62,14 +70,14 @@ class ArtifactManager:
         self.logger.info("Params loaded successfully.")
         return params
 
-    def save_model(self, model: BaseModel, file_name: str, ext: str):
-        file_path = self.get_model_file_path(file_name=file_name, ext=ext)
+    def save_model(self, model: BaseModel, model_name: str, ext: str):
+        file_path = self._generate_file_path(file_name=model_name, ext=ext, main_dir=consts.models_dir)
         self.logger.info(f"Saving model to {file_path}")
         model.save(file_path=file_path)
         self.logger.info("Model saved successfully.")
 
     def save_params(self, params: dict, file_name: str):
-        file_path = self.get_params_file_path(file_name=file_name, ext="pkl")
+        file_path = self._generate_file_path(file_name=file_name, ext="pkl", main_dir=consts.params_dir)
         self.logger.info(f"Saving params to {file_path}")
         joblib.dump(params, file_path)
         self.logger.info("Params saved successfully.")

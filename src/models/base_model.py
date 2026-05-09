@@ -57,7 +57,3 @@ class BaseModel(ABC):
     @abstractmethod
     def save(self, file_path: str):
         pass
-
-    @abstractmethod
-    def final_train(self, best_params: dict, **params):
-        pass

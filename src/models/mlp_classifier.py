@@ -17,7 +17,8 @@ class MlpClassifier(TorchModel):
             layers.append(nn.Linear(current_size, hidden_size))
             layers.append(nn.BatchNorm1d(hidden_size))
             layers.append(nn.ReLU())
-            layers.append(nn.Dropout(dropout_rate))
+            if dropout_rate > 0:
+                layers.append(nn.Dropout(dropout_rate))
             current_size = hidden_size
 
         layers.append(nn.Linear(current_size, 1))

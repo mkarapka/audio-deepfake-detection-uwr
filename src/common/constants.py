@@ -134,13 +134,22 @@ class ExperimentPreprocessConfig:
         return asdict(self)
 
 
-class ExperimentParamsInfo:
-    model: str
-    majority_vote: bool
-    trials_iter: int
-    data_type: str
-    data_fraction: float
-    balance_strategy: str
+@dataclass
+class ExperimentInfo:
+    experiment_name: str
+    models: list[str]
+    description: str
+    experiment_preprocess_config: dict[str, ExperimentPreprocessConfig]
+
+    def get_dict(self):
+        return asdict(self)
+
+
+@dataclass
+class ExperimentParams:
+    n_trials: int
+    epochs: int
+    objective_params: dict
 
     def get_dict(self):
         return asdict(self)

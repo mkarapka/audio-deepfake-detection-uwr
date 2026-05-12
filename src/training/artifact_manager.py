@@ -54,7 +54,7 @@ class ArtifactManager:
     def get_model_file_path(self, file_name: str, ext: str) -> Path:
         return self._get_file_path(file_name=file_name, ext=ext, main_dir=consts.models_dir)
 
-    def get_params_file_path(self, file_name: str, ext: str) -> Path:
+    def get_params_file_path(self, file_name: str, ext: str = "pkl") -> Path:
         return self._get_file_path(file_name=file_name, ext=ext, main_dir=consts.params_dir)
 
     def load_model(self, model: BaseModel, model_name: str, ext: str):

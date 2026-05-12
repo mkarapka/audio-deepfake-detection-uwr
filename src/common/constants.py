@@ -139,16 +139,8 @@ class ExperimentInfo:
     experiment_name: str
     models: list[str]
     description: str
-    experiment_preprocess_config: dict[str, ExperimentPreprocessConfig]
-
-    def get_dict(self):
-        return asdict(self)
-
-
-@dataclass
-class ExperimentParams:
+    experiment_preprocess_configs: dict[str, ExperimentPreprocessConfig]
     n_trials: int
-    epochs: int
     objective_params: dict
 
     def get_dict(self):

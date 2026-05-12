@@ -9,6 +9,7 @@ def setup_logger(
     level: int = logging.INFO,
     log_to_console: bool = False,
     log_to_file: bool = True,
+    wandb_run=None,
 ) -> logging.Logger:
     """
     Konfiguruje i zwraca logger z zapisem do pliku w data/logs.
@@ -23,11 +24,6 @@ def setup_logger(
         Skonfigurowany logger
     """
     logger = logging.getLogger(name)
-
-    # Unikaj dodawania handlerów wielokrotnie
-    if logger.handlers:
-        return logger
-
     logger.setLevel(level)
 
     # Format logów
@@ -35,16 +31,29 @@ def setup_logger(
         fmt="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+    wandb_formatter = logging.Formatter(
+        fmt="%(message)s",
+    )
+
+    class WandbLogHandler(logging.Handler):
+        def __init__(self, run, formatter_obj):
+            super().__init__(level)
+            self._run = run
+            self.setFormatter(formatter_obj)
+
+        def emit(self, record):
+            log_entry = self.format(record)
+            self._run.log({"log": log_entry})
 
     # Handler do konsoli
-    if log_to_console:
+    if log_to_console and not any(isinstance(h, logging.StreamHandler) for h in logger.handlers):
         console_handler = logging.StreamHandler()
         console_handler.setLevel(level)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
     # Handler do pliku
-    if log_to_file:
+    if log_to_file and not any(isinstance(h, logging.FileHandler) for h in logger.handlers):
         # Twórz katalog logs jeśli nie istnieje
         consts.logs_dir.mkdir(parents=True, exist_ok=True)
 
@@ -56,6 +65,10 @@ def setup_logger(
         file_handler.setLevel(level)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
+
+    if wandb_run is not None and not any(isinstance(h, WandbLogHandler) for h in logger.handlers):
+        wandb_handler = WandbLogHandler(wandb_run, wandb_formatter)
+        logger.addHandler(wandb_handler)
 
     return logger
 

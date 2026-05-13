@@ -1,6 +1,6 @@
 import wandb
-
-from src.common.constants import Constants as consts, ExperimentInfo
+from src.common.constants import Constants as consts
+from src.common.constants import ExperimentInfo
 from src.common.logger import setup_logger
 from src.preprocessing.experiment_preprocessor import ExperimentPreprocessor
 from src.training.artifact_manager import ArtifactManager
@@ -22,6 +22,7 @@ class FFTvsWavLMExperiment:
     def run(self):
         self.logger.info(self.wavlm_preprocess_config)
         wavlm_preprocessor = ExperimentPreprocessor(feat_suffix=consts.wavlm_emb_suffix)
+
         self.logger.info("Preprocessing WavLM features...")
         wavlm_dataset_map = wavlm_preprocessor.preprocess_data(**self.wavlm_preprocess_config)
 
@@ -31,6 +32,7 @@ class FFTvsWavLMExperiment:
 
         self.logger.info(self.fft_preprocess_config)
         fft_preprocessor = ExperimentPreprocessor(feat_suffix=consts.fft_emb_suffix)
+
         self.logger.info("Preprocessing fft features...")
         fft_dataset_map = fft_preprocessor.preprocess_data(**self.fft_preprocess_config)
 
@@ -43,32 +45,35 @@ class FFTvsWavLMExperiment:
             "fft": fft_dataloaders_map,
         }
 
-        model_trainer = ModelTrainer()
-        artifact_manager = ArtifactManager(experiment_name=self.experiment_info.experiment_name)
-
         objectives = [LogisticRegressionObjective, MlpObjective]
-        objectives_params = self.experiment_info.objective_params
 
         for feature_key, dataloaders_map in dataloaders_dict.items():
             train_dataloader = dataloaders_map["train"]
             dev_dataloader = dataloaders_map["dev"]
             for objective_cls in objectives:
-                self.logger.info(f"Training {objective_cls.__name__} with {feature_key} features...")
+                obj_name = objective_cls.__name__
+                self.logger.info(f"Training {obj_name} with {feature_key} features...")
+
                 objective = objective_cls(train_loader=train_dataloader, val_loader=dev_dataloader)
-                best_params, best_value = model_trainer.optuna_train(
-                    objective=objective, n_trials=self.n_trials, **objectives_params
+                best_params, best_value = self.model_trainer.optuna_train(
+                    objective=objective, n_trials=self.n_trials, **self.experiment_info.objective_params
                 )
+
                 self.logger.info(
-                    f"Best params for {objective_cls.__name__} with {feature_key} features: {best_params}, best value: {best_value}"
+                    f"Best params for {obj_name} with {feature_key} features: {best_params}, best value: {best_value}"
                 )
-                file_name = f"{objective_cls.__name__}_{feature_key}_best_params"
-                artifact_manager.save_params(
+
+                file_name = f"{obj_name}_{feature_key}_best_params"
+                self.artifact_manager.save_params(
                     params=best_params,
                     file_name=file_name,
                 )
-                params_file_path = artifact_manager.get_params_file_path(file_name=file_name)
+
+                params_file_path = self.artifact_manager.get_params_file_path(file_name=file_name)
                 wandb.save(params_file_path)
+
                 self.logger.info(
-                    f"Saved best params for {objective_cls.__name__} with {feature_key} features to {params_file_path} and logged to wandb."
+                    f"Saved best params for {obj_name} with {
+                        feature_key} features to {params_file_path} and logged to wandb."
                 )
         self.wandb_run.finish()

@@ -156,9 +156,32 @@ class ExperimentPreprocessorTest:
             assert (meta["target"] == "spoof").all()
             assert len(meta) == len(feat)
 
+    def test_prepare_data_with_remove_by_query_dict(self):
+        self.pipeline.feature_loader = DeterministicFeatureLoaderMock()
+
+        preprocess_config = {
+            "splits_names": ["train", "dev", "test"],
+            "fraction": 1.0,
+            "use_audio_id_sampling": False,
+            "balance_splits_strategy": [None, None, None],
+            "remove_by_query": {
+                "train": "target == 'bonafide'",  # leave only spoof
+                "dev": "target == 'spoof'",  # leave only bonafide
+                "test": "target == 'bonafide'",  # leave only spoof
+            },
+        }
+
+        data_for_exp = self.pipeline.preprocess_data(**preprocess_config)
+
+        assert set(data_for_exp.keys()) == {"train", "dev", "test"}
+        assert (data_for_exp["train"].metadata["target"] == "spoof").all()
+        assert (data_for_exp["dev"].metadata["target"] == "bonafide").all()
+        assert (data_for_exp["test"].metadata["target"] == "spoof").all()
+
 
 ExperimentPreprocessorTest().test_get_balancer_instance()
 ExperimentPreprocessorTest().test_prepare_data_for_experiment()
 ExperimentPreprocessorTest().test_remove_records_by_query()
 ExperimentPreprocessorTest().test_prepare_data_with_remove_by_query()
+ExperimentPreprocessorTest().test_prepare_data_with_remove_by_query_dict()
 print_green("All tests passed!")

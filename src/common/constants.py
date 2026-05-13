@@ -128,7 +128,7 @@ class ExperimentPreprocessConfig:
     use_audio_id_sampling: bool
     balance_splits_strategy: dict[str, list] | None
     use_standardize: bool
-    remove_by_query: str | None
+    remove_by_query: str | dict[str, str] | None
 
     def get_dict(self):
         return asdict(self)

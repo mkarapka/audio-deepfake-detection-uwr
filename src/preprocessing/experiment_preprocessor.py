@@ -61,7 +61,7 @@ class ExperimentPreprocessor:
         use_audio_id_sampling: bool = False,
         use_standardize: bool = False,
         balance_splits_strategy: list[tuple[str, float | list[float] | None]] = None,
-        remove_by_query: str = None,
+        remove_by_query: str | dict[str, str] | None = None,
     ) -> dict[str, AudioDataset]:
         split_dataset_dict = {}
         train_mean = None
@@ -71,8 +71,12 @@ class ExperimentPreprocessor:
             meta, feat = self.feature_loader.load_data_split(split_name=split_name)
 
             if remove_by_query is not None:
-                self.logger.info(f"Removing records from split '{split_name}' using query: {remove_by_query}")
-                meta, feat = self._remove_records_by_query(metadata=meta, features=feat, query=remove_by_query)
+                if isinstance(remove_by_query, dict):
+                    query = remove_by_query[split_name]
+                else:
+                    query = remove_by_query
+                self.logger.info(f"Removing records from split '{split_name}' using query: {query}")
+                meta, feat = self._remove_records_by_query(metadata=meta, features=feat, query=query)
 
             if fraction < 1.0:
                 self.logger.info(f"Sampling {fraction * 100:.1f}% of data for split '{split_name}'...")

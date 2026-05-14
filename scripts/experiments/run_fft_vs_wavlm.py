@@ -1,5 +1,5 @@
 import wandb
-from src.common.constants import ExperimentInfo, ExperimentPreprocessConfig
+from src.common.experiment_configs import ExperimentInfo, ExperimentPreprocessConfig
 from src.common.wandb_config import WANDB_ENTITY, WANDB_PROJECT
 from src.pipelines.experiments.fft_vs_wavlm import FFTvsWavLMExperiment
 

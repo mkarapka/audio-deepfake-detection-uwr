@@ -39,7 +39,7 @@ class OptunaTrainingConfig:
 @dataclass
 class ExperimentConfig:
     wandb_run: wandb.Run
-    experiment_preprocess_configs: dict[str, ExperimentPreprocessConfig]
+    preprocess_configs: dict[str, ExperimentPreprocessConfig]
     optuna_training_config: OptunaTrainingConfig
 
 

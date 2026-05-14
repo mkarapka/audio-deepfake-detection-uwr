@@ -10,14 +10,15 @@ from optuna import Trial
 from torch.utils.data import DataLoader
 from torchmetrics.functional.classification import binary_eer
 
-from src.common.logger import setup_logger
+from src.common.logger import WandbLogger, setup_logger
 from src.models.logistic_regression_classifier import LogisticRegressionClassifier
 from src.models.mlp_classifier import MlpClassifier
 
 
 class Objective(ABC):
-    def __init__(self, class_name: str, direction: str = "minimize"):
+    def __init__(self, class_name: str, direction: str = "minimize", wandb_run=None):
         self.logger = setup_logger(class_name, log_to_console=True)
+        self.wandb_logger = WandbLogger(self.logger, run=wandb_run)
         self.direction = direction
 
     @abstractmethod
@@ -26,8 +27,8 @@ class Objective(ABC):
 
 
 class TorchBinaryObjective(Objective):
-    def __init__(self, *, class_name: str, train_loader, val_loader):
-        super().__init__(class_name=class_name)
+    def __init__(self, *, class_name: str, train_loader, val_loader, wandb_run=None):
+        super().__init__(class_name=class_name, wandb_run=wandb_run)
         self.train_loader = train_loader
         self.val_loader = val_loader
 
@@ -78,7 +79,7 @@ class TorchBinaryObjective(Objective):
             trial.report(score, step=epoch)
 
             if epoch % max(1, epochs // int(1 / logging_percent_threshold)) == 0:
-                self.logger.info(
+                self.wandb_logger.info(
                     f"Epoch {epoch + 1}/{epochs} - Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, "
                     f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}, EER: {score:.4f}"
                 )
@@ -91,11 +92,12 @@ class TorchBinaryObjective(Objective):
 
 
 class LogisticRegressionObjective(TorchBinaryObjective):
-    def __init__(self, *, train_loader: DataLoader, val_loader: DataLoader):
+    def __init__(self, *, train_loader: DataLoader, val_loader: DataLoader, wandb_run=None):
         super().__init__(
             class_name=__class__.__name__,
             train_loader=train_loader,
             val_loader=val_loader,
+            wandb_run=wandb_run,
         )
 
     def build_classifier(self, *, trial: Trial):
@@ -103,11 +105,12 @@ class LogisticRegressionObjective(TorchBinaryObjective):
 
 
 class MlpObjective(TorchBinaryObjective):
-    def __init__(self, *, train_loader: DataLoader, val_loader: DataLoader):
+    def __init__(self, *, train_loader: DataLoader, val_loader: DataLoader, wandb_run=None):
         super().__init__(
             class_name=__class__.__name__,
             train_loader=train_loader,
             val_loader=val_loader,
+            wandb_run=wandb_run,
         )
 
     def _get_suggested_hidden_sizes(self, trial: Trial, step: int = 32) -> list[int]:
@@ -130,8 +133,8 @@ class MlpObjective(TorchBinaryObjective):
 
 
 class XGBoostObjective(Objective):
-    def __init__(self, X_train: np.ndarray, y_train: np.ndarray, X_dev: np.ndarray, y_dev: np.ndarray):
-        super().__init__(class_name=__class__.__name__)
+    def __init__(self, X_train: np.ndarray, y_train: np.ndarray, X_dev: np.ndarray, y_dev: np.ndarray, wandb_run=None):
+        super().__init__(class_name=__class__.__name__, wandb_run=wandb_run)
         self.dmatrix_train = xgb.DMatrix(X_train, label=y_train)
         self.dmatrix_dev = xgb.DMatrix(X_dev, label=y_dev)
 

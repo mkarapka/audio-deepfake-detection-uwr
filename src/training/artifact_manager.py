@@ -11,6 +11,7 @@ class ArtifactManager:
     def __init__(self, experiment_name: str):
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.experiment_name = experiment_name
+        self.changed_file_name = False
 
     def _increase_file_number(self, file_path: Path) -> Path:
         if not file_path.exists():
@@ -39,16 +40,29 @@ class ArtifactManager:
         if final_path.exists():
             old_path = final_path
             final_path = self._increase_file_number(final_path)
+            self.changed_file_name = True
             self.logger.warning(f"File {old_path} already exists. Adding number suffix to create new file.")
 
         final_path.touch()
         return final_path
 
-    def _get_file_path(self, file_name: str, ext: str, main_dir: Path) -> Path:
+    def _get_file_path(self, file_name: str, ext: str, main_dir: Path, ignore_changed_file_name: bool = False) -> Path:
         experiment_path_dir = main_dir / self.experiment_name
         file_path = experiment_path_dir / f"{file_name}.{ext}"
+
         if not file_path.exists():
             raise_error_logger(self.logger, f"File not found: {file_path}")
+        if self.changed_file_name and not ignore_changed_file_name:
+            old_file_path = file_path
+            matching_files = sorted(
+                [f for f in experiment_path_dir.iterdir() if f.stem.startswith(file_name) and f.suffix == f".{ext}"],
+                reverse=True,
+            )
+            file_path = matching_files[0] if matching_files else file_path
+            self.logger.warning(
+                f"File name {old_file_path} was changed due to existing file. Using {file_path} instead."
+            )
+
         return file_path
 
     def get_model_file_path(self, file_name: str, ext: str) -> Path:

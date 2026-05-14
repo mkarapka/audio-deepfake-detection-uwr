@@ -1,4 +1,3 @@
-from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
 
@@ -119,29 +118,3 @@ class BalanceType(Enum):
     OVERSAMPLE = "oversample"
     MIX = "mix"
     UNBALANCED = "unbalanced"
-
-
-@dataclass
-class ExperimentPreprocessConfig:
-    splits_names: list[str]
-    fraction: float
-    use_audio_id_sampling: bool
-    balance_splits_strategy: dict[str, list] | None
-    use_standardize: bool
-    remove_by_query: str | dict[str, str] | None
-
-    def get_dict(self):
-        return asdict(self)
-
-
-@dataclass
-class ExperimentInfo:
-    experiment_name: str
-    models: list[str]
-    description: str
-    experiment_preprocess_configs: dict[str, ExperimentPreprocessConfig]
-    n_trials: int
-    objective_params: dict
-
-    def get_dict(self):
-        return asdict(self)

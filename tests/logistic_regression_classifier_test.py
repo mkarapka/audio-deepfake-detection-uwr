@@ -8,7 +8,7 @@ from src.models.logistic_regression_classifier import LogisticRegressionClassifi
 class LogisticRegressionClassifierTest:
     def test_model_initialization(self):
         in_features = 128
-        model = LogisticRegressionClassifier(in_features=in_features, device="cpu")
+        model = LogisticRegressionClassifier(input_size=in_features, device="cpu")
 
         # Sprawdzamy czy model zainicjalizował się w atrybucie BaseModel/TorchModel
         assert model.model is not None, "Model nie został przekazany do self.model"
@@ -23,7 +23,7 @@ class LogisticRegressionClassifierTest:
     def test_forward_pass(self):
         in_features = 128
         batch_size = 10
-        model = LogisticRegressionClassifier(in_features=in_features, device="cpu")
+        model = LogisticRegressionClassifier(input_size=in_features, device="cpu")
 
         # Generowanie sztucznych danych - batch o rozmiarze 10 i odpowiedniej liczbie cech
         X = torch.randn(batch_size, in_features)

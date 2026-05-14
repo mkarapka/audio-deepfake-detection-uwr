@@ -1,79 +1,74 @@
 import wandb
 from src.common.constants import Constants as consts
-from src.common.constants import ExperimentInfo
-from src.common.logger import setup_logger
+from src.common.experiment_configs import ExperimentInfo
+from src.common.logger import WandbLogger, setup_logger
 from src.preprocessing.experiment_preprocessor import ExperimentPreprocessor
 from src.training.artifact_manager import ArtifactManager
 from src.training.model_trainer import ModelTrainer
-from src.training.objectives import LogisticRegressionObjective, MlpObjective
 
 
 class FFTvsWavLMExperiment:
-    def __init__(self, experiment_info: dict[str, ExperimentInfo], wandb_run=None):
-        self.logger = setup_logger(__class__.__name__, log_to_console=True, wandb_run=wandb_run)
+    def __init__(self, experiment_info: ExperimentInfo, wandb_run: wandb.Run):
+        self.experiment_config = experiment_info.config
         self.wandb_run = wandb_run
-        self.n_trials = experiment_info.n_trials
-        self.experiment_info = experiment_info
-        self.fft_preprocess_config = self.experiment_info.experiment_preprocess_configs["fft"]
-        self.wavlm_preprocess_config = self.experiment_info.experiment_preprocess_configs["wavlm"]
+
+        self.logger = setup_logger(__class__.__name__, log_to_console=True)
+        self.wandb_logger = WandbLogger(self.logger, run=self.wandb_run)
+
+        self.optuna_training_config = self.experiment_config.optuna_training_config
+        self.torch_params = self.optuna_training_config.torch_params
+
         self.model_trainer = ModelTrainer()
-        self.artifact_manager = ArtifactManager(experiment_name=self.experiment_info.experiment_name)
+        self.artifact_manager = ArtifactManager(experiment_name=experiment_info.experiment_name)
 
     def run(self):
-        self.logger.info(self.wavlm_preprocess_config)
-        wavlm_preprocessor = ExperimentPreprocessor(feat_suffix=consts.wavlm_emb_suffix)
+        feature_type_dataloaders_map = {}
+        for feature_key, preprocess_config in self.experiment_config.preprocess_configs.items():
+            feat_suffix = (
+                consts.wavlm_emb_suffix
+                if feature_key == "wavlm"
+                else consts.fft_emb_suffix if feature_key == "fft" else "unknown"
+            )
+            preprocessor = ExperimentPreprocessor(feat_suffix=feat_suffix)
 
-        self.logger.info("Preprocessing WavLM features...")
-        wavlm_dataset_map = wavlm_preprocessor.preprocess_data(**self.wavlm_preprocess_config)
+            self.wandb_logger.info(f"Preprocessing {feature_key} features with config: {preprocess_config}...")
+            dataset_map = preprocessor.preprocess_data(**preprocess_config)
 
-        self.logger.info("Getting Dataloader for training...")
-        wavlm_dataloaders_map = wavlm_preprocessor.get_dataloaders(wavlm_dataset_map, batch_size=32)
-        self.logger.info(f"Dataloader keys: {wavlm_dataloaders_map.keys()}")
+            self.wandb_logger.info(f"Getting Dataloaders for {feature_key} features...")
+            dataloaders_map = preprocessor.get_dataloaders(dataset_map, batch_size=self.torch_params.batch_size)
+            self.wandb_logger.info(f"Dataloader keys for {feature_key} features: {dataloaders_map.keys()}")
 
-        self.logger.info(self.fft_preprocess_config)
-        fft_preprocessor = ExperimentPreprocessor(feat_suffix=consts.fft_emb_suffix)
+            feature_type_dataloaders_map[feature_key] = dataloaders_map
 
-        self.logger.info("Preprocessing fft features...")
-        fft_dataset_map = fft_preprocessor.preprocess_data(**self.fft_preprocess_config)
-
-        self.logger.info("Getting Dataloader for training...")
-        fft_dataloaders_map = fft_preprocessor.get_dataloaders(fft_dataset_map, batch_size=32)
-        self.logger.info(f"Dataloader keys: {fft_dataloaders_map.keys()}")
-
-        dataloaders_dict = {
-            "wavlm": wavlm_dataloaders_map,
-            "fft": fft_dataloaders_map,
-        }
-
-        objectives = [LogisticRegressionObjective, MlpObjective]
-
-        for feature_key, dataloaders_map in dataloaders_dict.items():
+        for feature_key, dataloaders_map in feature_type_dataloaders_map.items():
             train_dataloader = dataloaders_map["train"]
             dev_dataloader = dataloaders_map["dev"]
-            for objective_cls in objectives:
+            for objective_cls in self.optuna_training_config.objectives:
                 obj_name = objective_cls.__name__
-                self.logger.info(f"Training {obj_name} with {feature_key} features...")
+                self.wandb_logger.info(f"Training {obj_name} with {feature_key} features...")
 
-                objective = objective_cls(train_loader=train_dataloader, val_loader=dev_dataloader)
                 best_params, best_value = self.model_trainer.optuna_train(
-                    objective=objective, n_trials=self.n_trials, **self.experiment_info.objective_params
+                    objective=objective_cls(
+                        train_loader=train_dataloader,
+                        val_loader=dev_dataloader,
+                        wandb_run=self.wandb_run,
+                    ),
+                    n_trials=self.optuna_training_config.n_trials,
+                    epochs=self.torch_params.epochs,
                 )
 
-                self.logger.info(
-                    f"Best params for {obj_name} with {feature_key} features: {best_params}, best value: {best_value}"
-                )
+                self.wandb_logger.info(f"Best params for {obj_name} with {feature_key} features: {best_params}")
+                self.wandb_logger.log_metrics({f"{obj_name}_{feature_key}_best_value": best_value})
 
                 file_name = f"{obj_name}_{feature_key}_best_params"
                 self.artifact_manager.save_params(
                     params=best_params,
                     file_name=file_name,
                 )
+                file_path = self.artifact_manager.get_params_file_path(file_name=file_name)
+                self.wandb_run.log_artifact(file_path, name=file_name, type="model_params")
 
-                params_file_path = self.artifact_manager.get_params_file_path(file_name=file_name)
-                wandb.save(params_file_path)
-
-                self.logger.info(
-                    f"Saved best params for {obj_name} with {
-                        feature_key} features to {params_file_path} and logged to wandb."
+                self.wandb_logger.info(
+                    f"Saved best params for {obj_name} with {feature_key} features to {file_path} and logged to wandb."
                 )
         self.wandb_run.finish()

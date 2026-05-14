@@ -81,6 +81,7 @@ class WandbLogger:
             self.run.log({"log": message})
 
     def log_metrics(self, metrics: dict, step: int = None):
-        self.logger.info(f"{metrics} at step {step}")
+        for key, value in metrics.items():
+            self.logger.info(f"{key}: {value:<10.4f}")
         if self.run is not None:
             self.run.log(metrics, step=step)

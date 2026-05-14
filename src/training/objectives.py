@@ -79,9 +79,16 @@ class TorchBinaryObjective(Objective):
             trial.report(score, step=epoch)
 
             if epoch % max(1, epochs // int(1 / logging_percent_threshold)) == 0:
-                self.wandb_logger.info(
-                    f"Epoch {epoch + 1}/{epochs} - Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, "
-                    f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}, EER: {score:.4f}"
+                self.logger.info(f"==== Epoch {epoch + 1}/{epochs} ====")
+                self.wandb_logger.log_metrics(
+                    {
+                        "epoch": epoch + 1,
+                        "train_loss": train_loss,
+                        "train_acc": train_acc,
+                        "val_loss": val_loss,
+                        "val_acc": val_acc,
+                        "eer": score,
+                    },
                 )
 
             best_score = min(best_score, score)

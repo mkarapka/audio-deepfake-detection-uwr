@@ -4,7 +4,6 @@ from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import wandb
     from src.training.objectives import Objective
 
 
@@ -38,7 +37,6 @@ class OptunaTrainingConfig:
 
 @dataclass
 class ExperimentConfig:
-    wandb_run: wandb.Run
     preprocess_configs: dict[str, ExperimentPreprocessConfig]
     optuna_training_config: OptunaTrainingConfig
 

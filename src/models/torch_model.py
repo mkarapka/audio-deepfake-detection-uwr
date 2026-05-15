@@ -22,7 +22,9 @@ class TorchModel(BaseModel):
         total_samples = 0
 
         for x_batch, y_batch in train_loader:
-            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+            non_blocking = str(device).startswith("cuda")
+            x_batch = x_batch.to(device, non_blocking=non_blocking)
+            y_batch = y_batch.to(device, non_blocking=non_blocking)
 
             optimizer.zero_grad()
             logits = self.model(x_batch)
@@ -50,7 +52,9 @@ class TorchModel(BaseModel):
 
         self.model.eval()
         for x_batch, y_batch in val_loader:
-            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+            non_blocking = str(device).startswith("cuda")
+            x_batch = x_batch.to(device, non_blocking=non_blocking)
+            y_batch = y_batch.to(device, non_blocking=non_blocking)
 
             logits = self.model(x_batch)
             loss = criterion(logits, y_batch)

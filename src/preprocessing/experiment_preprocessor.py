@@ -108,10 +108,9 @@ class ExperimentPreprocessor:
                     metadata=meta,
                     features=feat,
                     transform=lambda x: self._standardize_func(x, train_mean, train_std),
-                    device=self.device,
                 )
             else:
-                torch_dataset = AudioDataset(metadata=meta, features=feat, device=self.device)
+                torch_dataset = AudioDataset(metadata=meta, features=feat)
 
             split_dataset_dict[split_name] = torch_dataset
 
@@ -123,7 +122,7 @@ class ExperimentPreprocessor:
         dataloader_dict = {}
         for split_name, dataset in dataset_dict.items():
             shuffle = shuffle_train if split_name == "train" else False
-            if self.device == "cuda":
+            if self.device == "cuda" and dataset.device == "cpu":
                 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, pin_memory=True)
             else:
                 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)

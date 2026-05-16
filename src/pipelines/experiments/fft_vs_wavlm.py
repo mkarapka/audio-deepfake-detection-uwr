@@ -26,8 +26,8 @@ class FFTvsWavLMExperiment:
         for feature_key, preprocess_config in self.experiment_config.preprocess_configs.items():
             feat_suffix = (
                 consts.wavlm_emb_suffix
-                if feature_key == "wavlm"
-                else consts.fft_emb_suffix if feature_key == "fft" else "unknown"
+                if "wavlm" in feature_key
+                else consts.fft_emb_suffix if "fft" in feature_key else "unknown"
             )
             preprocessor = ExperimentPreprocessor(feat_suffix=feat_suffix)
 

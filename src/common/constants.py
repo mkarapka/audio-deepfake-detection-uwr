@@ -8,7 +8,7 @@ class Constants:
     data_dir = root / "data"
     logs_dir = data_dir / "logs"
     collected_data_dir = data_dir / "collected_data"
-    train_results_dir = data_dir / "results"
+    results_dir = data_dir / "results"
     models_dir = data_dir / "models"
     params_dir = data_dir / "params"
     split_dir = collected_data_dir / "splited_data"

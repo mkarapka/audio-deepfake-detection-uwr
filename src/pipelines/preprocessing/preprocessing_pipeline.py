@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from src.common.constants import Constants as consts
 from src.common.logger import get_logger, setup_logger
 from src.preprocessing.audio_segmentator import AudioSegmentator
@@ -95,12 +93,12 @@ class PreprocessingPipeline:
             batch_size=batch_size,
         )
 
-    def split_dataset(self, file_name: Path, feat_suffix: str, split_config: dict[str, float], seed=44):
-        feature_loader = FeatureLoader(file_name=file_name)
+    def split_dataset(self, file_name: str, split_config: dict[str, float], seed=44):
+        feature_loader = FeatureLoader(file_name=file_name, feat_suffix="")
         dataset_spliter = DatasetSpliter(
             config=split_config, speakers_ids=feature_loader.load_speakers_ids(), seed=seed
         )
-        collector = Collector(save_file_name=file_name, feat_suffix=feat_suffix)
+        collector = Collector(save_file_name=file_name, feat_suffix="")
 
         metadata = feature_loader.load_metadata_file(file_path=collector.get_metadata_file_path())
         meta_train, meta_dev, meta_test = dataset_spliter.transform(metadata=metadata)

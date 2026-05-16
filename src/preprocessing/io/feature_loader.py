@@ -42,21 +42,29 @@ class FeatureLoader(BaseIO):
         return audio_ids[:sample_size]
 
     def sample_data(
-        self, metadata: pd.DataFrame, features: np.ndarray | None = None, fraction=0.4, audio_id_sampling=False
+        self,
+        metadata: pd.DataFrame,
+        features: np.ndarray | None = None,
+        fraction=0.4,
+        audio_id_sampling=False,
+        reset_index=True,
     ) -> tuple[pd.DataFrame, np.ndarray] | pd.DataFrame:
         if features is None:
             return self._sample_meta(metadata=metadata, fraction=fraction)
 
         if audio_id_sampling:
-            return self.sample_by_audio_ids(metadata=metadata, features=features, fraction=fraction)
+            return self.sample_by_audio_ids(
+                metadata=metadata, features=features, fraction=fraction, reset_index=reset_index
+            )
 
         sampled_metadata = self._sample_meta(metadata, fraction=fraction)
         sampled_features = features[sampled_metadata.index]
-        sampled_metadata = sampled_metadata.reset_index(drop=True)
+        if reset_index:
+            sampled_metadata = sampled_metadata.reset_index(drop=True)
         return sampled_metadata, sampled_features
 
     def sample_by_audio_ids(
-        self, metadata: pd.DataFrame, features: np.ndarray = None, fraction=0.4
+        self, metadata: pd.DataFrame, features: np.ndarray = None, fraction=0.4, reset_index=True
     ) -> tuple[pd.DataFrame, np.ndarray]:
         sampled_audio_ids = self._sample_uq_audio_ids(metadata, fraction=fraction)
 
@@ -65,7 +73,8 @@ class FeatureLoader(BaseIO):
             return sampled_metadata
 
         sampled_embeddings = features[sampled_metadata.index]
-        sampled_metadata = sampled_metadata.reset_index(drop=True)
+        if reset_index:
+            sampled_metadata = sampled_metadata.reset_index(drop=True)
 
         return sampled_metadata, sampled_embeddings
 

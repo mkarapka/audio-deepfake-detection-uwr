@@ -76,7 +76,9 @@ class ExperimentPreprocessor:
                 else:
                     query = remove_by_query
                 self.logger.info(f"Removing records from split '{split_name}' using query: {query}")
+                self.logger.info(f"Number of records before removal: {len(meta)}")
                 meta, feat = self._remove_records_by_query(metadata=meta, features=feat, query=query)
+                self.logger.info(f"Number of records after removal: {len(meta)}")
 
             if fraction < 1.0:
                 self.logger.info(f"Sampling {fraction * 100:.1f}% of data for split '{split_name}'...")
@@ -86,6 +88,7 @@ class ExperimentPreprocessor:
                     fraction=fraction,
                     audio_id_sampling=use_audio_id_sampling,
                 )
+                self.logger.info(f"Number of records after sampling: {len(meta)}")
 
             if balance_splits_strategy is not None and balance_splits_strategy[i] is not None:
                 self.logger.info(

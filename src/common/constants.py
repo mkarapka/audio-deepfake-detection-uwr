@@ -13,6 +13,11 @@ class Constants:
     params_dir = data_dir / "params"
     split_dir = collected_data_dir / "splited_data"
     tests_data_dir = data_dir / "tests_data"
+    artifacts_dir = data_dir / "artifacts"
+
+    # WandB
+    type_model_params = "model_params"
+    type_model = "model"
 
     # File names
     speakers_ids_file = "speakers_ids.csv"

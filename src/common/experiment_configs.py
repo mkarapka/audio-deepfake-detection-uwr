@@ -4,8 +4,8 @@ from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.training.objectives import Objective
     from src.models.base_model import BaseModel
+    from src.training.objectives import Objective
 
 
 @dataclass
@@ -35,6 +35,7 @@ class OptunaTrainingConfig:
     n_trials: int
     torch_params: TorchParameters | None
 
+
 @dataclass
 class FinalTrainConfig:
     best_params_artifact_alias: str
@@ -42,10 +43,12 @@ class FinalTrainConfig:
     models: list[BaseModel]
     torch_params: TorchParameters
 
+
 @dataclass
 class ExperimentConfig:
     preprocess_configs: dict[str, ExperimentPreprocessConfig]
     training_config: OptunaTrainingConfig | FinalTrainConfig
+
 
 @dataclass
 class ExperimentInfo:

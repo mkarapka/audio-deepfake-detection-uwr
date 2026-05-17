@@ -18,8 +18,10 @@ BATCH_SIZE = 128
 NUM_WORKERS = -1
 USE_POS_WEIGHT = True
 
+
 def get_expression(config_type: str) -> str:
     return f'anomaly == {1.0} or config.str.contains("{config_type}")'
+
 
 if __name__ == "__main__":
     fft_real_tts_preprocess_config = ExperimentPreprocessConfig(

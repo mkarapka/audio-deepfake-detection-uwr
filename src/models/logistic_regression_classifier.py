@@ -15,3 +15,18 @@ class LogisticRegressionClassifier(TorchModel):
     def forward(self, X: torch.Tensor):
         y_hat = self.model(X)
         return y_hat
+
+    def save(self, file_path: str):
+        payload = {
+            "state_dict": self.model.state_dict(),
+            "in_features": self.model[0].in_features,
+        }
+        torch.save(payload, file_path)
+
+    @classmethod
+    def from_pretrained(cls, file_path: str, device: str = None):
+        payload = torch.load(file_path, map_location="cpu")
+        in_features = payload["in_features"]
+        model = cls(input_size=in_features, device=device)
+        model.model.load_state_dict(payload["state_dict"])
+        return model

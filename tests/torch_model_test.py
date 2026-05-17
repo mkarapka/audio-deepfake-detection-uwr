@@ -9,31 +9,44 @@ from src.models.torch_model import TorchModel
 
 class TestableTorchModel(TorchModel):
     def _create_model(self, in_features):
-        return super()._create_model(in_features)
-
-    def load(self, file_path: str):
-        return None
+        return nn.Sequential(nn.Linear(in_features, 1))
 
     def save(self, file_path: str):
+        return None
+
+    @classmethod
+    def from_pretrained(cls, file_path: str, device: str = None):
         return None
 
 
 class PersistableTorchModel(TorchModel):
     def __init__(self, in_features: int, device: str = "cpu"):
-        self.device = torch.device(device)
-        model = self._create_model(in_features=in_features)
-        super().__init__(model=model, class_name="PersistableTorchModel", include_mps=False)
+        self.in_features = int(in_features)
+        model = self._create_model(in_features=self.in_features)
+        super().__init__(model=model, class_name="PersistableTorchModel", device=device, include_mps=False)
 
     def _create_model(self, in_features: int):
-        return nn.Sequential(
-            nn.Linear(in_features=in_features, out_features=1),
-        ).to(self.device)
+        return nn.Sequential(nn.Linear(in_features=in_features, out_features=1))
 
     def state_dict(self):
         return self.model.state_dict()
 
     def load_state_dict(self, state_dict):
         return self.model.load_state_dict(state_dict)
+
+    def save(self, file_path: str):
+        payload = {
+            "state_dict": self.model.state_dict(),
+            "in_features": self.in_features,
+        }
+        torch.save(payload, file_path)
+
+    @classmethod
+    def from_pretrained(cls, file_path: str, device: str = "cpu"):
+        payload = torch.load(file_path, map_location="cpu")
+        model = cls(in_features=int(payload["in_features"]), device=device)
+        model.model.load_state_dict(payload["state_dict"])
+        return model
 
 
 class TorchModelTest:
@@ -130,7 +143,7 @@ class TorchModelTest:
         print("TorchModel.save test passed.")
 
     def test_load(self):
-        print("Testing TorchModel.load...")
+        print("Testing TorchModel.from_pretrained...")
         torch.manual_seed(27)
 
         save_dir = consts.tests_data_dir / "models"
@@ -140,19 +153,14 @@ class TorchModelTest:
         source_model = PersistableTorchModel(in_features=2)
         source_model.save(file_path)
 
-        loaded_model = PersistableTorchModel(in_features=2)
-        with torch.no_grad():
-            for param in loaded_model.model.parameters():
-                param.zero_()
-
-        loaded_model.load(file_path)
+        loaded_model = PersistableTorchModel.from_pretrained(str(file_path), device="cpu")
 
         for source_param, loaded_param in zip(source_model.model.parameters(), loaded_model.model.parameters()):
             assert torch.allclose(
                 source_param.detach(), loaded_param.detach()
             ), "Expected loaded parameters to match saved parameters."
 
-        print("TorchModel.load test passed.")
+        print("TorchModel.from_pretrained test passed.")
 
     def test_predict(self):
         print("Testing TorchModel.predict...")

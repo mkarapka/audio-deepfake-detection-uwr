@@ -97,20 +97,14 @@ class TorchModel(BaseModel):
 
             return y_pred
 
+    @abstractmethod
     def save(self, file_path: str):
-        payload = {
-            "state_dict": self.model.state_dict(),
-            "in_features": self.model[0].in_features,
-        }
-        torch.save(payload, file_path)
-
-    def load(self, file_path: str):
-        payload = torch.load(file_path, map_location=self.device)
-        in_features = payload["in_features"]
-        self.model = self._create_model(in_features=in_features)
-        self.model.load_state_dict(payload["state_dict"])
-        self.model.to(self.device)
+        pass
 
     @abstractmethod
     def _create_model(self, in_features):
+        pass
+
+    @abstractmethod
+    def from_pretrained(cls, file_path: str, device: str = None):
         pass

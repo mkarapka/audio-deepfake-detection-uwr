@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.training.objectives import Objective
+    from src.models.base_model import BaseModel
 
 
 @dataclass
@@ -34,12 +35,17 @@ class OptunaTrainingConfig:
     n_trials: int
     torch_params: TorchParameters | None
 
+@dataclass
+class FinalTrainConfig:
+    best_params_artifact_alias: str
+    best_params_artifact_type: str
+    models: list[BaseModel]
+    torch_params: TorchParameters
 
 @dataclass
 class ExperimentConfig:
     preprocess_configs: dict[str, ExperimentPreprocessConfig]
-    optuna_training_config: OptunaTrainingConfig
-
+    training_config: OptunaTrainingConfig | FinalTrainConfig
 
 @dataclass
 class ExperimentInfo:

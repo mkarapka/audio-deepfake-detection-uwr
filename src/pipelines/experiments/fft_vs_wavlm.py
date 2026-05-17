@@ -15,7 +15,7 @@ class FFTvsWavLMExperiment:
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.wandb_logger = WandbLogger(self.logger, run=self.wandb_run)
 
-        self.optuna_training_config = self.experiment_config.optuna_training_config
+        self.optuna_training_config = self.experiment_config.training_config
         self.torch_params = self.optuna_training_config.torch_params
 
         self.model_trainer = ModelTrainer()

@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     experiment_config = ExperimentConfig(
         preprocess_configs={"fft": fft_preprocess_config, "wavlm": wavlm_preprocess_config},
-        optuna_training_config=optuna_training_config,
+        training_config=optuna_training_config,
     )
 
     experiment_info = ExperimentInfo(

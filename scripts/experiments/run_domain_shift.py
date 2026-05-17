@@ -53,11 +53,11 @@ if __name__ == "__main__":
     )
 
     experiment_config = ExperimentConfig(
-        experiment_preprocess_configs={
+        preprocess_configs={
             "fft_real_tts": fft_real_tts_preprocess_config,
             "fft_real_vocoders": fft_real_vocoders_preprocess_config,
         },
-        optuna_training_config=optuna_training_config,
+        training_config=optuna_training_config,
     )
 
     experiment_info = ExperimentInfo(

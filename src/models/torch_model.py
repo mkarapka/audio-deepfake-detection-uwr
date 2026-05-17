@@ -108,7 +108,7 @@ class TorchModel(BaseModel):
         payload = torch.load(file_path, map_location=self.device)
         in_features = payload["in_features"]
         self.model = self._create_model(in_features=in_features)
-        self.load_state_dict(payload["state_dict"])
+        self.model.load_state_dict(payload["state_dict"])
         self.model.to(self.device)
 
     @abstractmethod

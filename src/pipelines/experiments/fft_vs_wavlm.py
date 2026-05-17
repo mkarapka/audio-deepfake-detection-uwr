@@ -21,6 +21,12 @@ class FFTvsWavLMExperiment:
         self.model_trainer = ModelTrainer()
         self.artifact_manager = ArtifactManager(experiment_name=experiment_info.experiment_name)
 
+    def _remove_objective_from_class_name(self, objective_cls_name: str) -> str:
+        suffix = "Objective"
+        if not objective_cls_name.endswith(suffix):
+            raise ValueError(f"Invalid objective class name: {objective_cls_name}")
+        return objective_cls_name.removesuffix(suffix) 
+
     def run(self):
         feature_type_dataloaders_map = {}
         for feature_key, preprocess_config in self.experiment_config.preprocess_configs.items():
@@ -44,7 +50,7 @@ class FFTvsWavLMExperiment:
             train_dataloader = dataloaders_map["train"]
             dev_dataloader = dataloaders_map["dev"]
             for objective_cls in self.optuna_training_config.objectives:
-                obj_name = objective_cls.__name__
+                obj_name = self._remove_objective_from_class_name(objective_cls_name=objective_cls.__name__)
                 self.wandb_logger.info(f"Training {obj_name} with {feature_key} features...")
 
                 best_params, best_value = self.model_trainer.optuna_train(

@@ -84,6 +84,41 @@ class ArtifactManager:
         self.logger.info("Params loaded successfully.")
         return params
 
+    def load_params_from_wandb(
+        self,
+        wandb_run,
+        artifact_name: str,
+        artifact_type: str,
+        alias: str = "latest",
+        artifact_dir: Path | None = consts.artifacts_dir,
+    ):
+        artifact_ref = f"{artifact_name}:{alias}"
+        self.logger.info(f"Loading params from W&B artifact {artifact_ref}...")
+
+        artifact = wandb_run.use_artifact(artifact_ref, type=artifact_type)
+
+        if artifact_dir is None:
+            download_dir = Path(artifact.download())
+        else:
+            artifact_dir = Path(artifact_dir)
+            download_dir = artifact_dir / self.experiment_name
+            download_dir.mkdir(parents=True, exist_ok=True)
+            artifact.download(root=str(download_dir))
+
+        self.logger.info(f"Artifact downloaded to {download_dir}")
+
+        file_path = download_dir / f"{artifact_name}.pkl"
+        if not file_path.exists():
+            pkls = sorted(download_dir.glob("**/*.pkl"))
+            if len(pkls) != 1:
+                raise_error_logger(self.logger, f"File not found in W&B artifact: {file_path}")
+            file_path = pkls[0]
+
+        self.logger.info(f"Loading params from file: {file_path}")
+        params = joblib.load(file_path)
+        self.logger.info("Params loaded successfully from W&B artifact.")
+        return params
+
     def save_model(self, model: BaseModel, model_name: str, ext: str):
         file_path = self._generate_file_path(file_name=model_name, ext=ext, main_dir=consts.models_dir)
         self.logger.info(f"Saving model to {file_path}")

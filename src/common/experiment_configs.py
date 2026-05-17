@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from enum import Enum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.models.base_model import BaseModel
     from src.training.objectives import Objective
 
+class ModelType(Enum):
+    LOGISTIC_REGRESSION = "LogisticRegression"
+    MLP = "MLP"
+    XGBOOST = "XGBoost"
 
 @dataclass
 class ExperimentPreprocessConfig:
@@ -38,10 +42,10 @@ class OptunaTrainingConfig:
 
 @dataclass
 class FinalTrainConfig:
-    best_params_artifact_alias: str
-    best_params_artifact_type: str
-    models: list[BaseModel]
+    models: list[ModelType]
     torch_params: TorchParameters
+    best_params_artifact_alias: str = "latest"
+    best_params_artifact_type: str = "model_params"
 
 
 @dataclass

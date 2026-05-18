@@ -15,17 +15,12 @@ class FFTvsWavLMExperiment:
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.wandb_logger = WandbLogger(self.logger, run=self.wandb_run)
 
+        self.model_names = experiment_info.models
         self.optuna_training_config = self.experiment_config.training_config
         self.torch_params = self.optuna_training_config.torch_params
 
         self.model_trainer = ModelTrainer()
         self.artifact_manager = ArtifactManager(experiment_name=experiment_info.experiment_name)
-
-    def _remove_objective_from_class_name(self, objective_cls_name: str) -> str:
-        suffix = "Objective"
-        if not objective_cls_name.endswith(suffix):
-            raise ValueError(f"Invalid objective class name: {objective_cls_name}")
-        return objective_cls_name.removesuffix(suffix) 
 
     def run(self):
         feature_type_dataloaders_map = {}
@@ -49,12 +44,11 @@ class FFTvsWavLMExperiment:
         for feature_key, dataloaders_map in feature_type_dataloaders_map.items():
             train_dataloader = dataloaders_map["train"]
             dev_dataloader = dataloaders_map["dev"]
-            for objective_cls in self.optuna_training_config.objectives:
-                obj_name = self._remove_objective_from_class_name(objective_cls_name=objective_cls.__name__)
-                self.wandb_logger.info(f"Training {obj_name} with {feature_key} features...")
+            for model_name, objective in zip(self.model_names, self.optuna_training_config.objectives):
+                self.wandb_logger.info(f"Training {model_name} with {feature_key} features...")
 
                 best_params, best_value = self.model_trainer.optuna_train(
-                    objective=objective_cls(
+                    objective=objective(
                         train_loader=train_dataloader,
                         val_loader=dev_dataloader,
                         wandb_run=self.wandb_run,
@@ -63,10 +57,10 @@ class FFTvsWavLMExperiment:
                     epochs=self.torch_params.epochs,
                 )
 
-                self.wandb_logger.info(f"Best params for {obj_name} with {feature_key} features: {best_params}")
-                self.wandb_logger.log_metrics({f"{obj_name}_{feature_key}_best_value": best_value})
+                self.wandb_logger.info(f"Best params for {model_name} with {feature_key} features: {best_params}")
+                self.wandb_logger.log_metrics({f"{model_name}_{feature_key}_best_value": best_value})
 
-                file_name = f"{obj_name}_{feature_key}_best_params"
+                file_name = f"{model_name}_{feature_key}_best_params"
                 self.artifact_manager.save_params(
                     params=best_params,
                     file_name=file_name,
@@ -75,6 +69,6 @@ class FFTvsWavLMExperiment:
                 self.wandb_run.log_artifact(file_path, name=file_name, type="model_params")
 
                 self.wandb_logger.info(
-                    f"Saved best params for {obj_name} with {feature_key} features to {file_path} and logged to wandb."
+                    f"Saved best params for {model_name} with {feature_key} features to {file_path} and logged to wandb."
                 )
         self.wandb_run.finish()

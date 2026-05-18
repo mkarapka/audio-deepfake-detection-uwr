@@ -1,4 +1,3 @@
-from enum import Enum
 from pathlib import Path
 
 
@@ -116,10 +115,3 @@ class Constants:
         "cluster_selection_method": "eom",
         "prediction_data": True,
     }
-
-
-class BalanceType(Enum):
-    UNDERSAMPLE = "undersample"
-    OVERSAMPLE = "oversample"
-    MIX = "mix"
-    UNBALANCED = "unbalanced"

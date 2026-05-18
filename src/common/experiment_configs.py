@@ -7,17 +7,29 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.training.objectives import Objective
 
+
 class ModelType(Enum):
     LOGISTIC_REGRESSION = "LogisticRegression"
     MLP = "MLP"
     XGBOOST = "XGBoost"
 
+
+class BalanceType(Enum):
+    UNDERSAMPLE = "undersample"
+    OVERSAMPLE = "oversample"
+    MIX = "mix"
+    UNBALANCED = "unbalanced"
+
+
+type BalanceStrategy = dict[str, tuple[str, float | list[float]]] | None
+
+
 @dataclass
 class ExperimentPreprocessConfig:
     splits_names: list[str]
-    fraction: float
+    fraction: float | dict[str, float]
     use_audio_id_sampling: bool
-    balance_splits_strategy: dict[str, list] | None
+    balance_splits_strategy: BalanceStrategy
     use_standardize: bool
     remove_by_query: str | dict[str, str] | None
 

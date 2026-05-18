@@ -3,6 +3,7 @@ import pandas as pd
 from torch.utils.data import DataLoader
 
 from src.common.constants import Constants as consts
+from src.common.experiment_configs import BalanceStrategy
 from src.common.logger import raise_error_logger, setup_logger
 from src.common.utils import get_device
 from src.datasets.audio_dataset import AudioDataset
@@ -57,10 +58,10 @@ class ExperimentPreprocessor:
     def preprocess_data(
         self,
         splits_names: list[str],
-        fraction: float,
+        fraction: float | dict[str, float],
         use_audio_id_sampling: bool = False,
         use_standardize: bool = False,
-        balance_splits_strategy: list[tuple[str, float | list[float] | None]] = None,
+        balance_splits_strategy: BalanceStrategy = None,
         remove_by_query: str | dict[str, str] | None = None,
     ) -> dict[str, AudioDataset]:
         split_dataset_dict = {}
@@ -76,29 +77,35 @@ class ExperimentPreprocessor:
                 else:
                     query = remove_by_query
                 self.logger.info(f"Removing records from split '{split_name}' using query: {query}")
-                self.logger.info(f"Number of records before removal: {len(meta)}")
+                self.logger.info(f"Number of records before removal: {len(meta):,}")
                 meta, feat = self._remove_records_by_query(metadata=meta, features=feat, query=query)
-                self.logger.info(f"Number of records after removal: {len(meta)}")
+                self.logger.info(f"Number of records after removal: {len(meta):,}")
 
-            if fraction < 1.0:
-                self.logger.info(f"Sampling {fraction * 100:.1f}% of data for split '{split_name}'...")
+            if isinstance(fraction, dict):
+                split_fraction = fraction[split_name]
+            else:
+                split_fraction = fraction
+
+            if split_fraction < 1.0:
+                self.logger.info(f"Sampling {split_fraction * 100:.1f}% of data for split '{split_name}'...")
                 meta, feat = self.feature_loader.sample_data(
                     metadata=meta,
                     features=feat,
-                    fraction=fraction,
+                    fraction=split_fraction,
                     audio_id_sampling=use_audio_id_sampling,
                 )
-                self.logger.info(f"Number of records after sampling: {len(meta)}")
+                self.logger.info(f"Number of records after sampling: {len(meta):,}")
 
-            if balance_splits_strategy is not None and balance_splits_strategy[i] is not None:
+            if balance_splits_strategy is not None and balance_splits_strategy.get(split_name) is not None:
                 self.logger.info(
                     f"Applying balancing strategy '{
-                        balance_splits_strategy[i][0]}' to split '{split_name}'"
+                        balance_splits_strategy[split_name]}' to split '{split_name}'"
                 )
-                balance_type, ratio_args = balance_splits_strategy[i]
+                balance_type, ratio_args = balance_splits_strategy[split_name]
                 balancer = self._get_balancer_instance(balancer_type=balance_type, ratio_args=ratio_args)
                 if balancer is not None:
                     meta, feat = balancer.transform(metadata=meta, features=feat)
+                self.logger.info(f"Number of records after balancing: {len(meta):,}")
 
             if use_standardize:
                 self.logger.info(f"Standardizing features for split '{split_name}'...")

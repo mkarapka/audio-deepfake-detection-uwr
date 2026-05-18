@@ -2,9 +2,10 @@ import pytest
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
+from torchmetrics.functional.classification import binary_eer
 
 from src.evaluation.binary_evaluator import BinaryEvaluator
-from torchmetrics.functional.classification import binary_eer
+
 
 class DummyBinaryModel:
     """Minimal model stub compatible with BinaryEvaluator.evaluate()."""

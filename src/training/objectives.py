@@ -8,15 +8,22 @@ import torch.optim as optim
 import xgboost as xgb
 from optuna import Trial
 from torch.utils.data import DataLoader
-from torchmetrics.functional.classification import binary_eer
+from torchmetrics.functional.classification import (
+    binary_accuracy,
+    binary_eer,
+    binary_f1_score,
+    binary_precision,
+    binary_recall,
+)
 
 from src.common.logger import WandbLogger, setup_logger
 from src.models.logistic_regression_classifier import LogisticRegressionClassifier
 from src.models.mlp_classifier import MlpClassifier
+from src.models.torch_model import TorchModel
 
 
 class Objective(ABC):
-    def __init__(self, class_name: str, direction: str = "minimize", wandb_run=None):
+    def __init__(self, class_name: str, direction: str = "maximize", wandb_run=None):
         self.logger = setup_logger(class_name, log_to_console=True)
         self.wandb_logger = WandbLogger(self.logger, run=wandb_run)
         self.direction = direction
@@ -36,8 +43,13 @@ class TorchBinaryObjective(Objective):
         self.in_features = features.shape[-1]
 
     @abstractmethod
-    def build_classifier(self, *, trial: Trial):
+    def build_classifier(self, *, trial: Trial) -> TorchModel:
         pass
+
+    def update_score(self, prev_score: float, new_score: float):
+        best_score = min(prev_score, new_score) if self.direction == "minimize" else max(prev_score, new_score)
+        self.wandb_logger.log_metrics({"best_score": best_score})
+        return best_score
 
     def suggest_optim_params(self, trial: Trial):
         lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
@@ -61,7 +73,7 @@ class TorchBinaryObjective(Objective):
         optimizer = optim.AdamW(classifier.parameters(), lr=lr, weight_decay=weight_decay)
         criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
-        best_score = float("inf")
+        best_score = float("-inf") if self.direction == "maximize" else float("inf")
         for epoch in range(epochs):
             train_loss, train_acc = classifier.train_one_epoch(
                 train_loader=self.train_loader,
@@ -69,13 +81,13 @@ class TorchBinaryObjective(Objective):
                 optimizer=optimizer,
                 device=classifier.device,
             )
-            val_loss, val_acc, y_true, y_pred = classifier.evaluate(
+            val_loss, val_acc, y_true, y_probs = classifier.evaluate(
                 val_loader=self.val_loader,
                 criterion=criterion,
                 device=classifier.device,
             )
 
-            score = binary_eer(preds=y_pred, target=y_true).item()
+            score = val_acc
             trial.report(score, step=epoch)
 
             if epoch % max(1, epochs // int(1 / logging_percent_threshold)) == 0:
@@ -87,11 +99,14 @@ class TorchBinaryObjective(Objective):
                         "train_acc": train_acc,
                         "val_loss": val_loss,
                         "val_acc": val_acc,
-                        "eer": score,
+                        "val_precision": binary_precision(y_probs, y_true).item(),
+                        "val_recall": binary_recall(y_probs, y_true).item(),
+                        "val_f1": binary_f1_score(y_probs, y_true).item(),
+                        "val_eer": binary_eer(preds=y_probs, target=y_true).item(),
                     },
                 )
 
-            best_score = min(best_score, score)
+            best_score = self.update_score(best_score, score)
             if trial.should_prune():
                 raise optuna.TrialPruned()
 
@@ -176,6 +191,4 @@ class XGBoostObjective(Objective):
         )
         y_pred = classifier.predict(self.dmatrix_dev)
 
-        return binary_eer(
-            preds=torch.tensor(y_pred), target=torch.tensor(self.dmatrix_dev.get_label(), dtype=torch.int)
-        ).item()
+        return binary_accuracy(torch.tensor(y_pred), torch.tensor(self.dmatrix_dev.get_label())).item()

@@ -7,11 +7,12 @@ import wandb
 from src.common.constants import Constants as consts
 from src.common.experiment_configs import ExperimentInfo, ModelType
 from src.common.logger import WandbLogger, raise_error_logger, setup_logger
+from src.evaluation.binary_evaluator import BinaryEvaluator
 from src.models.logistic_regression_classifier import LogisticRegressionClassifier
 from src.models.mlp_classifier import MlpClassifier
 from src.preprocessing.experiment_preprocessor import ExperimentPreprocessor
 from src.training.artifact_manager import ArtifactManager
-from src.evaluation.binary_evaluator import BinaryEvaluator
+
 
 class FinalTrainExperiment:
     def __init__(self, *, experiment_info: ExperimentInfo, wandb_run: wandb.Run):
@@ -108,7 +109,6 @@ class FinalTrainExperiment:
             self.wandb_logger.log_metrics(metrics)
 
         return classifier
-
 
     def run(self):
         if self.torch_params is None:

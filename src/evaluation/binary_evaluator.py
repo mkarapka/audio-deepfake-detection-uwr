@@ -1,14 +1,15 @@
+import torch
 import torch.nn as nn
 from torchmetrics.functional.classification import (
     binary_accuracy,
     binary_auroc,
+    binary_eer,
     binary_f1_score,
     binary_precision,
     binary_recall,
     binary_roc,
-    binary_eer,
 )
-import torch
+
 from src.common.logger import setup_logger
 
 
@@ -49,7 +50,6 @@ class BinaryEvaluator:
             ("f1_score_base_threshold", f1_score_base_threshold),
             ("auroc", auroc),
         ]
-
 
     def evaluate(self, *, model, dataloader, log_prefix: str) -> dict[str, float]:
         loss, _, y_true, y_probs = model.evaluate(

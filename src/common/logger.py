@@ -80,7 +80,10 @@ class WandbLogger:
         if self.run is not None:
             self.run.log({"log": message})
 
-    def log_metrics(self, metrics: dict, step: int = None):
+    def log_metrics(self, metrics: dict, log_prefix: str = None, step: int = None):
+        key = f"{log_prefix}/" if log_prefix else ""
+        epoch = metrics.pop(f"{key}epoch", None)
+        self.logger.info(f"\n ==== Epoch: {epoch},  Metrics: ====")
         for key, value in metrics.items():
             self.logger.info(f"{key}: {value:<10.4f}")
         if self.run is not None:

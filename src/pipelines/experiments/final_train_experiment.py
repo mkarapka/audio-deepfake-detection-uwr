@@ -1,7 +1,12 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torchmetrics.functional.classification import binary_eer
+from torchmetrics.functional.classification import (
+    binary_eer,
+    binary_f1_score,
+    binary_precision,
+    binary_recall,
+)
 
 import wandb
 from src.common.constants import Constants as consts
@@ -10,6 +15,7 @@ from src.common.logger import WandbLogger, raise_error_logger, setup_logger
 from src.evaluation.binary_evaluator import BinaryEvaluator
 from src.models.logistic_regression_classifier import LogisticRegressionClassifier
 from src.models.mlp_classifier import MlpClassifier
+from src.models.torch_model import TorchModel
 from src.preprocessing.experiment_preprocessor import ExperimentPreprocessor
 from src.training.artifact_manager import ArtifactManager
 
@@ -55,7 +61,7 @@ class FinalTrainExperiment:
     def _train_torch_binary(
         self,
         *,
-        classifier,
+        classifier: TorchModel,
         train_loader,
         val_loader,
         best_params: dict,
@@ -102,11 +108,14 @@ class FinalTrainExperiment:
                 metrics |= {
                     f"{log_prefix}/val_loss": val_loss,
                     f"{log_prefix}/val_acc": val_acc,
+                    f"{log_prefix}/val_precision": binary_precision(preds=y_probs, target=y_true).item(),
+                    f"{log_prefix}/val_recall": binary_recall(preds=y_probs, target=y_true).item(),
+                    f"{log_prefix}/val_f1": binary_f1_score(preds=y_probs, target=y_true).item(),
                     f"{log_prefix}/val_eer": val_eer,
-                    f"{log_prefix}/best_val_eer": best_val_eer,
+                    f"{log_prefix}/val_eer_best": best_val_eer,
                 }
 
-            self.wandb_logger.log_metrics(metrics)
+            self.wandb_logger.log_metrics(metrics, log_prefix=log_prefix)
 
         return classifier
 

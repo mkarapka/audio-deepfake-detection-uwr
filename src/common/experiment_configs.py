@@ -75,3 +75,24 @@ class ExperimentInfo:
 
     def get_dict(self):
         return asdict(self)
+
+
+@dataclass
+class RunExperimentParams:
+    description: str
+
+    epochs: int
+    fraction: float | dict[str, float]
+    balance_strategy: BalanceStrategy | None
+    batch_size: int
+
+    experiment_group: str
+    models_types: list[ModelType]
+    params_artifact_type: str
+
+    feat_suffix: str = ""
+    params_artifact_alias: str = "latest"
+    job_type: str = "final_train"
+
+    num_workers: int = -1
+    use_pos_weight: bool = True

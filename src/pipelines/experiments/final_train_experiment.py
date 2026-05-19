@@ -42,7 +42,11 @@ class FinalTrainExperiment:
 
     def _build_classifier(self, *, model_type: ModelType, best_params: dict, in_features: int):
         if model_type is ModelType.LOGISTIC_REGRESSION:
-            return LogisticRegressionClassifier(input_size=in_features)
+            classifier = LogisticRegressionClassifier(input_size=in_features)
+            self.logger.info(
+                f"Built Logistic Regression with {[p.numel() for p in classifier.parameters()]} parameters"
+            )
+            return classifier
 
         if model_type is ModelType.MLP:
             n_layers = int(best_params.get("n_layers"))
@@ -50,11 +54,13 @@ class FinalTrainExperiment:
                 raise_error_logger(self.logger, f"Missing 'n_layers' in best_params for MLP classifier: {best_params}")
             hidden_sizes = [int(best_params[f"hidden_size_{i}"]) for i in range(n_layers)]
             dropout_rate = float(best_params["dropout_rate"])
-            return MlpClassifier(
+            classifier = MlpClassifier(
                 input_size=in_features,
                 hidden_sizes=hidden_sizes,
                 dropout_rate=dropout_rate,
             )
+            self.logger.info(f"Built MlpClassifier with {[p.numel() for p in classifier.parameters()]} parameters")
+            return classifier
 
         raise_error_logger(self.logger, f"Unsupported classifier for final training: {model_type.value}")
 

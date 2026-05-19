@@ -132,7 +132,11 @@ class FinalTrainExperiment:
             dataset_map = preprocessor.preprocess_data(**preprocess_config)
 
             self.wandb_logger.info(f"Getting Dataloaders for {feature_key} features...")
-            dataloaders_map = preprocessor.get_dataloaders(dataset_map, batch_size=self.torch_params.batch_size)
+            dataloaders_map = preprocessor.get_dataloaders(
+                dataset_map,
+                batch_size=self.torch_params.batch_size,
+                num_workers=self.torch_params.num_workers,
+            )
             self.wandb_logger.info(f"Dataloader keys for {feature_key} features: {dataloaders_map.keys()}")
 
             feature_type_dataloaders_map[feature_key] = dataloaders_map

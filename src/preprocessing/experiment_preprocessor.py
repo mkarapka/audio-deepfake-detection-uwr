@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 from torch.utils.data import DataLoader
@@ -127,15 +128,32 @@ class ExperimentPreprocessor:
         return split_dataset_dict
 
     def get_dataloaders(
-        self, dataset_dict: dict[str, AudioDataset], batch_size: int, shuffle_train: bool = True
+        self,
+        dataset_dict: dict[str, AudioDataset],
+        batch_size: int,
+        shuffle_train: bool = True,
+        num_workers: int = 0,
     ) -> dict[str, DataLoader]:
         dataloader_dict = {}
+        if num_workers == -1:
+            num_workers = os.cpu_count() or 0
         for split_name, dataset in dataset_dict.items():
             shuffle = shuffle_train if split_name == "train" else False
             if self.device == "cuda" and dataset.device == "cpu":
-                dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, pin_memory=True)
+                dataloader = DataLoader(
+                    dataset,
+                    batch_size=batch_size,
+                    shuffle=shuffle,
+                    pin_memory=True,
+                    num_workers=num_workers,
+                )
             else:
-                dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
+                dataloader = DataLoader(
+                    dataset,
+                    batch_size=batch_size,
+                    shuffle=shuffle,
+                    num_workers=num_workers,
+                )
 
             dataloader_dict[split_name] = dataloader
 

@@ -32,7 +32,7 @@ if __name__ == "__main__":
     experiment_params = RunExperimentParams(
         description="Final train for $x0 on $x1 using best params from W&B artifacts (FFT vs WavLM)",
         experiment_group="fft_vs_wavlm_comparison",
-        epochs=15,
+        epochs=20,
         fraction=1.0,
         batch_size=128,
         feat_suffix=FEAT_SUFFIX,

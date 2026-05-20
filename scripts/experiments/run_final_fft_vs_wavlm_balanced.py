@@ -32,7 +32,7 @@ if __name__ == "__main__":
     feat_suffix = "_eq_dev"
     experiment_params = RunExperimentParams(
         description="Final train for $x0 on $x1 using best params from W&B artifacts (FFT vs WavLM)",
-        experiment_group="fft_vs_wavlm_comparison_balanced_dev_test",
+        experiment_group="fft_vs_wavlm_comparison_balanced_test",
         epochs=15,
         fraction=1.0,
         batch_size=128,
@@ -54,5 +54,7 @@ if __name__ == "__main__":
         feat_suffix=experiment_params.feat_suffix,
     )
 
-    run = RunExperiment(experiment_params=experiment_params, preprocess_configs=preprocess_configs)
+    run = RunExperiment(
+        experiment_params=experiment_params, preprocess_configs=preprocess_configs, experiment_class="final_evaluation"
+    )
     run.run()

@@ -5,6 +5,8 @@ import joblib
 from src.common.constants import Constants as consts
 from src.common.logger import raise_error_logger, setup_logger
 from src.models.base_model import BaseModel
+from src.models.logistic_regression_classifier import LogisticRegressionClassifier
+from src.models.mlp_classifier import MlpClassifier
 
 
 class ArtifactManager:
@@ -65,6 +67,14 @@ class ArtifactManager:
 
         return file_path
 
+    def _get_model_instace(self, file_path: Path) -> BaseModel:
+        if "mlp" in str(file_path).lower():
+            return MlpClassifier.from_pretrained(file_path=file_path)
+        elif "logistic" in str(file_path).lower():
+            return LogisticRegressionClassifier.from_pretrained(file_path=file_path)
+        else:
+            raise_error_logger(self.logger, f"Cannot determine model type from file name: {file_path}")
+
     def get_model_file_path(self, file_name: str, ext: str) -> Path:
         return self._get_file_path(file_name=file_name, ext=ext, main_dir=consts.models_dir)
 
@@ -118,6 +128,42 @@ class ArtifactManager:
         params = joblib.load(file_path)
         self.logger.info("Params loaded successfully from W&B artifact.")
         return params
+
+    def load_model_from_wandb(
+        self,
+        wandb_run,
+        artifact_name: str,
+        artifact_type: str,
+        alias: str = "latest",
+        artifact_dir: Path | None = consts.artifacts_dir,
+        ext: str = "pt",
+    ):
+        artifact_ref = f"{artifact_name}:{alias}"
+        self.logger.info(f"Loading model from W&B artifact {artifact_ref}...")
+
+        artifact = wandb_run.use_artifact(artifact_ref, type=artifact_type)
+
+        if artifact_dir is None:
+            download_dir = Path(artifact.download())
+        else:
+            artifact_dir = Path(artifact_dir)
+            download_dir = artifact_dir / self.experiment_name
+            download_dir.mkdir(parents=True, exist_ok=True)
+            artifact.download(root=str(download_dir))
+
+        self.logger.info(f"Artifact downloaded to {download_dir}")
+
+        file_path = download_dir / f"{artifact_name}.{ext}"
+        if not file_path.exists():
+            files = sorted(download_dir.glob(f"**/*.{ext}"))
+            if len(files) != 1:
+                raise_error_logger(self.logger, f"File not found in W&B artifact: {file_path}")
+            file_path = files[0]
+
+        self.logger.info(f"Loading model from file: {file_path}")
+        model = self._get_model_instace(file_path)
+        self.logger.info("Model loaded successfully from W&B artifact.")
+        return model
 
     def save_model(self, model: BaseModel, model_name: str, ext: str):
         file_path = self._generate_file_path(file_name=model_name, ext=ext, main_dir=consts.models_dir)

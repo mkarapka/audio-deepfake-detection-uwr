@@ -40,6 +40,7 @@ class BinaryEvaluator:
 
         return [
             ("eer", eer),
+            ("eer_threshold", eer_threshold),
             ("accuracy_eer_threshold", accuracy_eer_threshold),
             ("precision_eer_threshold", precision_eer_threshold),
             ("recall_eer_threshold", recall_eer_threshold),

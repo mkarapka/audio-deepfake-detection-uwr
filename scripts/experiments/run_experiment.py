@@ -9,6 +9,7 @@ from src.common.experiment_configs import (
 )
 from src.common.logger import raise_error_logger, setup_logger
 from src.common.wandb_config import WANDB_ENTITY, WANDB_PROJECT
+from src.pipelines.experiments.final_evaluation import FinalEvaluationExperiment
 from src.pipelines.experiments.final_train_experiment import FinalTrainExperiment
 
 
@@ -17,10 +18,12 @@ class RunExperiment:
         self,
         experiment_params: RunExperimentParams,
         preprocess_configs: dict[str, ExperimentPreprocessConfig],
+        experiment_class="final_train",
     ):
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.experiment_params = experiment_params
         self.preprocess_configs = preprocess_configs
+        self.experiment_class = experiment_class
 
     def _get_artifact_type_with_suffix(self, feat_suffix: str) -> str:
         if feat_suffix == "":
@@ -69,9 +72,19 @@ class RunExperiment:
                     config=experiment_info,
                 )
 
-                experiment = FinalTrainExperiment(
-                    experiment_info=experiment_info,
-                    wandb_run=run,
-                    feat_suffix=self.experiment_params.feat_suffix,
-                )
+                if self.experiment_class == "final_train":
+                    experiment = FinalTrainExperiment(
+                        experiment_info=experiment_info,
+                        wandb_run=run,
+                        feat_suffix=self.experiment_params.feat_suffix,
+                    )
+                elif self.experiment_class == "final_evaluation":
+                    experiment = FinalEvaluationExperiment(
+                        experiment_info=experiment_info,
+                        wandb_run=run,
+                        feat_suffix=self.experiment_params.feat_suffix,
+                    )
+                else:
+                    raise_error_logger(self.logger, f"Unsupported experiment_class: {self.experiment_class}")
+
                 experiment.run()

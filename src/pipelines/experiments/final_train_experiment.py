@@ -61,9 +61,7 @@ class FinalTrainExperiment:
                 hidden_sizes=hidden_sizes,
                 dropout_rate=dropout_rate,
             )
-            self.logger.info(
-                f"Built MLP Classifier with hidden sizes {hidden_sizes} and dropout rate {dropout_rate}"
-            )
+            self.logger.info(f"Built MLP Classifier with hidden sizes {hidden_sizes} and dropout rate {dropout_rate}")
             params_count = sum(p.numel() for p in classifier.parameters())
             self.logger.info(f"Built MlpClassifier with {params_count} parameters")
             return classifier

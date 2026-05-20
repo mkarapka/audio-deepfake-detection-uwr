@@ -21,9 +21,10 @@ from src.training.artifact_manager import ArtifactManager
 
 
 class FinalTrainExperiment:
-    def __init__(self, *, experiment_info: ExperimentInfo, wandb_run: wandb.Run):
+    def __init__(self, *, experiment_info: ExperimentInfo, wandb_run: wandb.Run, feat_suffix: str = ""):
         self.experiment_config = experiment_info.config
         self.wandb_run = wandb_run
+        self.feat_suffix = feat_suffix
 
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.wandb_logger = WandbLogger(self.logger, run=self.wandb_run)
@@ -53,13 +54,18 @@ class FinalTrainExperiment:
             if n_layers is None:
                 raise_error_logger(self.logger, f"Missing 'n_layers' in best_params for MLP classifier: {best_params}")
             hidden_sizes = [int(best_params[f"hidden_size_{i}"]) for i in range(n_layers)]
+            self.logger.info(f"MLP hidden sizes from custom test: {hidden_sizes}")
             dropout_rate = float(best_params["dropout_rate"])
             classifier = MlpClassifier(
                 input_size=in_features,
                 hidden_sizes=hidden_sizes,
                 dropout_rate=dropout_rate,
             )
-            self.logger.info(f"Built MlpClassifier with {[p.numel() for p in classifier.parameters()]} parameters")
+            self.logger.info(
+                f"Built MLP Classifier with hidden sizes {hidden_sizes} and dropout rate {dropout_rate}"
+            )
+            params_count = sum(p.numel() for p in classifier.parameters())
+            self.logger.info(f"Built MlpClassifier with {params_count} parameters")
             return classifier
 
         raise_error_logger(self.logger, f"Unsupported classifier for final training: {model_type.value}")
@@ -208,7 +214,7 @@ class FinalTrainExperiment:
                 model_artifact_name = f"{model_name}_{feature_key}_final_model"
                 self.artifact_manager.save_model(model=classifier, model_name=model_artifact_name, ext="pt")
                 model_path = self.artifact_manager.get_model_file_path(file_name=model_artifact_name, ext="pt")
-                self.wandb_run.log_artifact(model_path, name=model_artifact_name, type="model")
+                self.wandb_run.log_artifact(model_path, name=model_artifact_name, type=f"model{self.feat_suffix}")
                 self.wandb_logger.info(f"Saved final model to {model_path} and logged to W&B.")
 
         self.wandb_run.finish()

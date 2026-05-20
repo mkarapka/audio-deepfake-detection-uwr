@@ -27,7 +27,7 @@ class RunExperiment:
             return self.experiment_params.params_artifact_type
         if feat_suffix[0] != "_":
             raise_error_logger(self.logger, f"feat_suffix should start with '_' if not empty, got: '{feat_suffix}'")
-        return f"{self.experiment_params.params_artifact_type}_{feat_suffix}"
+        return f"{self.experiment_params.params_artifact_type}{feat_suffix}"
 
     def run(self):
         torch_params = TorchParameters(
@@ -72,5 +72,6 @@ class RunExperiment:
                 experiment = FinalTrainExperiment(
                     experiment_info=experiment_info,
                     wandb_run=run,
+                    feat_suffix=self.experiment_params.feat_suffix,
                 )
                 experiment.run()

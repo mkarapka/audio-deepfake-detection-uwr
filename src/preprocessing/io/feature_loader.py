@@ -15,10 +15,11 @@ class FeatureLoader(BaseIO):
         file_name=consts.feature_extracted,
         data_dir: Path = consts.collected_data_dir,
         split_dir: Path = consts.split_dir,
+        meta_suffix: str = None,
     ):
         super().__init__(self.__class__.__name__, file_name, feat_suffix, data_dir, split_dir)
         self.emb_path = self._create_file_path(file_ext=consts.npy_ext)
-        self.meta_path = self._create_file_path(file_ext=consts.csv_ext)
+        self.meta_path = self._create_file_path(file_ext=consts.csv_ext, meta_suffix=meta_suffix)
 
     def _sample_meta(self, metadata: pd.DataFrame, fraction=0.4) -> pd.DataFrame:
         sample_size = int(len(metadata) * fraction)

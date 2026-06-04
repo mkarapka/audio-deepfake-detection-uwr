@@ -5,7 +5,7 @@ import pandas as pd
 import soundfile as sf
 
 from src.common.constants import Constants as consts
-from src.common.logger import get_logger, setup_logger
+from src.common.logger import setup_logger
 from src.preprocessing.audio_segmentator import AudioSegmentator
 from src.preprocessing.feature_extractors.base_feature_extractor import (
     BaseFeatureExtractor,
@@ -15,9 +15,6 @@ from src.preprocessing.feature_extractors.wavlm_extractor import WavLmExtractor
 from src.preprocessing.io.collector import Collector
 from src.preprocessing.unique_audio_id_mapper import UniqueAudioIdMapper
 
-LOGGER_NAME = "InTheWildPreprocessingPipeline"
-logger = get_logger(LOGGER_NAME)
-setup_logger(LOGGER_NAME, log_to_console=True)
 
 UNKNOWN_SPEAKER_ID = -1
 
@@ -36,19 +33,20 @@ class InTheWildPreprocessingPipeline:
         self.source_dir = Path(source_dir)
         self.files_chunk_size = files_chunk_size
 
-        logger.info(f"Initialized InTheWildPreprocessingPipeline with source: {self.source_dir}")
+        self.logger = setup_logger(__class__.__name__, log_to_console=True)
+        self.logger.info(f"Initialized InTheWildPreprocessingPipeline with source: {self.source_dir}")
         if not self.source_dir.exists():
-            logger.error(f"Source directory does not exist: {self.source_dir}")
+            self.logger.error(f"Source directory does not exist: {self.source_dir}")
 
     def _list_audio_files(self) -> list[tuple[Path, str]]:
         files: list[tuple[Path, str]] = []
         for label in self.LABEL_TO_TARGET:
             label_dir = self.source_dir / label
             if not label_dir.exists():
-                logger.warning(f"Label directory not found, skipping: {label_dir}")
+                self.logger.warning(f"Label directory not found, skipping: {label_dir}")
                 continue
             label_files = sorted(label_dir.glob("*.wav"), key=lambda p: p.stem)
-            logger.info(f"Found {len(label_files)} '{label}' files in {label_dir}")
+            self.logger.info(f"Found {len(label_files)} '{label}' files in {label_dir}")
             files.extend((wav_path, label) for wav_path in label_files)
         return files
 
@@ -85,16 +83,16 @@ class InTheWildPreprocessingPipeline:
     def _reset_output_files(self, collector: Collector):
         for file_path in (collector.get_metadata_file_path(), collector.get_embeddings_file_path()):
             if file_path.exists():
-                logger.warning(f"Removing existing output file before fresh run: {file_path}")
+                self.logger.warning(f"Removing existing output file before fresh run: {file_path}")
                 file_path.unlink()
 
     def _preprocess_dataset(self, file_name: str, feat_suffix: str, feature_extractor: BaseFeatureExtractor):
         if not file_name:
-            logger.error("File name for saving processed data must be provided.")
+            self.logger.error("File name for saving processed data must be provided.")
 
         files = self._list_audio_files()
         if not files:
-            logger.error(f"No WAV files found under {self.source_dir}; nothing to process.")
+            self.logger.error(f"No WAV files found under {self.source_dir}; nothing to process.")
             return
 
         segmentator = AudioSegmentator()
@@ -106,23 +104,23 @@ class InTheWildPreprocessingPipeline:
         for start in range(0, total_files, self.files_chunk_size):
             chunk = files[start : start + self.files_chunk_size]
             chunk_end = start + len(chunk)
-            logger.info(f"Processing files {start + 1}-{chunk_end} of {total_files}")
+            self.logger.info(f"Processing files {start + 1}-{chunk_end} of {total_files}")
 
             segs_metadata, waves_segs = segmentator.transform(self._stream_records(chunk))
             if segs_metadata.empty:
-                logger.warning("Chunk produced no segments, skipping.")
+                self.logger.warning("Chunk produced no segments, skipping.")
                 continue
-            logger.info(f"✓ Segmented into {segs_metadata.shape[0]} segments")
+            self.logger.info(f"✓ Segmented into {segs_metadata.shape[0]} segments")
 
             modified_segs_metadata = self._build_metadata(segs_metadata)
             modified_segs_metadata = uq_audio_id_mapper.transform(metadata=modified_segs_metadata)
-            logger.info(f"✓ Modified metadata ({len(modified_segs_metadata.columns)} columns)")
+            self.logger.info(f"✓ Modified metadata ({len(modified_segs_metadata.columns)} columns)")
 
             embeddings = feature_extractor.transform(wave_segments=waves_segs)
-            logger.info(f"✓ Extracted {len(embeddings)} embeddings")
+            self.logger.info(f"✓ Extracted {len(embeddings)} embeddings")
 
             collector.transform(meta_df=modified_segs_metadata, embeddings=embeddings)
-            logger.info(f"✓ Saved chunk to {file_name}\n")
+            self.logger.info(f"✓ Saved chunk to {file_name}\n")
 
     def preprocess_dataset_wavlm(self, file_name=consts.in_the_wild_file, batch_size=8):
         self._preprocess_dataset(

@@ -55,7 +55,7 @@ class FFTExtractor(BaseFeatureExtractor):
 
             step = max(1, int(rows_size // self.batch_size * 0.1))
             if (i // self.batch_size) % step == 0:
-                print(f"FFT Extractor: Processed {i / rows_size:.2%} records.")
+                self.logger.info(f"FFT Extractor: Processed {i / rows_size:.2%} records.")
 
         full_features = np.vstack(all_features)
         return full_features

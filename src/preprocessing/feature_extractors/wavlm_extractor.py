@@ -27,7 +27,7 @@ class WavLmExtractor(BaseFeatureExtractor):
     def _print_percent_of_completed_records(self, i, rows_size):
         step = max(1, int(rows_size // self.batch_size * self.print_percent))
         if (i // self.batch_size) % step == 0:
-            print(f"WavLM Extractor: Processed {i / rows_size:.2%} records.")
+            self.logger.info(f"WavLM Extractor: Processed {i / rows_size:.2%} records.")
 
     def transform(self, wave_segments: np.ndarray) -> torch.Tensor:
         rows_size = wave_segments.shape[0]

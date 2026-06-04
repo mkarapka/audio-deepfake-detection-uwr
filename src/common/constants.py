@@ -14,7 +14,7 @@ class Constants:
     tests_data_dir = data_dir / "tests_data"
     artifacts_dir = data_dir / "artifacts"
     in_the_wild_dir = data_dir / "in_the_wild"
-    colab_data_dir = Path("/content/drive/MyDrive/deepfake_data")
+    in_the_wild_audio_dir = in_the_wild_dir / "audio"
 
     # WandB
     type_model_params = "model_params"
@@ -22,6 +22,7 @@ class Constants:
 
     # File names
     speakers_ids_file = "speakers_ids.csv"
+    in_the_wild_meta_file = "in_the_wild.csv"
     feature_extracted = "feature_extracted"
     in_the_wild_file = "in_the_wild"
     wavlm_emb_suffix = "_wavlm"

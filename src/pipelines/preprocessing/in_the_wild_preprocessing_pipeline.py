@@ -15,68 +15,87 @@ from src.preprocessing.feature_extractors.wavlm_extractor import WavLmExtractor
 from src.preprocessing.io.collector import Collector
 from src.preprocessing.unique_audio_id_mapper import UniqueAudioIdMapper
 
-
 UNKNOWN_SPEAKER_ID = -1
 
 
 class InTheWildPreprocessingPipeline:
-    """Feature extraction pipeline for the local `in_the_wild` dataset.
-
-    Mirrors `PreprocessingPipeline`, but reads WAV files from disk
-    (`fake/` and `real/` subfolders) instead of streaming from HuggingFace.
-    Files are processed in chunks to keep memory bounded for the ~30k clips.
-    """
-
-    LABEL_TO_TARGET = {"fake": consts.spoof, "real": consts.bonafide}
-
-    def __init__(self, source_dir: Path = consts.in_the_wild_dir, files_chunk_size: int = 3_800):
+    def __init__(
+        self,
+        source_dir: Path = consts.in_the_wild_dir,
+        meta_file: str = consts.in_the_wild_meta_file,
+        files_chunk_size: int = 3_800,
+    ):
         self.source_dir = Path(source_dir)
+        self.audio_dir = self.source_dir / "audio"
+        self.meta_path = self.source_dir / meta_file
         self.files_chunk_size = files_chunk_size
+
+        self.label_by_stem: dict[str, str] = {}
+        self.speaker_by_stem: dict[str, int] = {}
 
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.logger.info(f"Initialized InTheWildPreprocessingPipeline with source: {self.source_dir}")
-        if not self.source_dir.exists():
-            self.logger.error(f"Source directory does not exist: {self.source_dir}")
+        if not self.audio_dir.exists():
+            self.logger.error(f"Audio directory does not exist: {self.audio_dir}")
+        if not self.meta_path.exists():
+            self.logger.error(f"Metadata file does not exist: {self.meta_path}")
+
+    def _is_missing_columns(self, meta: pd.DataFrame) -> bool:
+        missing_columns = {"file", "target"} - set(meta.columns)
+        if missing_columns:
+            self.logger.error(f"{self.meta_path} is missing required columns: {missing_columns}")
+            return True
+        return False
 
     def _list_audio_files(self) -> list[tuple[Path, str]]:
+        meta = pd.read_csv(self.meta_path)
+        if self._is_missing_columns(meta):
+            return []
+
+        speaker_map = dict(zip(meta["speaker"].unique(), pd.factorize(meta["speaker"])[0]))
+
         files: list[tuple[Path, str]] = []
-        for label in self.LABEL_TO_TARGET:
-            label_dir = self.source_dir / label
-            if not label_dir.exists():
-                self.logger.warning(f"Label directory not found, skipping: {label_dir}")
+        self.label_by_stem = {}
+        self.speaker_by_stem = {}
+        missing_files = 0
+        for i, row in enumerate(meta.itertuples(index=False)):
+            stem = Path(row.file).stem
+            wav_path = self.audio_dir / row.file
+            if not wav_path.exists():
+                missing_files += 1
                 continue
-            label_files = sorted(label_dir.glob("*.wav"), key=lambda p: p.stem)
-            self.logger.info(f"Found {len(label_files)} '{label}' files in {label_dir}")
-            files.extend((wav_path, label) for wav_path in label_files)
+            self.label_by_stem[stem] = row.target
+            self.speaker_by_stem[stem] = speaker_map.get(row.speaker, UNKNOWN_SPEAKER_ID)
+            files.append((wav_path, stem))
+
+        if missing_files:
+            self.logger.warning(f"{missing_files} files listed in {self.meta_path.name} not found in {self.audio_dir}")
+        self.logger.info(f"Prepared {len(files)} labelled files from {self.meta_path.name}")
         return files
 
-    def _load_wav_record(self, wav_path: Path, label: str) -> dict:
+    def _load_wav_record(self, wav_path: Path, stem: str) -> dict:
         array, sr = sf.read(str(wav_path))
         if array.ndim > 1:
             array = array.mean(axis=1)
         array = array.astype(np.float32)
         return {
-            "__key__": f"{label}/{wav_path.stem}",
+            "__key__": stem,
             "wav": {"array": array, "sampling_rate": sr},
         }
 
     def _stream_records(self, files_chunk: list[tuple[Path, str]]):
-        for wav_path, label in files_chunk:
-            yield self._load_wav_record(wav_path, label)
+        for wav_path, stem in files_chunk:
+            yield self._load_wav_record(wav_path, stem)
 
     def _build_metadata(self, segs_metadata: pd.DataFrame) -> pd.DataFrame:
-        labels, record_ids = [], []
-        for key in segs_metadata["key_id"]:
-            label, stem = key.split("/", 1)
-            labels.append(label)
-            record_ids.append(stem)
+        record_ids = list(segs_metadata["key_id"])
 
         metadata = segs_metadata.copy()
-        metadata["config"] = [f"{consts.in_the_wild_file}-{label}" for label in labels]
+        metadata["config"] = consts.in_the_wild_file
         metadata["split"] = consts.in_the_wild_file
         metadata["record_id"] = record_ids
-        metadata["speaker_id"] = UNKNOWN_SPEAKER_ID
-        metadata["target"] = [self.LABEL_TO_TARGET[label] for label in labels]
+        metadata["speaker_id"] = [self.speaker_by_stem[stem] for stem in record_ids]
+        metadata["target"] = [self.label_by_stem[stem] for stem in record_ids]
         metadata = metadata.drop(columns=["key_id"])
         return metadata
 
@@ -95,7 +114,7 @@ class InTheWildPreprocessingPipeline:
             self.logger.error(f"No WAV files found under {self.source_dir}; nothing to process.")
             return
 
-        segmentator = AudioSegmentator()
+        segmentator = AudioSegmentator(estimated_records_in_dataset=self.files_chunk_size)
         collector = Collector(save_file_name=file_name, feat_suffix=feat_suffix)
         uq_audio_id_mapper = UniqueAudioIdMapper()
         self._reset_output_files(collector)

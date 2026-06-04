@@ -24,6 +24,9 @@ def setup_logger(
     """
     logger = logging.getLogger(name)
     logger.setLevel(level)
+    # Each logger has its own handlers; no propagation to root (otherwise
+    # transformers/datasets/wandb via basicConfig() duplicate console logs).
+    logger.propagate = False
 
     # Format logów
     formatter = logging.Formatter(

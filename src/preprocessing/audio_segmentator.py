@@ -8,11 +8,18 @@ from src.preprocessing.base_preprocessor import BasePreprocessor
 
 
 class AudioSegmentator(BasePreprocessor):
-    def __init__(self, overlap=2.0, max_duration=4.0, audio_type="spoof"):
+    def __init__(
+        self,
+        overlap=2.0,
+        max_duration=4.0,
+        audio_type="spoof",
+        estimated_records_in_dataset=consts.ESTIMATED_RECORDS_IN_DATASET,
+    ):
         super().__init__(class_name=__class__.__name__)
         self.overlap_sec = overlap
         self.chunk_sec = max_duration
         self.audio_type = audio_type
+        self.estimated_records_in_dataset = estimated_records_in_dataset
 
     def _get_relevant_samples(self, wave_samples) -> list[torch.Tensor | int | float]:
         samples = wave_samples["array"]
@@ -49,7 +56,7 @@ class AudioSegmentator(BasePreprocessor):
     def _log_segmented_audio_info(self, iteration: int):
         self.logger.info(
             f"Estimated percentage of dataset processed: {
-                iteration * 100 / consts.ESTIMATED_RECORDS_IN_DATASET:.2f}%"
+                iteration * 100 / self.estimated_records_in_dataset:.2f}%"
         )
 
     def transform(self, dataset) -> tuple[pd.DataFrame, np.ndarray]:
@@ -75,7 +82,7 @@ class AudioSegmentator(BasePreprocessor):
                 )
                 wave_segments.append(ch)
 
-            if (i + 1) % int(consts.ESTIMATED_RECORDS_IN_DATASET * 0.1) == 0:
+            if (i + 1) % int(self.estimated_records_in_dataset * 0.1) == 0:
                 self._log_segmented_audio_info(iteration=i + 1)
 
         audio_segments_df = pd.DataFrame(audio_segments_rows)

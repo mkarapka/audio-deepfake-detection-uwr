@@ -21,6 +21,7 @@ from src.preprocessing.io.feature_loader import FeatureLoader
 class ExperimentPreprocessor:
     def __init__(self, feat_suffix: str, load_file_name: str = consts.feature_extracted, device: str = None):
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
+        self.feat_suffix = feat_suffix
         self.feature_loader = FeatureLoader(file_name=load_file_name, feat_suffix=feat_suffix)
         self.device = get_device(include_mps=True) if device is None else device
         self.logger.info(
@@ -55,6 +56,22 @@ class ExperimentPreprocessor:
             )
         return (x - train_mean) / train_std
 
+    def compute_standardize_params(self, features: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        mean = np.mean(features, axis=0)
+        std = np.std(features, axis=0)
+        std[std == 0] = 1e-8
+        return mean, std
+
+    def compute_standardize_params_from_split(
+        self, file_name: str = consts.feature_extracted, split_name: str = "train"
+    ) -> tuple[np.ndarray, np.ndarray]:
+        loader = FeatureLoader(file_name=file_name, feat_suffix=self.feat_suffix)
+        meta, feat = loader.load_data_split(split_name=split_name)
+        self.logger.info(
+            f"Computed standardization params from '{file_name}' split '{split_name}' ({len(meta):,} samples)."
+        )
+        return self.compute_standardize_params(feat)
+
     def preprocess_data(
         self,
         splits_names: list[str],
@@ -63,13 +80,17 @@ class ExperimentPreprocessor:
         use_standardize: bool = False,
         balance_splits_strategy: BalanceStrategy = None,
         remove_by_query: str | dict[str, str] | None = None,
+        standardize_params: tuple[np.ndarray, np.ndarray] | None = None,
     ) -> dict[str, AudioDataset]:
         split_dataset_dict = {}
-        train_mean = None
-        train_std = None
+        train_mean = standardize_params[0] if standardize_params else None
+        train_std = standardize_params[1] if standardize_params else None
 
         for i, split_name in enumerate(splits_names):
-            meta, feat = self.feature_loader.load_data_split(split_name=split_name)
+            if self.feature_loader.file_name_no_suffix == consts.feature_extracted:
+                meta, feat = self.feature_loader.load_data_split(split_name=split_name)
+            else:
+                meta, feat = self.feature_loader.load_data()
 
             if remove_by_query is not None:
                 if isinstance(remove_by_query, dict):
@@ -109,10 +130,8 @@ class ExperimentPreprocessor:
 
             if use_standardize:
                 self.logger.info(f"Standardizing features for split '{split_name}'...")
-                if split_name == "train":
-                    train_mean = np.mean(feat, axis=0)
-                    train_std = np.std(feat, axis=0)
-                    train_std[train_std == 0] = 1e-8
+                if split_name == "train" and train_mean is None:
+                    train_mean, train_std = self.compute_standardize_params(feat)
 
                 torch_dataset = AudioDataset(
                     metadata=meta,

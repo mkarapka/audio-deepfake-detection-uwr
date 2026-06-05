@@ -34,14 +34,14 @@ class BaseIO:
     def _create_file_path(
         self,
         file_ext: str,
-        dir: str = None,
+        data_dir: str = None,
         split_name: str = None,
         meta_suffix: str = None,
     ) -> Path:
-        if dir is None:
-            dir = self.data_dir
+        if data_dir is None:
+            data_dir = self.data_dir
             if split_name is not None:
-                dir = self.split_dir
+                data_dir = self.split_dir
 
         if file_ext == consts.csv_ext:
             full_file_name = self.file_name_no_suffix
@@ -56,18 +56,18 @@ class BaseIO:
             else:
                 new_file_name = f"{full_file_name}{file_ext}"
 
-        file_path = Path(dir) / new_file_name
+        file_path = Path(data_dir) / new_file_name
         self.logger.info(f"Constructed file path: {file_path}")
         return file_path
 
     def create_read_file_path(self, file_ext: str, dir: str = None, split_name: str = None):
-        file_path = self._create_file_path(file_ext=file_ext, dir=dir, split_name=split_name)
+        file_path = self._create_file_path(file_ext=file_ext, data_dir=dir, split_name=split_name)
         if not file_path.exists():
             raise_error_logger(self.logger, f"File {file_path} does not exist.")
         return file_path
 
     def create_write_file_path(self, file_ext: str, dir: str = None, split_name: str = None):
-        file_path = self._create_file_path(file_ext=file_ext, dir=dir, split_name=split_name)
+        file_path = self._create_file_path(file_ext=file_ext, data_dir=dir, split_name=split_name)
         if file_path.exists():
             self.logger.warning(f"File {file_path} already exists and might be overwritten.")
         return file_path

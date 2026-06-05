@@ -11,7 +11,7 @@ from src.common.experiment_configs import (
 def make_preprocess_configs(
     fraction: float,
     balance_strategy: BalanceStrategy | None,
-    feat_suffix: str,
+    experiment_suffix: str,
     splits_names: list[str] = ["train", "dev", "test"],
 ):
     wavlm = ExperimentPreprocessConfig(
@@ -26,7 +26,7 @@ def make_preprocess_configs(
     fft = wavlm.copy()
     fft["use_standardize"] = True
 
-    return {f"fft{feat_suffix}": fft, f"wavlm{feat_suffix}": wavlm}
+    return {f"fft{experiment_suffix}": fft, f"wavlm{experiment_suffix}": wavlm}
 
 
 if __name__ == "__main__":

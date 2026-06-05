@@ -91,8 +91,8 @@ class InTheWildPreprocessingPipeline:
         record_ids = list(segs_metadata["key_id"])
 
         metadata = segs_metadata.copy()
-        metadata["config"] = consts.in_the_wild_file
-        metadata["split"] = consts.in_the_wild_file
+        metadata["config"] = consts.in_the_wild
+        metadata["split"] = consts.in_the_wild
         metadata["record_id"] = record_ids
         metadata["speaker_id"] = [self.speaker_by_stem[stem] for stem in record_ids]
         metadata["target"] = [self.label_by_stem[stem] for stem in record_ids]
@@ -141,14 +141,14 @@ class InTheWildPreprocessingPipeline:
             collector.transform(meta_df=modified_segs_metadata, embeddings=embeddings)
             self.logger.info(f"✓ Saved chunk to {file_name}\n")
 
-    def preprocess_dataset_wavlm(self, file_name=consts.in_the_wild_file, batch_size=8):
+    def preprocess_dataset_wavlm(self, file_name=consts.in_the_wild, batch_size=8):
         self._preprocess_dataset(
             file_name=file_name,
             feat_suffix=consts.wavlm_emb_suffix,
             feature_extractor=WavLmExtractor(batch_size=batch_size),
         )
 
-    def preprocess_dataset_fft(self, file_name=consts.in_the_wild_file, batch_size=8):
+    def preprocess_dataset_fft(self, file_name=consts.in_the_wild, batch_size=8):
         self._preprocess_dataset(
             file_name=file_name,
             feat_suffix=consts.fft_emb_suffix,

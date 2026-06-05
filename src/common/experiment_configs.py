@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import TYPE_CHECKING
-
+from src.common.constants import Constants as consts
 if TYPE_CHECKING:
     from src.training.objectives import Objective
 
@@ -92,6 +92,7 @@ class RunExperimentParams:
     models_types: list[ModelType]
     params_artifact_type: str
 
+    load_file_name: str = consts.feature_extracted
     experiment_suffix: str = ""
     params_artifact_alias: str = "latest"
     job_type: str = "final_train"

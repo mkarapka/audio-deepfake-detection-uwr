@@ -155,7 +155,7 @@ class ArtifactManager:
 
         file_path = download_dir / f"{artifact_name}.{ext}"
         if not file_path.exists():
-            files = sorted(download_dir.glob(f"**/*.{ext}"))
+            files = sorted(download_dir.glob(f"*.{ext}"))
             if len(files) != 1:
                 raise_error_logger(self.logger, f"File not found in W&B artifact: {file_path}")
             file_path = files[0]

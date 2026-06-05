@@ -24,7 +24,7 @@ class Constants:
     speakers_ids_file = "speakers_ids.csv"
     in_the_wild_meta_file = "in_the_wild.csv"
     feature_extracted = "feature_extracted"
-    in_the_wild_file = "in_the_wild"
+    in_the_wild = "in_the_wild"
     wavlm_emb_suffix = "_wavlm"
     fft_emb_suffix = "_fft"
     npy_ext = ".npy"
@@ -121,6 +121,6 @@ class Constants:
     }
 
     # Training configs
-    default_epochs = 20
+    default_epochs = 40
     default_batch_size = 128
     default_early_stopping_patience = 3

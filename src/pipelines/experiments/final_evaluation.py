@@ -8,10 +8,18 @@ from src.training.artifact_manager import ArtifactManager
 
 
 class FinalEvaluationExperiment:
-    def __init__(self, *, experiment_info: ExperimentInfo, wandb_run: wandb.Run, feat_suffix: str = ""):
+    def __init__(
+        self,
+        *,
+        experiment_info: ExperimentInfo,
+        wandb_run: wandb.Run,
+        experiment_suffix: str = "",
+        load_file_name: str = consts.feature_extracted,
+    ):
         self.experiment_config = experiment_info.config
         self.wandb_run = wandb_run
-        self.feat_suffix = feat_suffix
+        self.experiment_suffix = experiment_suffix
+        self.load_file_name = load_file_name
 
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.wandb_logger = WandbLogger(self.logger, run=self.wandb_run)
@@ -35,7 +43,16 @@ class FinalEvaluationExperiment:
         feature_type_dataloaders_map = {}
         for feature_key, preprocess_config in self.experiment_config.preprocess_configs.items():
             feat_suffix = self._get_feat_suffix(feature_key)
-            preprocessor = ExperimentPreprocessor(feat_suffix=feat_suffix, load_file_name=preprocess_config.file_name)
+            preprocessor = ExperimentPreprocessor(feat_suffix=feat_suffix, load_file_name=self.load_file_name)
+
+            if preprocess_config.get("use_standardize") and "train" not in preprocess_config.get("splits_names", []):
+                self.wandb_logger.info(
+                    f"Computing standardization params from '{consts.feature_extracted}' train split..."
+                )
+                standardize_params = preprocessor.compute_standardize_params_from_split(
+                    file_name=consts.feature_extracted, split_name="train"
+                )
+                preprocess_config = {**preprocess_config, "standardize_params": standardize_params}
 
             self.wandb_logger.info(f"Preprocessing {feature_key} features with config: {preprocess_config}...")
             dataset_map = preprocessor.preprocess_data(**preprocess_config)
@@ -57,7 +74,7 @@ class FinalEvaluationExperiment:
                 classifier = self.artifact_manager.load_model_from_wandb(
                     wandb_run=self.wandb_run,
                     artifact_name=f"{model_name}_{feature_key}_final_model",
-                    artifact_type=f"model{self.feat_suffix}",
+                    artifact_type=f"model{self.experiment_suffix}",
                     alias="latest",
                 )
 

@@ -81,12 +81,14 @@ class RunExperiment:
                         experiment_info=experiment_info,
                         wandb_run=run,
                         experiment_suffix=self.experiment_params.experiment_suffix,
+                        load_file_name=self.experiment_params.load_file_name,
                     )
                 elif self.experiment_class == "final_evaluation":
                     experiment = FinalEvaluationExperiment(
                         experiment_info=experiment_info,
                         wandb_run=run,
-                        feat_suffix=self.experiment_params.experiment_suffix,
+                        experiment_suffix=self.experiment_params.experiment_suffix,
+                        load_file_name=self.experiment_params.load_file_name,
                     )
                 else:
                     raise_error_logger(self.logger, f"Unsupported experiment_class: {self.experiment_class}")

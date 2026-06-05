@@ -114,6 +114,7 @@ class FinalTrainExperiment:
         if patience is not None and val_loader is None:
             self.logger.warning("Early stopping requested but no validation loader provided; running full epochs.")
 
+        best_val_loss = float("inf")
         best_val_eer = float("inf")
         best_state = None
         epochs_without_improvement = 0
@@ -138,15 +139,19 @@ class FinalTrainExperiment:
                     device=classifier.device,
                 )
                 val_eer = binary_eer(preds=y_probs, target=y_true).item()
-                improved = val_eer < best_val_eer - min_delta
+
+                improved = val_loss < best_val_loss - min_delta
                 if improved:
-                    best_val_eer = val_eer
+                    best_val_loss = val_loss
                     epochs_without_improvement = 0
                     best_state = copy.deepcopy(classifier.model.state_dict())
                 else:
                     epochs_without_improvement += 1
+
+                best_val_eer = min(best_val_eer, val_eer)
                 metrics |= {
                     f"{log_prefix}/val_loss": val_loss,
+                    f"{log_prefix}/val_loss_best": best_val_loss,
                     f"{log_prefix}/val_acc": val_acc,
                     f"{log_prefix}/val_precision": binary_precision(preds=y_probs, target=y_true).item(),
                     f"{log_prefix}/val_recall": binary_recall(preds=y_probs, target=y_true).item(),
@@ -160,12 +165,15 @@ class FinalTrainExperiment:
             if early_stopping_enabled and epochs_without_improvement >= patience:
                 self.logger.info(
                     f"Early stopping at epoch {epoch + 1}/{epochs}: "
-                    f"no val_eer improvement for {patience} epoch(s) (best val_eer={best_val_eer:.4f})."
+                    f"no val_loss improvement for {patience} epoch(s) "
+                    f"(best val_loss={best_val_loss:.4f}, best val_eer={best_val_eer:.4f})."
                 )
                 break
 
         if best_state is not None:
-            self.logger.info(f"Restoring best model weights (val_eer={best_val_eer:.4f}).")
+            self.logger.info(
+                f"Restoring best model weights (val_loss={best_val_loss:.4f}, val_eer={best_val_eer:.4f})."
+            )
             classifier.model.load_state_dict(best_state)
 
         return classifier

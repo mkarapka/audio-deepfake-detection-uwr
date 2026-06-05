@@ -35,7 +35,7 @@ class FinalEvaluationExperiment:
         feature_type_dataloaders_map = {}
         for feature_key, preprocess_config in self.experiment_config.preprocess_configs.items():
             feat_suffix = self._get_feat_suffix(feature_key)
-            preprocessor = ExperimentPreprocessor(feat_suffix=feat_suffix)
+            preprocessor = ExperimentPreprocessor(feat_suffix=feat_suffix, load_file_name=preprocess_config.file_name)
 
             self.wandb_logger.info(f"Preprocessing {feature_key} features with config: {preprocess_config}...")
             dataset_map = preprocessor.preprocess_data(**preprocess_config)

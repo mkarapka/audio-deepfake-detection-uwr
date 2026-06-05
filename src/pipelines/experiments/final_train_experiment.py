@@ -1,3 +1,5 @@
+import copy
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -21,10 +23,18 @@ from src.training.artifact_manager import ArtifactManager
 
 
 class FinalTrainExperiment:
-    def __init__(self, *, experiment_info: ExperimentInfo, wandb_run: wandb.Run, feat_suffix: str = ""):
+    def __init__(
+        self,
+        *,
+        experiment_info: ExperimentInfo,
+        wandb_run: wandb.Run,
+        experiment_suffix: str = "",
+        load_file_name: str = consts.feature_extracted,
+    ):
         self.experiment_config = experiment_info.config
         self.wandb_run = wandb_run
-        self.feat_suffix = feat_suffix
+        self.experiment_suffix = experiment_suffix
+        self.load_file_name = load_file_name
 
         self.logger = setup_logger(__class__.__name__, log_to_console=True)
         self.wandb_logger = WandbLogger(self.logger, run=self.wandb_run)
@@ -33,6 +43,12 @@ class FinalTrainExperiment:
         self.torch_params = self.training_config.torch_params
 
         self.artifact_manager = ArtifactManager(experiment_name=experiment_info.experiment_name)
+
+    def _get_const_hidden_sizes(self) -> list[int]:
+        return [256, 128, 64]
+
+    def _get_const_dropout_rate(self) -> float:
+        return 0.25
 
     def _get_feat_suffix(self, feature_key: str) -> str:
         if "wavlm" in feature_key:
@@ -92,7 +108,15 @@ class FinalTrainExperiment:
         optimizer = optim.AdamW(classifier.parameters(), lr=lr, weight_decay=weight_decay)
         criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
+        patience = self.torch_params.early_stopping_patience
+        min_delta = self.torch_params.early_stopping_min_delta
+        early_stopping_enabled = patience is not None and val_loader is not None
+        if patience is not None and val_loader is None:
+            self.logger.warning("Early stopping requested but no validation loader provided; running full epochs.")
+
         best_val_eer = float("inf")
+        best_state = None
+        epochs_without_improvement = 0
         for epoch in range(epochs):
             train_loss, train_acc = classifier.train_one_epoch(
                 train_loader=train_loader,
@@ -114,7 +138,13 @@ class FinalTrainExperiment:
                     device=classifier.device,
                 )
                 val_eer = binary_eer(preds=y_probs, target=y_true).item()
-                best_val_eer = min(best_val_eer, val_eer)
+                improved = val_eer < best_val_eer - min_delta
+                if improved:
+                    best_val_eer = val_eer
+                    epochs_without_improvement = 0
+                    best_state = copy.deepcopy(classifier.model.state_dict())
+                else:
+                    epochs_without_improvement += 1
                 metrics |= {
                     f"{log_prefix}/val_loss": val_loss,
                     f"{log_prefix}/val_acc": val_acc,
@@ -127,6 +157,17 @@ class FinalTrainExperiment:
 
             self.wandb_logger.log_metrics(metrics, log_prefix=log_prefix)
 
+            if early_stopping_enabled and epochs_without_improvement >= patience:
+                self.logger.info(
+                    f"Early stopping at epoch {epoch + 1}/{epochs}: "
+                    f"no val_eer improvement for {patience} epoch(s) (best val_eer={best_val_eer:.4f})."
+                )
+                break
+
+        if best_state is not None:
+            self.logger.info(f"Restoring best model weights (val_eer={best_val_eer:.4f}).")
+            classifier.model.load_state_dict(best_state)
+
         return classifier
 
     def run(self):
@@ -136,7 +177,7 @@ class FinalTrainExperiment:
         feature_type_dataloaders_map = {}
         for feature_key, preprocess_config in self.experiment_config.preprocess_configs.items():
             feat_suffix = self._get_feat_suffix(feature_key)
-            preprocessor = ExperimentPreprocessor(feat_suffix=feat_suffix)
+            preprocessor = ExperimentPreprocessor(feat_suffix=feat_suffix, load_file_name=self.load_file_name)
 
             self.wandb_logger.info(f"Preprocessing {feature_key} features with config: {preprocess_config}...")
             dataset_map = preprocessor.preprocess_data(**preprocess_config)
@@ -212,7 +253,11 @@ class FinalTrainExperiment:
                 model_artifact_name = f"{model_name}_{feature_key}_final_model"
                 self.artifact_manager.save_model(model=classifier, model_name=model_artifact_name, ext="pt")
                 model_path = self.artifact_manager.get_model_file_path(file_name=model_artifact_name, ext="pt")
-                self.wandb_run.log_artifact(model_path, name=model_artifact_name, type=f"model{self.feat_suffix}")
+                self.wandb_run.log_artifact(
+                    model_path,
+                    name=model_artifact_name,
+                    type=f"model{self.experiment_suffix}",
+                )
                 self.wandb_logger.info(f"Saved final model to {model_path} and logged to W&B.")
 
         self.wandb_run.finish()

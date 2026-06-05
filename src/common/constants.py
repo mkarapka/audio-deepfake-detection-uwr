@@ -119,3 +119,8 @@ class Constants:
         "cluster_selection_method": "eom",
         "prediction_data": True,
     }
+
+    # Training configs
+    default_epochs = 20
+    default_batch_size = 128
+    default_early_stopping_patience = 3

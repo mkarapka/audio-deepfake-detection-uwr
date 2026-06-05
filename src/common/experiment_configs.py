@@ -43,6 +43,8 @@ class TorchParameters:
     num_workers: int
     epochs: int
     use_pos_weight: bool = True
+    early_stopping_patience: int | None = None
+    early_stopping_min_delta: float = 0.0
 
 
 @dataclass
@@ -90,9 +92,11 @@ class RunExperimentParams:
     models_types: list[ModelType]
     params_artifact_type: str
 
-    feat_suffix: str = ""
+    experiment_suffix: str = ""
     params_artifact_alias: str = "latest"
     job_type: str = "final_train"
 
     num_workers: int = -1
     use_pos_weight: bool = True
+    early_stopping_patience: int | None = None
+    early_stopping_min_delta: float = 0.0

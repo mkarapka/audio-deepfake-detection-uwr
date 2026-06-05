@@ -38,6 +38,8 @@ class RunExperiment:
             num_workers=self.experiment_params.num_workers,
             epochs=self.experiment_params.epochs,
             use_pos_weight=self.experiment_params.use_pos_weight,
+            early_stopping_patience=self.experiment_params.early_stopping_patience,
+            early_stopping_min_delta=self.experiment_params.early_stopping_min_delta,
         )
 
         for feature_key, preprocess_cfg in self.preprocess_configs.items():
@@ -46,7 +48,9 @@ class RunExperiment:
                     models=[model],
                     torch_params=torch_params,
                     best_params_artifact_alias=self.experiment_params.params_artifact_alias,
-                    best_params_artifact_type=self._get_artifact_type_with_suffix(self.experiment_params.feat_suffix),
+                    best_params_artifact_type=self._get_artifact_type_with_suffix(
+                        self.experiment_params.experiment_suffix
+                    ),
                 )
                 experiment_config = ExperimentConfig(
                     preprocess_configs={feature_key: preprocess_cfg},
@@ -76,13 +80,13 @@ class RunExperiment:
                     experiment = FinalTrainExperiment(
                         experiment_info=experiment_info,
                         wandb_run=run,
-                        feat_suffix=self.experiment_params.feat_suffix,
+                        experiment_suffix=self.experiment_params.experiment_suffix,
                     )
                 elif self.experiment_class == "final_evaluation":
                     experiment = FinalEvaluationExperiment(
                         experiment_info=experiment_info,
                         wandb_run=run,
-                        feat_suffix=self.experiment_params.feat_suffix,
+                        feat_suffix=self.experiment_params.experiment_suffix,
                     )
                 else:
                     raise_error_logger(self.logger, f"Unsupported experiment_class: {self.experiment_class}")

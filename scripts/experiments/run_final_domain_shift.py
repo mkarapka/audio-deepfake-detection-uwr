@@ -1,4 +1,5 @@
 from scripts.experiments.run_experiment import ExperimentPreprocessConfig, RunExperiment
+from src.common.constants import Constants as consts
 from src.common.experiment_configs import (
     ModelType,
     RunExperimentParams,
@@ -10,14 +11,14 @@ def get_expression(config_type: str) -> str:
 
 
 if __name__ == "__main__":
-    FEAT_SUFFIX = "_domain_shift"
+    EXP_SUFFIX = "_domain_shift"
     experiment_params = RunExperimentParams(
         description="Final train for $x0 on $x1 using best params from W&B artifacts (FFT vs WavLM)",
-        experiment_group="final_domain_shift_comparison",
-        epochs=20,
+        experiment_group="final_domain_shift_comparison_const_hid_sizes",
+        epochs=consts.default_epochs,
         fraction=1.0,
-        batch_size=128,
-        feat_suffix=FEAT_SUFFIX,
+        batch_size=consts.default_batch_size,
+        experiment_suffix=EXP_SUFFIX,
         params_artifact_type="model_params",
         models_types=[ModelType.LOGISTIC_REGRESSION, ModelType.MLP],
         balance_strategy=None,
@@ -25,6 +26,7 @@ if __name__ == "__main__":
         job_type="final_train",
         num_workers=-1,
         use_pos_weight=True,
+        early_stopping_patience=consts.default_early_stopping_patience,
     )
     real_vocoder_cfg = ExperimentPreprocessConfig(
         splits_names=["train", "dev", "test"],

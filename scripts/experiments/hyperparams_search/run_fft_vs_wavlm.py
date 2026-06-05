@@ -18,7 +18,7 @@ from src.training.objectives import (
 
 EXPERIMENT_NAME = "fft_vs_wavlm"
 EXPERIMENT_GROUP = "fft_vs_wavlm_search_hyperparams"
-DESCRIPTION = "Optuna hyperparameter search for $x0 on $x1 using Logistic Regression, MLP and XGBoost classifiers to compare FFT vs WavLM features"
+DESCRIPTION = "Optuna hyperparameter search for $x0 on $x1 using Logistic Regression, MLP"
 
 N_TRIALS = 30
 EPOCHS = 20

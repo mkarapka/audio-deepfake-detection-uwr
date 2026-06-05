@@ -3,7 +3,9 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import TYPE_CHECKING
+
 from src.common.constants import Constants as consts
+
 if TYPE_CHECKING:
     from src.training.objectives import Objective
 

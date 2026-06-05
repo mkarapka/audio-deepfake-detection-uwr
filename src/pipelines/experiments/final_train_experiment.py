@@ -68,10 +68,14 @@ class FinalTrainExperiment:
         if model_type is ModelType.MLP:
             n_layers = int(best_params.get("n_layers"))
             if n_layers is None:
-                raise_error_logger(self.logger, f"Missing 'n_layers' in best_params for MLP classifier: {best_params}")
-            hidden_sizes = [int(best_params[f"hidden_size_{i}"]) for i in range(n_layers)]
-            self.logger.info(f"MLP hidden sizes from custom test: {hidden_sizes}")
-            dropout_rate = float(best_params["dropout_rate"])
+                raise_error_logger(
+                    self.logger,
+                    f"Missing 'n_layers' in best_params for MLP classifier: {best_params}",
+                )
+            # hidden_sizes = [int(best_params[f"hidden_size_{i}"]) for i in range(n_layers)]
+            # dropout_rate = float(best_params["dropout_rate"])
+            hidden_sizes = self._get_const_hidden_sizes()
+            dropout_rate = self._get_const_dropout_rate()
             classifier = MlpClassifier(
                 input_size=in_features,
                 hidden_sizes=hidden_sizes,
@@ -95,10 +99,14 @@ class FinalTrainExperiment:
         use_pos_weight: bool,
         log_prefix: str,
     ) -> nn.Module:
-        lr = float(best_params["lr"])
+        lr = float(best_params["lr"]) * 0.2  # Reduce LR for final training
         weight_decay = float(best_params["weight_decay"])
 
-        pos_weight_value = best_params.get("pos_weight")
+        # pos_weight_value = best_params.get("pos_weight")
+        pos_weight_value = 20.44045170627666  # Computed from the full training set, can be hardcoded for final training
+        self.logger.info(
+            f"Using learning rate {lr}, pos_weight {pos_weight_value}, weight decay {weight_decay} for final training"
+        )
         pos_weight = (
             torch.tensor([float(pos_weight_value)], device=classifier.device)
             if use_pos_weight and pos_weight_value

@@ -89,8 +89,10 @@ class ExperimentPreprocessor:
         for i, split_name in enumerate(splits_names):
             if self.feature_loader.file_name_no_suffix == consts.feature_extracted:
                 meta, feat = self.feature_loader.load_data_split(split_name=split_name)
+                reduce_spoof = False
             else:
                 meta, feat = self.feature_loader.load_data()
+                reduce_spoof = True
 
             if remove_by_query is not None:
                 if isinstance(remove_by_query, dict):
@@ -124,8 +126,9 @@ class ExperimentPreprocessor:
                 )
                 balance_type, ratio_args = balance_splits_strategy[split_name]
                 balancer = self._get_balancer_instance(balancer_type=balance_type, ratio_args=ratio_args)
+                self.logger.info(f"Number of records before balancing: {len(meta):,}")
                 if balancer is not None:
-                    meta, feat = balancer.transform(metadata=meta, features=feat)
+                    meta, feat = balancer.transform(metadata=meta, features=feat, reduce_spoof=reduce_spoof)
                 self.logger.info(f"Number of records after balancing: {len(meta):,}")
 
             if use_standardize:

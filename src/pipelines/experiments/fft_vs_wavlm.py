@@ -69,6 +69,7 @@ class FFTvsWavLMExperiment:
                 self.wandb_run.log_artifact(file_path, name=file_name, type="model_params")
 
                 self.wandb_logger.info(
-                    f"Saved best params for {model_name} with {feature_key} features to {file_path} and logged to wandb."
+                    f"Saved best params for {
+                        model_name} with {feature_key} features to {file_path} and logged to wandb."
                 )
         self.wandb_run.finish()

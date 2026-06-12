@@ -43,30 +43,30 @@ class Constants:
     mls_eng_ds_path = "parler-tts/mls_eng"
 
     # TTS, Vocoders and MLS English configs
-    mls_eng_config = "mls-bonafide"
+    mls_eng_config = "audiobook-bonafide"
     tts_configs = [
-        "mls-tts-bark",
-        "mls-tts-chattts",
-        "mls-tts-cosyvoice",
-        "mls-tts-f5_tts",
-        "mls-tts-fish_speech",
-        "mls-tts-sparktts",
-        "mls-tts-vits",
-        "mls-tts-xtts",
-        "mls-tts-yourtts",
-        "mls-tts-zonos",
+        "audiobook-tts-bark",
+        "audiobook-tts-chattts",
+        "audiobook-tts-cosyvoice",
+        "audiobook-tts-f5_tts",
+        "audiobook-tts-fish_speech",
+        "audiobook-tts-sparktts",
+        "audiobook-tts-vits",
+        "audiobook-tts-xtts",
+        "audiobook-tts-yourtts",
+        "audiobook-tts-zonos",
     ]
     vocoders_configs = [
-        "mls-vocoders-bigvgan",
-        "mls-vocoders-bigvsan",
-        "mls-vocoders-full_band_melgan",
-        "mls-vocoders-hifigan",
-        "mls-vocoders-melgan",
-        "mls-vocoders-multi_band_melgan",
-        "mls-vocoders-parallel_wavegan",
-        "mls-vocoders-style_melgan",
-        "mls-vocoders-univnet",
-        "mls-vocoders-vocos",
+        "audiobook-vocoders-bigvgan",
+        "audiobook-vocoders-bigvsan",
+        "audiobook-vocoders-full_band_melgan",
+        "audiobook-vocoders-hifigan",
+        "audiobook-vocoders-melgan",
+        "audiobook-vocoders-multi_band_melgan",
+        "audiobook-vocoders-parallel_wavegan",
+        "audiobook-vocoders-style_melgan",
+        "audiobook-vocoders-univnet",
+        "audiobook-vocoders-vocos",
     ]
     tts_and_vocoders_configs = tts_configs + vocoders_configs
 
